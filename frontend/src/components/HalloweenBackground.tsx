@@ -1,129 +1,121 @@
-import React, { useEffect, useState } from 'react';
-
-interface FloatingItem {
-  id: number;
-  emoji: string;
-  left: number;
-  size: number;
-  duration: number;
-  delay: number;
-}
+import React, { useEffect, useRef } from 'react';
 
 export function HalloweenBackground() {
-  const [items, setItems] = useState<FloatingItem[]>([]);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animationFrameId: number;
+
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Lista di elementi Halloween
     const emojis = ['🎃', '👻', '🦇', '💀', '🕷️', '🎃', '👻'];
-    const generatedItems: FloatingItem[] = Array.from({ length: 25 }).map((_, index) => ({
-      id: index,
+
+    interface Particle {
+      x: number;
+      y: number;
+      emoji: string;
+      size: number;
+      speedY: number;
+      speedX: number;
+      opacity: number;
+    }
+
+    // Creiamo 30 elementi fluttuanti
+    const particles: Particle[] = Array.from({ length: 30 }).map(() => ({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
       emoji: emojis[Math.floor(Math.random() * emojis.length)],
-      left: Math.random() * 95,
-      size: Math.floor(Math.random() * 20) + 24,
-      duration: Math.floor(Math.random() * 8) + 8,
-      delay: Math.random() * 5,
+      size: Math.floor(Math.random() * 16) + 22, // da 22px a 38px
+      speedY: Math.random() * 1.2 + 0.5, // Velocità risalita
+      speedX: Math.sin(Math.random() * Math.PI) * 0.5,
+      opacity: Math.random() * 0.6 + 0.3,
     }));
-    setItems(generatedItems);
+
+    // Cavaliere / Fantasma volante
+    let riderX = -100;
+    let riderY = window.innerHeight * 0.25;
+
+    // Loop di animazione
+    const render = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 1. Scritta in alto "HAPPY HALLOWEEN"
+      ctx.save();
+      ctx.font = '900 24px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#f97316';
+      ctx.shadowColor = 'rgba(249, 115, 22, 0.9)';
+      ctx.shadowBlur = 12;
+      ctx.fillText('🎃 HAPPY HALLOWEEN 👻', canvas.width / 2, 35);
+      ctx.restore();
+
+      // 2. Disegna e muovi Zucche, Fantasmi e Pipistrelli
+      particles.forEach((p) => {
+        ctx.save();
+        ctx.globalAlpha = p.opacity;
+        ctx.font = `${p.size}px serif`;
+        ctx.fillText(p.emoji, p.x, p.y);
+        ctx.restore();
+
+        // Movimento verso l'alto
+        p.y -= p.speedY;
+        p.x += Math.sin(p.y * 0.02) * 0.5;
+
+        // Reset se esce dallo schermo
+        if (p.y < -40) {
+          p.y = canvas.height + 40;
+          p.x = Math.random() * canvas.width;
+        }
+      });
+
+      // 3. Disegna il Cavaliere Fantasma che attraversa lo schermo
+      ctx.save();
+      ctx.font = '36px serif';
+      ctx.fillText('🏇💨👻', riderX, riderY);
+      ctx.restore();
+
+      riderX += 2.5;
+      riderY += Math.sin(riderX * 0.01) * 0.5;
+      if (riderX > canvas.width + 120) {
+        riderX = -120;
+        riderY = Math.random() * (canvas.height * 0.5) + 100;
+      }
+
+      animationFrameId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      window.removeEventListener('resize', resizeCanvas);
+      cancelAnimationFrame(animationFrameId);
+    };
   }, []);
 
   return (
-    <>
-      <style>{`
-        @keyframes floatUp {
-          0% {
-            transform: translateY(100vh) rotate(0deg);
-            opacity: 0;
-          }
-          15% {
-            opacity: 0.9;
-          }
-          85% {
-            opacity: 0.9;
-          }
-          100% {
-            transform: translateY(-10vh) rotate(360deg);
-            opacity: 0;
-          }
-        }
-
-        @keyframes crossScreen {
-          0% {
-            transform: translateX(-10vw) translateY(0);
-          }
-          50% {
-            transform: translateX(55vw) translateY(-30px);
-          }
-          100% {
-            transform: translateX(110vw) translateY(0);
-          }
-        }
-
-        @keyframes titlePulse {
-          0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
-          50% { opacity: 0.7; transform: translateX(-50%) scale(1.05); }
-        }
-
-        .halloween-item {
-          position: fixed;
-          bottom: 0;
-          pointer-events: none;
-          z-index: 999999;
-          animation-name: floatUp;
-          animation-iteration-count: infinite;
-          animation-timing-function: linear;
-        }
-
-        .halloween-rider {
-          position: fixed;
-          top: 25%;
-          left: 0;
-          pointer-events: none;
-          z-index: 999999;
-          font-size: 3rem;
-          animation: crossScreen 14s linear infinite;
-        }
-
-        .halloween-title {
-          position: fixed;
-          top: 12px;
-          left: 50%;
-          transform: translateX(-50%);
-          pointer-events: none;
-          z-index: 999999;
-          color: #f97316;
-          font-weight: 900;
-          font-size: 1.4rem;
-          letter-spacing: 0.15em;
-          text-shadow: 0 0 14px rgba(249, 115, 22, 0.9);
-          animation: titlePulse 2.5s ease-in-out infinite;
-          white-space: nowrap;
-        }
-      `}</style>
-
-      {/* Scritta in alto al centro */}
-      <div className="halloween-title">
-        🎃 HAPPY HALLOWEEN 👻
-      </div>
-
-      {/* Zucche e fantasmi fluttuanti */}
-      {items.map((item) => (
-        <div
-          key={item.id}
-          className="halloween-item"
-          style={{
-            left: `${item.left}%`,
-            fontSize: `${item.size}px`,
-            animationDuration: `${item.duration}s`,
-            animationDelay: `${item.delay}s`,
-          }}
-        >
-          {item.emoji}
-        </div>
-      ))}
-
-      {/* Cavaliere Fantasma che vola sullo schermo */}
-      <div className="halloween-rider">
-        🏇💨 👻
-      </div>
-    </>
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        pointerEvents: 'none', // Permette i clic sui bottoni e tab sotto!
+        zIndex: 999999, // Forza la visibilità SOPRA ogni card e sidebar
+      }}
+    />
   );
 }
