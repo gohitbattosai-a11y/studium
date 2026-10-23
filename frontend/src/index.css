@@ -111,3 +111,43 @@
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
+
+@keyframes halloweenFloat {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-105vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes halloweenCross {
+  0% {
+    transform: translateX(-10vw) translateY(0);
+  }
+  50% {
+    transform: translateX(50vw) translateY(-20px);
+  }
+  100% {
+    transform: translateX(110vw) translateY(0);
+  }
+}
+
+.animate-halloween-float {
+  animation-name: halloweenFloat;
+}
+
+.animate-halloween-cross {
+  animation-name: halloweenCross;
+  animation-duration: 18s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
