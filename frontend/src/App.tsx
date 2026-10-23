@@ -17,49 +17,117 @@ function HalloweenBackground() {
 
   useEffect(() => {
     const emojis = ['🎃', '👻', '🦇', '💀', '🕷️', '🎃', '👻'];
-    const generatedItems: FloatingItem[] = Array.from({ length: 20 }).map((_, index) => ({
+    const generatedItems: FloatingItem[] = Array.from({ length: 25 }).map((_, index) => ({
       id: index,
       emoji: emojis[Math.floor(Math.random() * emojis.length)],
-      left: Math.random() * 100,
-      size: Math.random() * 20 + 20,
-      duration: Math.random() * 10 + 12,
-      delay: Math.random() * 10,
+      left: Math.random() * 95, // Posizione orizzontale %
+      size: Math.floor(Math.random() * 20) + 24, // Dimensione emoji
+      duration: Math.floor(Math.random() * 8) + 8, // Durata in secondi
+      delay: Math.random() * 5, // Ritardo iniziale
     }));
     setItems(generatedItems);
   }, []);
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden select-none">
-      {/* Scritta Animata in alto */}
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 text-center">
-        <h1 className="animate-pulse text-xl md:text-2xl font-extrabold tracking-widest text-orange-500 drop-shadow-[0_0_10px_rgba(249,115,22,0.8)]">
-          🎃 HAPPY HALLOWEEN 👻
-        </h1>
+    <>
+      {/* Iniezione Stili CSS per l'animazione */}
+      <style>{`
+        @keyframes floatUp {
+          0% {
+            transform: translateY(100vh) rotate(0deg);
+            opacity: 0;
+          }
+          15% {
+            opacity: 0.9;
+          }
+          85% {
+            opacity: 0.9;
+          }
+          100% {
+            transform: translateY(-10vh) rotate(360deg);
+            opacity: 0;
+          }
+        }
+
+        @keyframes crossScreen {
+          0% {
+            transform: translateX(-10vw) translateY(0);
+          }
+          50% {
+            transform: translateX(55vw) translateY(-30px);
+          }
+          100% {
+            transform: translateX(110vw) translateY(0);
+          }
+        }
+
+        .halloween-item {
+          position: fixed;
+          bottom: 0;
+          pointer-events: none;
+          z-index: 99999;
+          animation-name: floatUp;
+          animation-iteration-count: infinite;
+          animation-timing-function: linear;
+        }
+
+        .halloween-rider {
+          position: fixed;
+          top: 30%;
+          left: 0;
+          pointer-events: none;
+          z-index: 99999;
+          font-size: 2.5rem;
+          animation: crossScreen 14s linear infinite;
+        }
+
+        .halloween-title {
+          position: fixed;
+          top: 12px;
+          left: 50%;
+          transform: translateX(-50%);
+          pointer-events: none;
+          z-index: 99999;
+          color: #f97316;
+          font-weight: 900;
+          font-size: 1.25rem;
+          letter-spacing: 0.1em;
+          text-shadow: 0 0 12px rgba(249, 115, 22, 0.9);
+          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: .5; }
+        }
+      `}</style>
+
+      {/* Scritta in alto */}
+      <div className="halloween-title">
+        🎃 HAPPY HALLOWEEN 👻
       </div>
 
-      {/* Zucche e fantasmi che salgono dal basso */}
+      {/* Zucche e fantasmi fluttuanti */}
       {items.map((item) => (
         <div
           key={item.id}
-          className="absolute bottom-[-50px] animate-halloween-float opacity-75"
+          className="halloween-item"
           style={{
             left: `${item.left}%`,
             fontSize: `${item.size}px`,
             animationDuration: `${item.duration}s`,
             animationDelay: `${item.delay}s`,
-            animationIterationCount: 'infinite',
-            animationTimingFunction: 'linear',
           }}
         >
           {item.emoji}
         </div>
       ))}
 
-      {/* Cavaliere / Fantasma che attraversa lo schermo in mezzo */}
-      <div className="absolute top-1/4 left-[-100px] text-4xl animate-halloween-cross opacity-70">
+      {/* Cavaliere / Fantasma che vola da sinistra a destra */}
+      <div className="halloween-rider">
         🏇💨 👻
       </div>
-    </div>
+    </>
   );
 }
 
@@ -67,10 +135,10 @@ function HalloweenBackground() {
 export default function App() {
   return (
     <div className="relative min-h-screen bg-background text-foreground">
-      {/* Sfondo di Halloween sempre attivo sopra i tab */}
+      {/* Sfondo di Halloween integrato */}
       <HalloweenBackground />
 
-      {/* Router e pagine */}
+      {/* Pagine e Router */}
       <Routes>
         <Route path="*" element={<Studium />} />
       </Routes>
