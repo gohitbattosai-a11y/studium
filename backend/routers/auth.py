@@ -72,7 +72,15 @@ async def join(body: JoinRequest, response: Response):
 
     token = secrets.token_urlsafe(32)
     await db.sessions.insert_one({"token": token, "member_id": member["id"], "created_at": now_iso()})
-    response.set_cookie(COOKIE_NAME, token, httponly=True, samesite="lax", max_age=60 * 60 * 24 * 60, path="/")
+    response.set_cookie(
+    COOKIE_NAME, 
+    token, 
+    httponly=True, 
+    samesite="none", 
+    secure=True, 
+    max_age=60 * 60 * 24 * 60, 
+    path="/"
+)
     return await build_me(member)
 
 
