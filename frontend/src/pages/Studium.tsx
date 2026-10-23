@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiGet } from "@/lib/api";
 import type { Me } from "@/lib/types";
@@ -7,105 +7,135 @@ import AppShell from "@/components/layout/AppShell";
 import { Toaster } from "@/components/ui/sonner";
 import { BrandMark } from "@/components/common";
 
-// Componente Sfondo Animato Halloween (Canvas Overlay)
-function HalloweenOverlay() {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+interface Particle {
+  id: number;
+  emoji: string;
+  left: number;
+  size: number;
+  duration: number;
+  delay: number;
+}
+
+// Overlay di Halloween con elementi DOM nativi (garantiti al 100%)
+function HalloweenDOMOverlay() {
+  const [particles, setParticles] = useState<Particle[]>([]);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    let animId: number;
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener("resize", resize);
-
     const emojis = ["🎃", "👻", "🦇", "💀", "🕷️", "🎃", "👻"];
-    const particles = Array.from({ length: 28 }).map(() => ({
-      x: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight,
+    const items: Particle[] = Array.from({ length: 25 }).map((_, index) => ({
+      id: index,
       emoji: emojis[Math.floor(Math.random() * emojis.length)],
-      size: Math.floor(Math.random() * 16) + 22,
-      speedY: Math.random() * 1.2 + 0.6,
-      opacity: Math.random() * 0.7 + 0.3,
+      left: Math.random() * 96, // Posizione orizzontale casuale %
+      size: Math.floor(Math.random() * 18) + 24, // Dimensione in px
+      duration: Math.floor(Math.random() * 8) + 8, // Durata in secondi (8s - 16s)
+      delay: Math.random() * 5, // Ritardo iniziale
     }));
-
-    let riderX = -100;
-    let riderY = window.innerHeight * 0.25;
-
-    const render = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Scritta Happy Halloween in alto
-      ctx.save();
-      ctx.font = "bold 22px system-ui, sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillStyle = "#f97316";
-      ctx.shadowColor = "rgba(249, 115, 22, 0.9)";
-      ctx.shadowBlur = 10;
-      ctx.fillText("🎃 HAPPY HALLOWEEN 👻", canvas.width / 2, 32);
-      ctx.restore();
-
-      // Flusso di zucche e fantasmi
-      particles.forEach((p) => {
-        ctx.save();
-        ctx.globalAlpha = p.opacity;
-        ctx.font = `${p.size}px serif`;
-        ctx.fillText(p.emoji, p.x, p.y);
-        ctx.restore();
-
-        p.y -= p.speedY;
-        p.x += Math.sin(p.y * 0.02) * 0.6;
-
-        if (p.y < -40) {
-          p.y = canvas.height + 40;
-          p.x = Math.random() * canvas.width;
-        }
-      });
-
-      // Cavaliere / Fantasma in volo
-      ctx.save();
-      ctx.font = "32px serif";
-      ctx.fillText("🏇💨👻", riderX, riderY);
-      ctx.restore();
-
-      riderX += 2.5;
-      riderY += Math.sin(riderX * 0.01) * 0.5;
-      if (riderX > canvas.width + 120) {
-        riderX = -120;
-        riderY = Math.random() * (canvas.height * 0.4) + 80;
-      }
-
-      animId = requestAnimationFrame(render);
-    };
-
-    render();
-
-    return () => {
-      window.removeEventListener("resize", resize);
-      cancelAnimationFrame(animId);
-    };
+    setParticles(items);
   }, []);
 
   return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100vw",
-        height: "100vh",
-        pointerEvents: "none", // Rende l'overlay trasparente ai clic
-        zIndex: 999999, // Garantisce la sovrapposizione su AppShell
-      }}
-    />
+    <>
+      <style>{`
+        @keyframes floatUpDOM {
+          0% {
+            transform: translateY(105vh) rotate(0deg);
+            opacity: 0;
+          }
+          10% {
+            opacity: 0.9;
+          }
+          90% {
+            opacity: 0.9;
+          }
+          100% {
+            transform: translateY(-10vh) rotate(360deg);
+            opacity: 0;
+          }
+        }
+
+        @keyframes crossScreenDOM {
+          0% {
+            transform: translateX(-10vw);
+          }
+          50% {
+            transform: translateX(50vw) translateY(-25px);
+          }
+          100% {
+            transform: translateX(110vw);
+          }
+        }
+
+        @keyframes pulseTitle {
+          0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+          50% { opacity: 0.7; transform: translateX(-50%) scale(1.04); }
+        }
+
+        .hw-particle {
+          position: fixed;
+          bottom: 0;
+          pointer-events: none;
+          z-index: 999999;
+          animation-name: floatUpDOM;
+          animation-iteration-count: infinite;
+          animation-timing-function: linear;
+          user-select: none;
+        }
+
+        .hw-rider {
+          position: fixed;
+          top: 22%;
+          left: 0;
+          font-size: 2.8rem;
+          pointer-events: none;
+          z-index: 999999;
+          animation: crossScreenDOM 14s linear infinite;
+          user-select: none;
+        }
+
+        .hw-title {
+          position: fixed;
+          top: 12px;
+          left: 50%;
+          transform: translateX(-50%);
+          font-weight: 900;
+          font-size: 1.3rem;
+          letter-spacing: 0.15em;
+          color: #f97316;
+          text-shadow: 0 0 12px rgba(249, 115, 22, 0.9);
+          pointer-events: none;
+          z-index: 999999;
+          animation: pulseTitle 2.5s ease-in-out infinite;
+          white-space: nowrap;
+          user-select: none;
+        }
+      `}</style>
+
+      {/* Scritta in alto */}
+      <div className="hw-title">
+        🎃 HAPPY HALLOWEEN 👻
+      </div>
+
+      {/* Zucche e fantasmi fluttuanti */}
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          className="hw-particle"
+          style={{
+            left: `${p.left}%`,
+            fontSize: `${p.size}px`,
+            animationDuration: `${p.duration}s`,
+            animationDelay: `${p.delay}s`,
+          }}
+        >
+          {p.emoji}
+        </div>
+      ))}
+
+      {/* Cavaliere / Fantasma volante */}
+      <div className="hw-rider">
+        🏇💨 👻
+      </div>
+    </>
   );
 }
 
@@ -128,8 +158,8 @@ export default function Studium() {
 
   return (
     <>
-      {/* Sfondo Animato Halloween sovrapposto all'intera app */}
-      <HalloweenOverlay />
+      {/* Sfondo animato di Halloween sovrapposto */}
+      <HalloweenDOMOverlay />
 
       {body}
       <Toaster richColors theme="dark" />
