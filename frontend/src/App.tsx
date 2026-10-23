@@ -5,7 +5,7 @@ import { HalloweenBackground } from "@/components/HalloweenBackground";
 export default function App() {
   return (
     <>
-      {/* Componente di Halloween visibile sopra tutte le pagine/tab */}
+      {/* Sfondo Canvas Animato Halloween */}
       <HalloweenBackground />
 
       <Routes>
