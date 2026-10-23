@@ -3,8 +3,11 @@ import { BarChart3, BookOpen, FolderOpen, LayoutGrid, LogOut, Megaphone, Users }
 import type { Me } from "@/lib/types";
 import { endSession } from "@/lib/session";
 import { useMembers } from "@/lib/queries";
+import { useBackground } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { Avatar, BrandMark, Eyebrow } from "@/components/common";
+import ThemeBackground from "@/components/theme/ThemeBackground";
+import ThemePicker from "@/components/theme/ThemePicker";
 import Overview from "@/components/Overview";
 import HomeworkPanel from "@/components/agenda/HomeworkPanel";
 import PollsPanel from "@/components/polls/PollsPanel";
@@ -24,6 +27,7 @@ const NAV: { id: Tab; label: string; icon: typeof BookOpen }[] = [
 export default function AppShell({ me }: { me: Me }) {
   const [tab, setTab] = useState<Tab>("home");
   const members = useMembers();
+  const [background, setBackground] = useBackground(me.group_id);
   const logout = () => void endSession("/");
 
   const go = (t: Tab) => {
@@ -31,12 +35,11 @@ export default function AppShell({ me }: { me: Me }) {
     window.scrollTo({ top: 0 });
   };
 
-  // Every panel stays mounted; inactive ones are only hidden, so drafts and scroll-free state survive tab switches.
   const panel = (id: Tab) => cn(tab === id ? "block animate-in fade-in-0 slide-in-from-bottom-1 duration-200" : "hidden");
 
   return (
-    <div className="min-h-dvh md:flex">
-      {/* Desktop sidebar */}
+    <div className="relative isolate min-h-dvh md:flex" data-background={background}>
+      <ThemeBackground id={background} />
       <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-[#30363D] bg-[#0D1117] md:flex" data-testid="sidebar">
         <div className="flex h-14 items-center gap-2.5 px-5">
           <BrandMark className="size-7" />
@@ -84,6 +87,12 @@ export default function AppShell({ me }: { me: Me }) {
             <p className="truncate text-sm font-medium" data-testid="sidebar-nickname">{me.nickname}</p>
             <p className="text-xs text-[#8B949E]">Connesso</p>
           </div>
+          <ThemePicker
+            value={background}
+            onChange={setBackground}
+            testId="sidebar-background-button"
+            className="grid size-9 place-items-center rounded-md text-[#8B949E] transition-colors duration-150 hover:bg-[#161B22] hover:text-[#F0F6FC]"
+          />
           <button type="button" onClick={logout} className="grid size-9 place-items-center rounded-md text-[#8B949E] transition-colors duration-150 hover:bg-[#161B22] hover:text-[#F0F6FC]" aria-label="Esci" data-testid="sidebar-logout-button">
             <LogOut className="size-4" />
           </button>
@@ -91,13 +100,18 @@ export default function AppShell({ me }: { me: Me }) {
       </aside>
 
       <div className="min-w-0 flex-1">
-        {/* Mobile header */}
         <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-[#30363D] bg-[#0D1117]/85 px-4 backdrop-blur-xl md:hidden" data-testid="mobile-header">
           <BrandMark className="size-7" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold leading-tight" data-testid="header-group-name">{me.group_name}</p>
             <p className="truncate text-xs text-[#8B949E]">come {me.nickname}</p>
           </div>
+          <ThemePicker
+            value={background}
+            onChange={setBackground}
+            testId="header-background-button"
+            className="grid size-10 place-items-center rounded-md text-[#8B949E] active:scale-95"
+          />
           <button type="button" onClick={logout} className="grid size-10 place-items-center rounded-md text-[#8B949E] active:scale-95" aria-label="Esci" data-testid="header-logout-button">
             <LogOut className="size-4" />
           </button>
@@ -122,7 +136,6 @@ export default function AppShell({ me }: { me: Me }) {
         </main>
       </div>
 
-      {/* Mobile bottom nav */}
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[#30363D] bg-[#161B22]/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden" data-testid="bottom-nav">
         <div className="grid h-16 grid-cols-5">
           {NAV.map((n) => {
