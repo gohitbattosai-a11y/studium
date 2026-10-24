@@ -8,20 +8,20 @@ GAME_TIERS: list[tuple[int, int]] = [(100, 5), (90, 4), (75, 3), (60, 2), (40, 1
 Window = Optional[tuple[str, str]]
 
 ITEMS: list[dict] = [
-    {"id": "fiamma-spettrale", "kind": "decoration", "name": "Fiamma spettrale", "description": "Fiamme viola e blu che avvolgono l'avatar.", "price": 10, "window": None},
-    {"id": "aura-oro", "kind": "decoration", "name": "Aura dorata", "description": "Scintille dorate in orbita attorno all'avatar.", "price": 15, "window": None},
-    {"id": "drago-spettrale", "kind": "decoration", "name": "Drago spettrale", "description": "Un drago di spirito che gira senza sosta attorno all'avatar.", "price": 35, "window": None},
-    {"id": "ghiaccio-cristalli", "kind": "decoration", "name": "Cristalli di ghiaccio", "description": "Schegge di ghiaccio e brillantini in orbita.", "price": 15, "window": None},
-    {"id": "fulmine-elettrico", "kind": "decoration", "name": "Scarica elettrica", "description": "Fulmini che crepitano attorno all'avatar.", "price": 20, "window": None},
-    {"id": "sakura", "kind": "decoration", "name": "Petali di ciliegio", "description": "Petali rosa che girano dolcemente.", "price": 15, "window": None},
-    {"id": "arcobaleno", "kind": "decoration", "name": "Anello arcobaleno", "description": "Un anello dai sette colori che ruota.", "price": 25, "window": None},
-    {"id": "zucca-halloween", "kind": "decoration", "name": "Zucca stregata", "description": "Zucca luminosa con pipistrelli in orbita.", "price": 15, "window": ("10-15", "11-02")},
-    {"id": "corona-natale", "kind": "decoration", "name": "Corona di Natale", "description": "Ghirlanda con luci che lampeggiano.", "price": 15, "window": ("12-01", "01-06")},
-    {"id": "halloween", "kind": "background", "name": "Notte di Halloween", "description": "Luna piena, casa stregata, pipistrelli e zucche.", "price": 20, "window": ("10-15", "11-02")},
-    {"id": "natale", "kind": "background", "name": "Notte di Natale", "description": "Neve, albero illuminato e baita nel bosco.", "price": 20, "window": ("12-01", "01-06")},
-    {"id": "cyber-glitch", "kind": "decoration", "name": "Cyber Glitch", "description": "Effetto digitale avanzato con linee e glitch al neon.", "price": 30, "window": None},
-    {"id": "nebulosa-cosmica", "kind": "decoration", "name": "Nebulosa Cosmica", "description": "Stelle cadenti e polvere interstellare.", "price": 35, "window": None},
-    {"id": "dinosauri", "kind": "decoration", "name": "Mondo Giurassico", "description": "Artigli infuocati, fossili e ambientazione vulcanica.", "price": 50, "window": None},
+    {"id": "fiamma-spettrale", "kind": "decoration", "name": "Fiamma spettrale", "description": "Fiamme viola e blu che avvolgono l'avatar.", "price": 20, "window": None},
+    {"id": "aura-oro", "kind": "decoration", "name": "Aura dorata", "description": "Scintille dorate in orbita attorno all'avatar.", "price": 30, "window": None},
+    {"id": "drago-spettrale", "kind": "decoration", "name": "Drago spettrale", "description": "Un drago di spirito che gira senza sosta attorno all'avatar.", "price": 90, "window": None},
+    {"id": "ghiaccio-cristalli", "kind": "decoration", "name": "Cristalli di ghiaccio", "description": "Schegge di ghiaccio e brillantini in orbita.", "price": 25, "window": None},
+    {"id": "fulmine-elettrico", "kind": "decoration", "name": "Scarica elettrica", "description": "Fulmini che crepitano attorno all'avatar.", "price": 40, "window": None},
+    {"id": "sakura", "kind": "decoration", "name": "Petali di ciliegio", "description": "Petali rosa che girano dolcemente.", "price": 25, "window": None},
+    {"id": "arcobaleno", "kind": "decoration", "name": "Anello arcobaleno", "description": "Un anello dai sette colori che ruota.", "price": 50, "window": None},
+    {"id": "zucca-halloween", "kind": "decoration", "name": "Zucca stregata", "description": "Zucca luminosa con pipistrelli in orbita.", "price": 35, "window": ("10-15", "11-02")},
+    {"id": "corona-natale", "kind": "decoration", "name": "Corona di Natale", "description": "Ghirlanda con luci che lampeggiano.", "price": 35, "window": ("12-01", "01-06")},
+    {"id": "halloween", "kind": "background", "name": "Notte di Halloween", "description": "Luna piena, casa stregata, pipistrelli e zucche.", "price": 60, "window": ("10-15", "11-02")},
+    {"id": "natale", "kind": "background", "name": "Notte di Natale", "description": "Neve, albero illuminato e baita nel bosco.", "price": 60, "window": ("12-01", "01-06")},
+    {"id": "cyber-glitch", "kind": "decoration", "name": "Cyber Glitch", "description": "Effetto digitale avanzato con linee e glitch al neon.", "price": 90, "window": None},
+    {"id": "nebulosa-cosmica", "kind": "decoration", "name": "Nebulosa Cosmica", "description": "Stelle cadenti e polvere interstellare.", "price": 90, "window": None},
+    {"id": "dinosauri", "kind": "decoration", "name": "Mondo Giurassico", "description": "Artigli infuocati, fossili e ambientazione vulcanica.", "price": 100, "window": None},
 ]
 
 ITEMS_BY_ID: dict[str, dict] = {i["id"]: i for i in ITEMS}
