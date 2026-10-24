@@ -11,7 +11,7 @@ from starlette.middleware.cors import CORSMiddleware
 load_dotenv(Path(__file__).parent / ".env")
 
 from lib.db import client, ensure_indexes, ensure_roles  # noqa: E402
-from routers import auth, homework, materials, notices, polls, shop  # noqa: E402
+from routers import auth, games, homework, materials, notices, polls, shop  # noqa: E402
 
 
 @asynccontextmanager
@@ -31,7 +31,7 @@ async def root():
     return {"message": "Studium API"}
 
 
-for _r in (auth.router, homework.router, polls.router, materials.router, notices.router, shop.router):
+for _r in (auth.router, homework.router, polls.router, materials.router, notices.router, shop.router, games.router):
     api_router.include_router(_r)
 
 app.include_router(api_router)
