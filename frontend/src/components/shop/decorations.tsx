@@ -36,7 +36,6 @@ const SPARKLES = Array.from({ length: 8 }, (_, i) => ({ a: i * 45 + 10, s: 0.7 +
 const LEAVES = Array.from({ length: 28 }, (_, i) => ({ a: i * (360 / 28), tone: i % 2 ? "#166534" : "#22c55e", tilt: i % 2 ? 38 : -38 }));
 const BERRIES = Array.from({ length: 8 }, (_, i) => i * 45 + 12);
 const WREATH_LIGHTS = Array.from({ length: 12 }, (_, i) => ({ a: i * 30 + 15, c: ["#fde047", "#f87171", "#60a5fa", "#4ade80"][i % 4], d: (i % 4) * 0.35 }));
-const DINO_SPIKES = Array.from({ length: 7 }, (_, i) => -54 + i * 18);
 
 function Fiamma() {
   return (
@@ -214,27 +213,49 @@ function NebulosaCosmica() {
   );
 }
 
+function DetailedDinoHead({ color, eyeColor, scale = 1 }: { color: string; eyeColor: string; scale?: number }) {
+  return (
+    <g transform={`scale(${scale})`}>
+      <path d="M-20 8 C-18 0 -12 -8 -2 -12 C10 -15 22 -10 24 -2 C25 3 20 6 12 6 C8 6 2 4 -2 8 C-6 11 -12 16 -18 14 Z" fill={color} stroke="#052e16" strokeWidth="0.8" filter="url(#dc-neon-glow)" />
+      <path d="M-12 12 C-6 10 2 12 10 10 C16 9 22 14 16 18 C8 20 -4 18 -12 14 Z" fill={color} stroke="#052e16" strokeWidth="0.8" />
+      <path d="M0 6 L2 10 L4 6 L6 10 L8 6 L10 9 L12 6 L14 8" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+      <path d="M-10 -10 L-6 -16 L-2 -11 M-2 -11 L2 -17 L5 -10 M5 -10 L9 -16 L12 -9" fill="#15803d" stroke="#facc15" strokeWidth="0.6" />
+      <circle cx="8" cy="-5" r="2.8" fill={eyeColor} filter="url(#dc-neon-glow)" className="dc-flicker" />
+      <ellipse cx="8" cy="-5" rx="0.8" ry="2" fill="#000000" />
+      <path d="M3 -8 C7 -12 12 -10 14 -7" stroke="#052e16" strokeWidth="1" fill="none" />
+      <circle cx="18" cy="-2" r="0.8" fill="#052e16" />
+    </g>
+  );
+}
+
 function Dinosauri() {
   return (
     <g transform="translate(50 50)">
-      <circle r="34" fill="none" stroke="url(#dc-dino-ring)" strokeWidth="4.5" />
-      <circle r="39" fill="none" stroke="#facc15" strokeWidth="0.8" strokeDasharray="4 10" className="dc-spin" />
-      {DINO_SPIKES.map((angle, i) => (
-        <g key={i} transform={`rotate(${angle}) translate(0 -34)`}>
-          <path d="M-3.5 0 L0 -8 L3.5 0 Z" fill="#22c55e" stroke="#14532d" strokeWidth="0.6" filter="url(#dc-neon-glow)" />
+      <circle r="36" fill="none" stroke="url(#dc-dino-ring)" strokeWidth="2.5" strokeDasharray="6 6 18 6" className="dc-spin" />
+      <path d="M-28 22 A36 36 0 0 1 22 -28" fill="none" stroke="#ef4444" strokeWidth="2" strokeDasharray="3 7" className="dc-flicker" filter="url(#dc-neon-glow)" />
+      <path d="M-22 28 A36 36 0 0 0 28 -22" fill="none" stroke="#22c55e" strokeWidth="2" strokeDasharray="3 7" className="dc-flicker" style={{ animationDelay: "1s" }} filter="url(#dc-neon-glow)" />
+
+      <g transform="translate(-25 25) rotate(-35)" className="dc-dino-bottom">
+        <DetailedDinoHead color="url(#dc-dino-green)" eyeColor="#facc15" scale={0.7} />
+        <g className="dc-roaring-wave-bottom">
+          <path d="M18 -2 Q26 -8 32 -4" fill="none" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" filter="url(#dc-neon-glow)" />
+          <path d="M22 2 Q30 -3 36 2" fill="none" stroke="#facc15" strokeWidth="1" strokeLinecap="round" filter="url(#dc-neon-glow)" />
         </g>
-      ))}
-      <g transform="rotate(42) translate(0 -34)" className="dc-dino-head">
-        <path d="M-8 -3 C-14 -12 2 -18 10 -10 C16 -4 10 6 2 4 Z" fill="url(#dc-dino-body)" stroke="#4ade80" strokeWidth="1" filter="url(#dc-neon-glow)" />
-        <path d="M5 -10 L11 -15 L13 -8 Z" fill="#facc15" />
-        <circle cx="2" cy="-7" r="2" fill="#ef4444" className="dc-flicker" />
-        <circle cx="2" cy="-7" r="0.8" fill="#ffffff" />
       </g>
-      <g className="dc-spin-rev" style={{ animationDuration: "16s" }}>
+
+      <g transform="translate(25 -25) rotate(145)" className="dc-dino-top">
+        <DetailedDinoHead color="url(#dc-dino-orange)" eyeColor="#00f0ff" scale={0.7} />
+        <g className="dc-roaring-wave-top">
+          <path d="M18 -2 Q26 -8 32 -4" fill="none" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" filter="url(#dc-neon-glow)" />
+          <path d="M22 2 Q30 -3 36 2" fill="none" stroke="#38bdf8" strokeWidth="1" strokeLinecap="round" filter="url(#dc-neon-glow)" />
+        </g>
+      </g>
+
+      <g className="dc-spin-fast" style={{ animationDuration: "10s" }}>
         {Array.from({ length: 4 }).map((_, i) => {
-          const a = i * 90 + 10;
-          const [x, y] = pt(41, a);
-          return <circle key={i} cx={x} cy={y} r="1.5" fill="#fde047" className="dc-twinkle" style={{ animationDelay: `${i * 0.4}s` }} />;
+          const a = i * 90 + 45;
+          const [x, y] = pt(40, a);
+          return <circle key={i} cx={x} cy={y} r="1.8" fill="#fde047" className="dc-twinkle" style={{ animationDelay: `${i * 0.3}s` }} />;
         })}
       </g>
     </g>
@@ -323,10 +344,16 @@ export function DecorationDefs() {
           <stop offset="100%" stopColor="#ef4444" />
         </linearGradient>
 
-        <linearGradient id="dc-dino-body" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#14532d" />
-          <stop offset="50%" stopColor="#16a34a" />
-          <stop offset="100%" stopColor="#ca8a04" />
+        <linearGradient id="dc-dino-green" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#15803d" />
+          <stop offset="60%" stopColor="#22c55e" />
+          <stop offset="100%" stopColor="#86efac" />
+        </linearGradient>
+
+        <linearGradient id="dc-dino-orange" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#9a3412" />
+          <stop offset="60%" stopColor="#ea580c" />
+          <stop offset="100%" stopColor="#fde047" />
         </linearGradient>
 
         <linearGradient id="dc-flame" x1="0" y1="1" x2="0" y2="0">
