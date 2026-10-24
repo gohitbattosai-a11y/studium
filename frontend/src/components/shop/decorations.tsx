@@ -258,7 +258,7 @@ function Dinosauri() {
         <RealisticTRex />
       </g>
 
-      <g transform={`translate(${x2.toFixed(1)} ${y2.toFixed(1)}) rotate(140)`}>
+      <g transform={`translate(${x2.toFixed(1)} ${y2.toFixed(1)}) rotate(20)`}>
         <RealisticSpinosaurus />
       </g>
 
