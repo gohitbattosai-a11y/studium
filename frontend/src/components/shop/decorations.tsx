@@ -213,26 +213,26 @@ function NebulosaCosmica() {
   );
 }
 
-function DetailedTRex() {
+function PerfectTRex() {
   return (
     <g>
-      <path d="M-18 6 C-14 -4 -6 -10 2 -12 C12 -15 22 -10 24 -2 C25 4 18 8 10 7 C4 7 -2 5 -8 8 C-12 11 -16 14 -20 10 Z" fill="url(#dc-dino-green)" stroke="#052e16" strokeWidth="0.8" filter="url(#dc-neon-glow)" />
-      <path d="M-10 10 C-4 8 4 10 10 8 C15 7 20 12 14 16 C8 18 0 16 -10 12 Z" fill="#15803d" stroke="#052e16" strokeWidth="0.8" />
-      <path d="M2 6 L4 10 L6 6 L8 10 L10 6 L12 9" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" fill="none" />
-      <circle cx="8" cy="-5" r="2.5" fill="#facc15" filter="url(#dc-neon-glow)" />
-      <circle cx="8" cy="-5" r="0.8" fill="#000000" />
+      <path d="M-16 10 C-14 -2 -4 -12 8 -14 C18 -16 26 -8 28 2 C29 8 20 12 10 10 C2 10 -8 8 -16 10 Z" fill="url(#dc-dino-green)" stroke="#052e16" strokeWidth="1" filter="url(#dc-neon-glow)" />
+      <path d="M6 -14 L12 -22 L16 -12 Z" fill="#22c55e" />
+      <path d="M2 2 L6 10 L10 2 L14 10 L18 2 L22 8" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+      <circle cx="14" cy="-6" r="2.8" fill="#facc15" filter="url(#dc-neon-glow)" />
+      <circle cx="14" cy="-6" r="1" fill="#000000" />
     </g>
   );
 }
 
-function DetailedRaptor() {
+function PerfectRaptor() {
   return (
     <g>
-      <path d="M18 -6 C14 2 6 8 -2 10 C-12 13 -22 8 -24 0 C-25 -6 -18 -10 -10 -9 C-4 -9 2 -7 8 -10 C12 -13 16 -16 20 -12 Z" fill="url(#dc-dino-orange)" stroke="#7c2d12" strokeWidth="0.8" filter="url(#dc-neon-glow)" />
-      <path d="M10 -2 C4 0 -4 -2 -10 -6 C-16 -9 -20 -2 -14 4 C-8 9 0 6 10 2 Z" fill="#c2410c" stroke="#7c2d12" strokeWidth="0.8" />
-      <path d="M-2 -6 L-4 -12 L-6 -6 L-8 -12 L-10 -6" stroke="#ffffff" strokeWidth="1.1" strokeLinecap="round" fill="none" />
-      <circle cx="-6" cy="-2" r="2.5" fill="#38bdf8" filter="url(#dc-neon-glow)" />
-      <circle cx="-6" cy="-2" r="0.8" fill="#000000" />
+      <path d="M16 -10 C14 2 4 12 -8 14 C-18 16 -26 8 -28 -2 C-29 -8 -20 -12 -10 -10 C-2 -10 8 -8 16 -10 Z" fill="url(#dc-dino-orange)" stroke="#7c2d12" strokeWidth="1" filter="url(#dc-neon-glow)" />
+      <path d="M-6 10 L-12 18 L-16 8 Z" fill="#ea580c" />
+      <path d="M-2 -2 L-6 -10 L-10 -2 L-14 -10 L-18 -2 L-22 -8" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+      <circle cx="-14" cy="2" r="2.8" fill="#38bdf8" filter="url(#dc-neon-glow)" />
+      <circle cx="-14" cy="2" r="1" fill="#000000" />
     </g>
   );
 }
@@ -241,22 +241,20 @@ function Dinosauri() {
   return (
     <g transform="translate(50 50)">
       <circle r="36" fill="none" stroke="url(#dc-dino-ring)" strokeWidth="2.5" strokeDasharray="6 6 18 6" className="dc-spin" />
-      <path d="M-28 22 A36 36 0 0 1 22 -28" fill="none" stroke="#ef4444" strokeWidth="2" strokeDasharray="3 7" className="dc-flicker" filter="url(#dc-neon-glow)" />
-      <path d="M-22 28 A36 36 0 0 0 28 -22" fill="none" stroke="#38bdf8" strokeWidth="2" strokeDasharray="3 7" className="dc-flicker" style={{ animationDelay: "1s" }} filter="url(#dc-neon-glow)" />
 
-      <g transform="translate(-28 28) rotate(-45)" className="dc-dino-bottom">
-        <DetailedTRex />
+      <g transform="translate(-29 29) rotate(-45)" className="dc-dino-bottom">
+        <PerfectTRex />
         <g className="dc-roar-waves">
-          <path d="M16 2 Q22 6 28 2" fill="none" stroke="#facc15" strokeWidth="2" strokeLinecap="round" filter="url(#dc-neon-glow)" />
-          <path d="M18 6 Q25 11 32 7" fill="none" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" filter="url(#dc-neon-glow)" />
+          <path d="M24 6 C30 8 36 6 42 2" fill="none" stroke="#facc15" strokeWidth="2.5" strokeLinecap="round" filter="url(#dc-neon-glow)" />
+          <path d="M26 12 C34 15 42 12 50 6" fill="none" stroke="#22c55e" strokeWidth="1.8" strokeLinecap="round" filter="url(#dc-neon-glow)" />
         </g>
       </g>
 
-      <g transform="translate(28 -28) rotate(-225)" className="dc-dino-top">
-        <DetailedRaptor />
+      <g transform="translate(29 -29) rotate(-225)" className="dc-dino-top">
+        <PerfectRaptor />
         <g className="dc-roar-waves">
-          <path d="M-14 -2 Q-20 -6 -26 -2" fill="none" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" filter="url(#dc-neon-glow)" />
-          <path d="M-16 -6 Q-23 -11 -30 -7" fill="none" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" filter="url(#dc-neon-glow)" />
+          <path d="M-24 -6 C-30 -8 -36 -6 -42 -2" fill="none" stroke="#38bdf8" strokeWidth="2.5" strokeLinecap="round" filter="url(#dc-neon-glow)" />
+          <path d="M-26 -12 C-34 -15 -42 -12 -50 -6" fill="none" stroke="#ef4444" strokeWidth="1.8" strokeLinecap="round" filter="url(#dc-neon-glow)" />
         </g>
       </g>
 
