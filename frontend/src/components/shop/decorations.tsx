@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 import "./decorations.css";
+import { SPECS, SpecArt } from "./decorationSpecs";
 
 const pt = (r: number, deg: number): [number, number] => {
   const a = (deg * Math.PI) / 180;
@@ -172,7 +173,12 @@ function Corona() {
   );
 }
 
+const SPEC_ART: Record<string, ComponentType> = Object.fromEntries(
+  Object.entries(SPECS).map(([id, spec]) => [id, () => <SpecArt spec={spec} />]),
+);
+
 const ART: Record<string, ComponentType> = {
+  ...SPEC_ART,
   "fiamma-spettrale": Fiamma,
   "aura-oro": Aura,
   "drago-spettrale": Drago,
