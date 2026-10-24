@@ -5,10 +5,6 @@ import { errMsg } from "./format";
 import { queryClient } from "./queryClient";
 import type { BonusCreate, GradeCreate, ItemKind, MemberOut, PointEvent, Role, ShopState } from "./types";
 
-export const GRADE_POINTS_OFFSET = 0;
-
-export const gradeToPoints = (grade: number) => Math.max(1, Math.floor(grade + 0.5) - GRADE_POINTS_OFFSET);
-
 const KEYS = ["shop", "leaderboard", "members", "me", "my-events", "group-events"];
 
 const refresh = () => {
