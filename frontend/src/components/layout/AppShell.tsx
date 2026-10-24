@@ -1,20 +1,23 @@
 import { useState } from "react";
-import { BarChart3, BookOpen, FolderOpen, LayoutGrid, LogOut, Megaphone, Users } from "lucide-react";
+import { BarChart3, BookOpen, FolderOpen, LayoutGrid, LogOut, Megaphone, ShieldCheck, ShoppingBag, Users } from "lucide-react";
 import type { Me } from "@/lib/types";
 import { endSession } from "@/lib/session";
-import { useMembers } from "@/lib/queries";
-import { useBackground } from "@/lib/theme";
+import { useMembers, useShop } from "@/lib/queries";
+import { useShopActions } from "@/lib/shop";
+import { isBackgroundId, type BackgroundId } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { Avatar, BrandMark, Eyebrow } from "@/components/common";
 import ThemeBackground from "@/components/theme/ThemeBackground";
 import ThemePicker from "@/components/theme/ThemePicker";
+import { DecorationDefs } from "@/components/shop/decorations";
+import ShopPanel from "@/components/shop/ShopPanel";
 import Overview from "@/components/Overview";
 import HomeworkPanel from "@/components/agenda/HomeworkPanel";
 import PollsPanel from "@/components/polls/PollsPanel";
 import MaterialsPanel from "@/components/materials/MaterialsPanel";
 import NoticesPanel from "@/components/notices/NoticesPanel";
 
-export type Tab = "home" | "compiti" | "sondaggi" | "materiali" | "bacheca";
+export type Tab = "home" | "compiti" | "sondaggi" | "materiali" | "bacheca" | "shop";
 
 const NAV: { id: Tab; label: string; icon: typeof BookOpen }[] = [
   { id: "home", label: "Home", icon: LayoutGrid },
@@ -22,12 +25,18 @@ const NAV: { id: Tab; label: string; icon: typeof BookOpen }[] = [
   { id: "sondaggi", label: "Sondaggi", icon: BarChart3 },
   { id: "materiali", label: "Materiali", icon: FolderOpen },
   { id: "bacheca", label: "Bacheca", icon: Megaphone },
+  { id: "shop", label: "Shop", icon: ShoppingBag },
 ];
 
 export default function AppShell({ me }: { me: Me }) {
   const [tab, setTab] = useState<Tab>("home");
   const members = useMembers();
-  const [background, setBackground] = useBackground(me.group_id);
+  const shop = useShop();
+  const { equip } = useShopActions();
+  const equipped = shop.data?.equipped_background;
+  const background: BackgroundId = isBackgroundId(equipped) ? equipped : "none";
+  const ownedBackgrounds = (shop.data?.items ?? []).filter((i) => i.kind === "background" && i.owned).map((i) => i.id);
+  const setBackground = (id: BackgroundId) => equip.mutate({ kind: "background", item_id: id === "none" ? null : id });
   const logout = () => void endSession("/");
 
   const go = (t: Tab) => {
@@ -39,6 +48,7 @@ export default function AppShell({ me }: { me: Me }) {
 
   return (
     <div className="relative isolate min-h-dvh md:flex" data-background={background}>
+      <DecorationDefs />
       <ThemeBackground id={background} />
       <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-[#30363D] bg-[#0D1117] md:flex" data-testid="sidebar">
         <div className="flex h-14 items-center gap-2.5 px-5">
@@ -71,12 +81,13 @@ export default function AppShell({ me }: { me: Me }) {
         </nav>
         <div className="mt-6 min-h-0 flex-1 overflow-y-auto px-5">
           <Eyebrow className="mb-2">Compagni</Eyebrow>
-          <ul className="space-y-2" data-testid="sidebar-members">
+          <ul className="space-y-3" data-testid="sidebar-members">
             {(members.data ?? []).map((m) => (
               <li key={m.nickname} className="flex items-center gap-2 text-sm text-[#C9D1D9]">
                 <Avatar name={m.nickname} size="sm" />
                 <span className="truncate">{m.nickname}</span>
                 {m.nickname === me.nickname && <span className="text-xs text-[#8B949E]">(tu)</span>}
+                {m.role === "admin" && <ShieldCheck className="size-3.5 shrink-0 text-[#58A6FF]" aria-label="Admin" />}
               </li>
             ))}
           </ul>
@@ -89,7 +100,9 @@ export default function AppShell({ me }: { me: Me }) {
           </div>
           <ThemePicker
             value={background}
+            owned={ownedBackgrounds}
             onChange={setBackground}
+            onShop={() => go("shop")}
             testId="sidebar-background-button"
             className="grid size-9 place-items-center rounded-md text-[#8B949E] transition-colors duration-150 hover:bg-[#161B22] hover:text-[#F0F6FC]"
           />
@@ -108,7 +121,9 @@ export default function AppShell({ me }: { me: Me }) {
           </div>
           <ThemePicker
             value={background}
+            owned={ownedBackgrounds}
             onChange={setBackground}
+            onShop={() => go("shop")}
             testId="header-background-button"
             className="grid size-10 place-items-center rounded-md text-[#8B949E] active:scale-95"
           />
@@ -133,11 +148,14 @@ export default function AppShell({ me }: { me: Me }) {
           <div className={panel("bacheca")} data-testid="panel-bacheca">
             <NoticesPanel />
           </div>
+          <div className={panel("shop")} data-testid="panel-shop">
+            <ShopPanel me={me} />
+          </div>
         </main>
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[#30363D] bg-[#161B22]/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden" data-testid="bottom-nav">
-        <div className="grid h-16 grid-cols-5">
+        <div className="grid h-16 grid-cols-6">
           {NAV.map((n) => {
             const active = tab === n.id;
             return (
