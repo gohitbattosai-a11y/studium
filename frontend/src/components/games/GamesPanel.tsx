@@ -6,7 +6,7 @@ import { apiGet } from "@/lib/api";
 import { useGameActions } from "@/lib/gameActions";
 import { errMsg } from "@/lib/format";
 import { templateOf } from "@/lib/games";
-import { useGames, useReviewQueue } from "@/lib/queries";
+import { useGames, usePointsTable, useReviewQueue } from "@/lib/queries";
 import type { GameOut, GameStatus, GameSummary, Me } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { EmptyState, LoadError, SectionHeader, Segmented, SkeletonList } from "@/components/common";
@@ -94,6 +94,7 @@ export default function GamesPanel({ me }: { me: Me }) {
   const games = useGames();
   const isAdmin = me.role === "admin";
   const queue = useReviewQueue(isAdmin);
+  const table = usePointsTable();
   const [view, setView] = useState<View>("tutti");
   const [screen, setScreen] = useState<Screen>({ name: "hub" });
 
@@ -179,6 +180,11 @@ export default function GamesPanel({ me }: { me: Me }) {
           </Button>
         }
       />
+      {table.data && (
+        <p className="mb-3 text-xs text-[#8B949E]" data-testid="games-tiers">
+          A fine round, dal {table.data.game_tiers[0]?.min_percent}% in su puoi riscuotere punti: {table.data.game_tiers.map((t) => `${t.min_percent}% → ${t.points}`).join(" · ")}. Una volta sola per gioco.
+        </p>
+      )}
       <div className="no-scrollbar -mx-4 mb-4 overflow-x-auto px-4">
         <Segmented
           value={current}
