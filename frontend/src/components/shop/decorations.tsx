@@ -216,10 +216,10 @@ function NebulosaCosmica() {
 function PerfectTRex() {
   return (
     <g>
-      <path d="M-16 8 C-14 -4 -4 -12 8 -14 C18 -16 26 -8 28 2 C29 8 18 12 10 10 C2 10 -8 8 -16 8 Z" fill="url(#dc-dino-green)" stroke="#052e16" strokeWidth="1.2" filter="url(#dc-neon-glow)" />
-      <path d="M4 2 L8 10 L12 2 L16 10 L20 2 L24 8" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" fill="none" />
-      <circle cx="14" cy="-4" r="2.8" fill="#facc15" filter="url(#dc-neon-glow)" />
-      <circle cx="14" cy="-4" r="1" fill="#000000" />
+      <path d="M-18 6 C-15 -6 -5 -14 8 -16 C20 -18 28 -8 28 4 C28 10 16 14 8 12 C0 12 -10 10 -18 6 Z" fill="url(#dc-dino-green)" stroke="#052e16" strokeWidth="1.2" filter="url(#dc-neon-glow)" />
+      <path d="M2 -2 L6 8 L10 0 L14 8 L18 0 L22 6" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="13" cy="-5" r="2.6" fill="#facc15" filter="url(#dc-neon-glow)" />
+      <circle cx="13" cy="-5" r="1.1" fill="#000000" />
     </g>
   );
 }
@@ -227,31 +227,28 @@ function PerfectTRex() {
 function PerfectSpinosaurus() {
   return (
     <g>
-      <path d="M16 8 C14 -4 4 -12 -8 -14 C-18 -16 -26 -8 -28 2 C-29 8 -18 12 -10 10 C-2 10 8 8 16 8 Z" fill="url(#dc-dino-orange)" stroke="#7c2d12" strokeWidth="1.2" filter="url(#dc-neon-glow)" />
-      <path d="M-2 -12 C2 -22 10 -22 14 -14 C16 -10 12 -4 8 -6 C4 -8 0 -12 -2 -12 Z" fill="#ea580c" stroke="#7c2d12" strokeWidth="0.8" />
-      <path d="M-4 2 L-8 10 L-12 2 L-16 10 L-20 2 L-24 8" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" fill="none" />
-      <circle cx="-14" cy="-4" r="2.8" fill="#38bdf8" filter="url(#dc-neon-glow)" />
-      <circle cx="-14" cy="-4" r="1" fill="#000000" />
+      <path d="M18 6 C15 -6 5 -14 -8 -16 C-20 -18 -28 -8 -28 4 C-28 10 -16 14 -8 12 C0 12 10 10 18 6 Z" fill="url(#dc-dino-orange)" stroke="#7c2d12" strokeWidth="1.2" filter="url(#dc-neon-glow)" />
+      <path d="M-3 -14 C1 -24 9 -24 13 -16 C15 -12 11 -6 7 -8 C3 -10 -1 -14 -3 -14 Z" fill="#ea580c" stroke="#7c2d12" strokeWidth="0.8" />
+      <path d="M-2 -2 L-6 8 L-10 0 L-14 8 L-18 0 L-22 6" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="-13" cy="-5" r="2.6" fill="#38bdf8" filter="url(#dc-neon-glow)" />
+      <circle cx="-13" cy="-5" r="1.1" fill="#000000" />
     </g>
   );
 }
 
 function Dinosauri() {
-  const [x1, y1] = pt(37, 220);
-  const [x2, y2] = pt(37, 40);
+  const [x1, y1] = pt(36, 210);
+  const [x2, y2] = pt(36, 30);
 
   return (
     <g transform="translate(50 50)">
       <circle r="36" fill="none" stroke="url(#dc-dino-ring)" strokeWidth="2.5" strokeDasharray="6 6 18 6" className="dc-spin" />
-
-      <g transform={`translate(${x1.toFixed(1)} ${y1.toFixed(1)}) rotate(130)`}>
+      <g transform={`translate(${x1.toFixed(1)} ${y1.toFixed(1)}) rotate(120)`}>
         <PerfectTRex />
       </g>
-
-      <g transform={`translate(${x2.toFixed(1)} ${y2.toFixed(1)}) rotate(-50)`}>
+      <g transform={`translate(${x2.toFixed(1)} ${y2.toFixed(1)}) rotate(-60)`}>
         <PerfectSpinosaurus />
       </g>
-
       <g className="dc-spin-fast" style={{ animationDuration: "10s" }}>
         {Array.from({ length: 4 }).map((_, i) => {
           const a = i * 90 + 45;
@@ -302,7 +299,6 @@ export function DecorationDefs() {
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
-
         <filter id="dc-soft-glow" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur stdDeviation="1.5" result="coloredBlur" />
           <feMerge>
@@ -310,53 +306,44 @@ export function DecorationDefs() {
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
-
         <filter id="dc-heavy-glow" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur stdDeviation="5" result="blur" />
         </filter>
-
         <linearGradient id="dc-cyber-grad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#00f0ff" />
           <stop offset="50%" stopColor="#7000ff" />
           <stop offset="100%" stopColor="#ff0055" />
         </linearGradient>
-
         <radialGradient id="dc-nebula-bg" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#c084fc" stopOpacity="0.8" />
           <stop offset="60%" stopColor="#38bdf8" stopOpacity="0.3" />
           <stop offset="100%" stopColor="#000000" stopOpacity="0" />
         </radialGradient>
-
         <linearGradient id="dc-nebula-ring" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stopColor="#a855f7" />
           <stop offset="50%" stopColor="#ec4899" />
           <stop offset="100%" stopColor="#38bdf8" />
         </linearGradient>
-
         <linearGradient id="dc-comet-grad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
           <stop offset="30%" stopColor="#38bdf8" stopOpacity="0.8" />
           <stop offset="100%" stopColor="#a855f7" stopOpacity="0" />
         </linearGradient>
-
         <linearGradient id="dc-dino-ring" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#22c55e" />
           <stop offset="50%" stopColor="#f59e0b" />
           <stop offset="100%" stopColor="#ef4444" />
         </linearGradient>
-
         <linearGradient id="dc-dino-green" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#15803d" />
           <stop offset="60%" stopColor="#22c55e" />
           <stop offset="100%" stopColor="#86efac" />
         </linearGradient>
-
         <linearGradient id="dc-dino-orange" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#9a3412" />
           <stop offset="60%" stopColor="#ea580c" />
           <stop offset="100%" stopColor="#fde047" />
         </linearGradient>
-
         <linearGradient id="dc-flame" x1="0" y1="1" x2="0" y2="0">
           <stop offset="0" stopColor="#7c3aed" />
           <stop offset="0.55" stopColor="#6366f1" />
