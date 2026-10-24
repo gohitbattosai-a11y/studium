@@ -61,13 +61,13 @@
 }
 
 @keyframes dc-dino-bottom {
-  0% { transform: translate(-25px, 25px) rotate(-38deg) scale(0.68); }
-  100% { transform: translate(-23px, 23px) rotate(-31deg) scale(0.74); }
+  0% { transform: translate(-25px, 25px) rotate(-40deg) scale(0.7); }
+  100% { transform: translate(-23px, 23px) rotate(-34deg) scale(0.76); }
 }
 
 @keyframes dc-dino-top {
-  0% { transform: translate(25px, -25px) rotate(142deg) scale(0.68); }
-  100% { transform: translate(23px, -23px) rotate(149deg) scale(0.74); }
+  0% { transform: translate(25px, -25px) rotate(45deg) scale(0.7); }
+  100% { transform: translate(23px, -23px) rotate(51deg) scale(0.76); }
 }
 
 @keyframes dc-wave {
