@@ -186,7 +186,9 @@ export interface BonusCreate {
   reason: string;
 }
 
-export type GameTemplate = "quiz" | "sort" | "abbina" | "memory" | "indovina" | "ordina";
+export type GameTemplate = "quiz" | "sort" | "abbina" | "memory" | "indovina" | "ordina" | "custom";
+export type BlockKind = "choice" | "type" | "number" | "order" | "match" | "info";
+export type SceneId = "none" | "car" | "rocket" | "climb" | "boss" | "plant";
 export type GameStatus = "draft" | "pending" | "published" | "rejected";
 
 export interface QuizQuestion {
@@ -205,12 +207,41 @@ export interface SortItem {
   category: number;
 }
 
+export interface Block {
+  kind: BlockKind;
+  prompt: string;
+  value: number;
+  explain: string;
+  options: string[];
+  correct: number;
+  answer: string;
+  number: number | null;
+  tolerance: number;
+  steps: string[];
+  pairs: PairItem[];
+}
+
+export interface Rules {
+  lives: number;
+  seconds: number;
+  penalty: number;
+  streak_bonus: boolean;
+  shuffle: boolean;
+}
+
+export interface CustomContent {
+  scene: SceneId;
+  rules: Rules;
+  blocks: Block[];
+}
+
 export interface GameContent {
   questions: QuizQuestion[];
   pairs: PairItem[];
   categories: string[];
   sort_items: SortItem[];
   steps: string[];
+  custom: CustomContent | null;
 }
 
 export interface GameInput {
@@ -250,4 +281,9 @@ export interface FinishResult {
   reason: "non_participating" | "author" | "too_low" | null;
   next_percent: number | null;
   next_points: number | null;
+}
+
+export interface PointsTable {
+  grades: { grade: number; points: number }[];
+  game_tiers: { min_percent: number; points: number }[];
 }
