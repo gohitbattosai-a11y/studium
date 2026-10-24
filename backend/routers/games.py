@@ -7,6 +7,7 @@ from lib.catalog import game_points, next_tier
 from lib.db import db
 from lib.security import current_member, new_id, now_iso
 from models.schemas import (
+    CustomContent,
     FinishRequest,
     FinishResult,
     GameInput,
@@ -19,6 +20,37 @@ from routers.shop import require_admin
 router = APIRouter()
 
 MAX_GAMES_PER_MEMBER = 50
+
+
+def validate_custom(custom: CustomContent) -> None:
+    blocks = custom.blocks
+    if not 1 <= len(blocks) <= 40:
+        raise HTTPException(status_code=400, detail="Servono da 1 a 40 blocchi")
+    if not any(b.kind != "info" and b.value >= 1 for b in blocks):
+        raise HTTPException(status_code=400, detail="Serve almeno una sfida che assegni punti")
+    for i, b in enumerate(blocks, start=1):
+        where = f"Blocco {i}: "
+        if b.kind == "choice":
+            if not b.prompt:
+                raise HTTPException(status_code=400, detail=where + "manca la domanda")
+            if not 2 <= len(b.options) <= 6:
+                raise HTTPException(status_code=400, detail=where + "servono da 2 a 6 risposte")
+            if b.correct >= len(b.options):
+                raise HTTPException(status_code=400, detail=where + "risposta corretta non valida")
+        elif b.kind == "type":
+            if not b.prompt or not b.answer:
+                raise HTTPException(status_code=400, detail=where + "servono domanda e risposta")
+        elif b.kind == "number":
+            if not b.prompt or b.number is None:
+                raise HTTPException(status_code=400, detail=where + "servono domanda e numero")
+        elif b.kind == "order":
+            if not 3 <= len(b.steps) <= 8:
+                raise HTTPException(status_code=400, detail=where + "servono da 3 a 8 passaggi")
+        elif b.kind == "match":
+            if not 2 <= len(b.pairs) <= 6:
+                raise HTTPException(status_code=400, detail=where + "servono da 2 a 6 coppie")
+        elif b.kind == "info" and not b.prompt:
+            raise HTTPException(status_code=400, detail=where + "manca il testo")
 
 
 def validate_content(data: GameInput) -> None:
@@ -45,6 +77,10 @@ def validate_content(data: GameInput) -> None:
     elif t == "ordina":
         if not 3 <= len(c.steps) <= 12:
             raise HTTPException(status_code=400, detail="Servono da 3 a 12 passaggi")
+    elif t == "custom":
+        if c.custom is None:
+            raise HTTPException(status_code=400, detail="Manca il contenuto del gioco")
+        validate_custom(c.custom)
 
 
 def item_count(g: dict) -> int:
@@ -56,6 +92,8 @@ def item_count(g: dict) -> int:
         return len(c["sort_items"])
     if t == "ordina":
         return len(c["steps"])
+    if t == "custom":
+        return len([b for b in (c.get("custom") or {}).get("blocks", []) if b["kind"] != "info"])
     return len(c["pairs"])
 
 
@@ -218,8 +256,8 @@ async def delete_game(game_id: str, member: dict = Depends(current_member)):
 
 
 def build_result(game: dict, member: dict, round_percent: int, best: int, claimed) -> FinishResult:
-    available = game_points(best)
-    upcoming = next_tier(best)
+    available = game_points(round_percent)
+    upcoming = next_tier(round_percent)
     reason = None
     can_claim = False
     if claimed is None:
@@ -252,7 +290,7 @@ async def finish_game(game_id: str, body: FinishRequest, member: dict = Depends(
     best = max(previous["best_percent"] if previous else 0, body.score)
     await db.game_plays.update_one(
         {"game_id": game_id, "member_id": member["id"]},
-        {"$set": {"best_percent": best, "last_at": now_iso(), "group_id": member["group_id"]}, "$inc": {"plays": 1}},
+        {"$set": {"best_percent": best, "last_percent": body.score, "last_at": now_iso(), "group_id": member["group_id"]}, "$inc": {"plays": 1}},
         upsert=True,
     )
     await db.games.update_one({"id": game_id}, {"$inc": {"plays": 1}})
@@ -272,9 +310,10 @@ async def claim_points(game_id: str, member: dict = Depends(current_member)):
     play = await db.game_plays.find_one({"game_id": game_id, "member_id": member["id"]}, {"_id": 0})
     if not play:
         raise HTTPException(status_code=409, detail="Gioca prima una partita")
-    points = game_points(play["best_percent"])
+    percent = play.get("last_percent", play["best_percent"])
+    points = game_points(percent)
     if points == 0:
-        raise HTTPException(status_code=409, detail="Il punteggio è troppo basso per ottenere punti")
+        raise HTTPException(status_code=409, detail="L'ultimo round è sotto il punteggio minimo per ottenere punti")
     if await db.game_claims.find_one({"game_id": game_id, "member_id": member["id"]}):
         raise HTTPException(status_code=409, detail="Hai già riscosso i punti di questo gioco")
     try:
@@ -305,4 +344,4 @@ async def claim_points(game_id: str, member: dict = Depends(current_member)):
             "created_at": now_iso(),
         }
     )
-    return build_result(game, member, play["best_percent"], play["best_percent"], points)
+    return build_result(game, member, percent, play["best_percent"], points)
