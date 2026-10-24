@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiGet } from "./api";
-import type { Folder, Homework, Material, MemberOut, Notice, Poll } from "./types";
+import type { Folder, Homework, LeaderboardEntry, Material, MemberOut, Notice, PointEvent, Poll, ShopState } from "./types";
 
-// Background refresh keeps class data fresh; form drafts live in component state, never in these caches.
 const REFRESH = 30_000;
 
 export const useHomework = () =>
@@ -17,3 +16,11 @@ export const useNotices = () =>
   useQuery({ queryKey: ["notices"], queryFn: () => apiGet<Notice[]>("/notices"), refetchInterval: REFRESH });
 export const useMembers = () =>
   useQuery({ queryKey: ["members"], queryFn: () => apiGet<MemberOut[]>("/members"), refetchInterval: 60_000 });
+export const useShop = () =>
+  useQuery({ queryKey: ["shop"], queryFn: () => apiGet<ShopState>("/shop"), refetchInterval: REFRESH });
+export const useLeaderboard = () =>
+  useQuery({ queryKey: ["leaderboard"], queryFn: () => apiGet<LeaderboardEntry[]>("/leaderboard"), refetchInterval: REFRESH });
+export const useMyEvents = (enabled: boolean) =>
+  useQuery({ queryKey: ["my-events"], queryFn: () => apiGet<PointEvent[]>("/points/mine"), enabled });
+export const useGroupEvents = (enabled: boolean) =>
+  useQuery({ queryKey: ["group-events"], queryFn: () => apiGet<PointEvent[]>("/points/events"), enabled });
