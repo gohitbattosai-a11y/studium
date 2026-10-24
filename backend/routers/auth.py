@@ -14,6 +14,17 @@ router = APIRouter()
 NICK_TAKEN = "Nickname già in uso in questo gruppo. Se è il tuo, inserisci il PIN personale corretto."
 
 
+def member_out(d: dict) -> MemberOut:
+    return MemberOut(
+        member_id=d["id"],
+        nickname=d["nickname"],
+        joined_at=d["joined_at"],
+        role=d.get("role", "member"),
+        participating=bool(d.get("participating", False)),
+        decoration=d.get("equipped_decoration"),
+    )
+
+
 async def build_me(member: dict) -> Me:
     group = await db.groups.find_one({"id": member["group_id"]}, {"_id": 0})
     count = await db.members.count_documents({"group_id": member["group_id"]})
@@ -24,6 +35,8 @@ async def build_me(member: dict) -> Me:
         group_name=group["name"] if group else "",
         member_count=count,
         today=today_iso(TZ),
+        role=member.get("role", "member"),
+        participating=bool(member.get("participating", False)),
     )
 
 
@@ -64,6 +77,8 @@ async def join(body: JoinRequest, response: Response):
             "nickname_key": nick_key,
             "pin_hash": hash_secret(body.pin),
             "joined_at": now_iso(),
+            "role": "admin" if body.mode == "create" else "member",
+            "participating": False,
         }
         try:
             await db.members.insert_one(dict(member))
@@ -101,4 +116,4 @@ async def logout(request: Request, response: Response):
 @router.get("/members", response_model=List[MemberOut])
 async def members(member: dict = Depends(current_member)):
     docs = await db.members.find({"group_id": member["group_id"]}, {"_id": 0}).sort("joined_at", 1).to_list(500)
-    return [MemberOut(nickname=d["nickname"], joined_at=d["joined_at"]) for d in docs]
+    return [member_out(d) for d in docs]
