@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { avatarTone, initials } from "@/lib/format";
+import { useMembers } from "@/lib/queries";
+import { AvatarDecoration } from "@/components/shop/decorations";
 
 export function BrandMark({ className }: { className?: string }) {
   return (
@@ -14,17 +16,22 @@ export function BrandMark({ className }: { className?: string }) {
   );
 }
 
-export function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md" }) {
+export function Avatar({ name, size = "md", decoration }: { name: string; size?: "sm" | "md"; decoration?: string | null }) {
+  const members = useMembers();
+  const deco = decoration !== undefined ? decoration : (members.data?.find((m) => m.nickname === name)?.decoration ?? null);
   return (
-    <span
-      className={cn(
-        "inline-grid shrink-0 place-items-center rounded-full font-semibold",
-        size === "sm" ? "size-6 text-[10px]" : "size-8 text-xs",
-        avatarTone(name),
-      )}
-      aria-hidden
-    >
-      {initials(name)}
+    <span className="relative inline-flex shrink-0">
+      <span
+        className={cn(
+          "inline-grid shrink-0 place-items-center rounded-full font-semibold",
+          size === "sm" ? "size-6 text-[10px]" : "size-8 text-xs",
+          avatarTone(name),
+        )}
+        aria-hidden
+      >
+        {initials(name)}
+      </span>
+      <AvatarDecoration id={deco} />
     </span>
   );
 }
@@ -85,7 +92,6 @@ export function LoadError({ testId }: { testId: string }) {
   );
 }
 
-/** Segmented control used for filters and small choice sets. */
 export function Segmented<T extends string>({
   value,
   onChange,
