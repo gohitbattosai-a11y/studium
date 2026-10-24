@@ -1,7 +1,8 @@
-// Hand-written mirrors of backend/models/schemas.py — keep in sync.
 
 export type Priority = "bassa" | "media" | "alta";
 export type NoticeTag = "avviso" | "urgente" | "info";
+export type Role = "admin" | "member";
+export type ItemKind = "decoration" | "background";
 
 export interface JoinRequest {
   mode: "join" | "create";
@@ -18,11 +19,17 @@ export interface Me {
   group_name: string;
   member_count: number;
   today: string;
+  role: Role;
+  participating: boolean;
 }
 
 export interface MemberOut {
+  member_id: string;
   nickname: string;
   joined_at: string;
+  role: Role;
+  participating: boolean;
+  decoration: string | null;
 }
 
 export interface HomeworkCreate {
@@ -120,4 +127,61 @@ export interface Notice {
   tag: NoticeTag;
   author: string;
   created_at: string;
+}
+
+export interface ShopItem {
+  id: string;
+  kind: ItemKind;
+  name: string;
+  description: string;
+  price: number;
+  owned: boolean;
+  equipped: boolean;
+  available: boolean;
+  window_label: string | null;
+}
+
+export interface ShopState {
+  participating: boolean;
+  role: Role;
+  total_points: number;
+  spent: number;
+  balance: number;
+  equipped_decoration: string | null;
+  equipped_background: string | null;
+  items: ShopItem[];
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  member_id: string;
+  nickname: string;
+  role: Role;
+  total_points: number;
+  is_me: boolean;
+}
+
+export interface PointEvent {
+  id: string;
+  member_id: string;
+  nickname: string;
+  kind: "grade" | "bonus";
+  subject: string | null;
+  grade: number | null;
+  points: number;
+  reason: string | null;
+  created_by: string;
+  created_at: string;
+}
+
+export interface GradeCreate {
+  member_id: string;
+  subject: string;
+  grade: number;
+}
+
+export interface BonusCreate {
+  member_id: string;
+  points: number;
+  reason: string;
 }
