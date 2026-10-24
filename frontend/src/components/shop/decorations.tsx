@@ -225,15 +225,14 @@ function DetailedTRex() {
   );
 }
 
-function DetailedPterodactyl() {
+function DetailedRaptor() {
   return (
     <g>
-      <path d="M0 -4 L-16 -18 C-22 -12 -18 -4 -12 2 Z" fill="url(#dc-pterodactyl-wing)" stroke="#1e1b4b" strokeWidth="0.8" filter="url(#dc-neon-glow)" opacity="0.9" />
-      <path d="M0 -4 L16 -18 C22 -12 18 -4 12 2 Z" fill="url(#dc-pterodactyl-wing)" stroke="#1e1b4b" strokeWidth="0.8" filter="url(#dc-neon-glow)" opacity="0.9" />
-      <path d="M-6 -10 C-2 -18 10 -16 16 -8 C22 0 14 8 4 6 C-2 5 -6 0 -6 -10 Z" fill="url(#dc-pterodactyl-body)" stroke="#312e81" strokeWidth="0.8" filter="url(#dc-neon-glow)" />
-      <path d="M14 -6 L24 -2 L14 2 Z" fill="#38bdf8" stroke="#1e1b4b" strokeWidth="0.8" />
-      <circle cx="8" cy="-3" r="2" fill="#ff0055" filter="url(#dc-neon-glow)" />
-      <circle cx="8" cy="-3" r="0.7" fill="#ffffff" />
+      <path d="M18 -6 C14 2 6 8 -2 10 C-12 13 -22 8 -24 0 C-25 -6 -18 -10 -10 -9 C-4 -9 2 -7 8 -10 C12 -13 16 -16 20 -12 Z" fill="url(#dc-dino-orange)" stroke="#7c2d12" strokeWidth="0.8" filter="url(#dc-neon-glow)" />
+      <path d="M10 -2 C4 0 -4 -2 -10 -6 C-16 -9 -20 -2 -14 4 C-8 9 0 6 10 2 Z" fill="#c2410c" stroke="#7c2d12" strokeWidth="0.8" />
+      <path d="M-2 -6 L-4 -12 L-6 -6 L-8 -12 L-10 -6" stroke="#ffffff" strokeWidth="1.1" strokeLinecap="round" fill="none" />
+      <circle cx="-6" cy="-2" r="2.5" fill="#38bdf8" filter="url(#dc-neon-glow)" />
+      <circle cx="-6" cy="-2" r="0.8" fill="#000000" />
     </g>
   );
 }
@@ -245,19 +244,19 @@ function Dinosauri() {
       <path d="M-28 22 A36 36 0 0 1 22 -28" fill="none" stroke="#ef4444" strokeWidth="2" strokeDasharray="3 7" className="dc-flicker" filter="url(#dc-neon-glow)" />
       <path d="M-22 28 A36 36 0 0 0 28 -22" fill="none" stroke="#38bdf8" strokeWidth="2" strokeDasharray="3 7" className="dc-flicker" style={{ animationDelay: "1s" }} filter="url(#dc-neon-glow)" />
 
-      <g transform="translate(-25 25) rotate(-40)" className="dc-dino-bottom">
+      <g transform="translate(-28 28) rotate(-45)" className="dc-dino-bottom">
         <DetailedTRex />
-        <g className="dc-roaring-wave-bottom">
-          <path d="M18 -2 Q26 -8 32 -4" fill="none" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" filter="url(#dc-neon-glow)" />
-          <path d="M22 2 Q30 -3 36 2" fill="none" stroke="#facc15" strokeWidth="1" strokeLinecap="round" filter="url(#dc-neon-glow)" />
+        <g className="dc-roar-waves">
+          <path d="M16 2 Q22 6 28 2" fill="none" stroke="#facc15" strokeWidth="2" strokeLinecap="round" filter="url(#dc-neon-glow)" />
+          <path d="M18 6 Q25 11 32 7" fill="none" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" filter="url(#dc-neon-glow)" />
         </g>
       </g>
 
-      <g transform="translate(25 -25) rotate(45)" className="dc-dino-top">
-        <DetailedPterodactyl />
-        <g className="dc-roaring-wave-top">
-          <path d="M18 -2 Q26 -8 32 -4" fill="none" stroke="#38bdf8" strokeWidth="1.5" strokeLinecap="round" filter="url(#dc-neon-glow)" />
-          <path d="M22 2 Q30 -3 36 2" fill="none" stroke="#a855f7" strokeWidth="1" strokeLinecap="round" filter="url(#dc-neon-glow)" />
+      <g transform="translate(28 -28) rotate(-225)" className="dc-dino-top">
+        <DetailedRaptor />
+        <g className="dc-roar-waves">
+          <path d="M-14 -2 Q-20 -6 -26 -2" fill="none" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" filter="url(#dc-neon-glow)" />
+          <path d="M-16 -6 Q-23 -11 -30 -7" fill="none" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" filter="url(#dc-neon-glow)" />
         </g>
       </g>
 
@@ -360,15 +359,10 @@ export function DecorationDefs() {
           <stop offset="100%" stopColor="#86efac" />
         </linearGradient>
 
-        <linearGradient id="dc-pterodactyl-body" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#3b82f6" />
-          <stop offset="50%" stopColor="#1d4ed8" />
-          <stop offset="100%" stopColor="#93c5fd" />
-        </linearGradient>
-
-        <linearGradient id="dc-pterodactyl-wing" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#1e3a8a" />
-          <stop offset="100%" stopColor="#60a5fa" />
+        <linearGradient id="dc-dino-orange" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#9a3412" />
+          <stop offset="60%" stopColor="#ea580c" />
+          <stop offset="100%" stopColor="#fde047" />
         </linearGradient>
 
         <linearGradient id="dc-flame" x1="0" y1="1" x2="0" y2="0">
