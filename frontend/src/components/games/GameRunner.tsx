@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { useGameActions } from "@/lib/gameActions";
 import { templateOf } from "@/lib/games";
 import type { FinishResult, GameOut, GameTemplate } from "@/lib/types";
+import EnginePlayer from "./engine/EnginePlayer";
 import GuessPlayer from "./GuessPlayer";
 import MatchPlayer from "./MatchPlayer";
 import MemoryPlayer from "./MemoryPlayer";
@@ -20,6 +21,7 @@ const PLAYERS: Record<GameTemplate, ComponentType<PlayerProps>> = {
   memory: MemoryPlayer,
   indovina: GuessPlayer,
   ordina: OrderPlayer,
+  custom: EnginePlayer,
 };
 
 function Outcome({ result, game, onClaim, claiming, onReplay, onExit }: { result: FinishResult; game: GameOut; onClaim: () => void; claiming: boolean; onReplay: () => void; onExit: () => void }) {
@@ -37,15 +39,15 @@ function Outcome({ result, game, onClaim, claiming, onReplay, onExit }: { result
     return (
       <div className="space-y-4" data-testid="outcome-claim">
         <p className="text-sm text-[#C9D1D9]">
-          Con il tuo miglior risultato (<b>{result.best_percent}%</b>) puoi ottenere <b>{result.points_available} punti</b>. Vuoi prenderli?
+          Con questo risultato (<b>{result.round_percent}%</b>) puoi ottenere <b>{result.points_available} punti</b>. Vuoi prenderli?
         </p>
         <p className="text-xs text-[#8B949E]">
-          Se li prendi ora, da questo gioco non potrai ottenerne altri.
-          {result.next_percent !== null && result.next_points !== null && <> Continuando a giocare, con il {result.next_percent}% ne otterresti {result.next_points}.</>}
+          Se li prendi ora, da questo gioco non potrai ottenerne altri. Se rigiochi, ti chiederò di nuovo a fine round.
+          {result.next_percent !== null && result.next_points !== null && <> Rigiocando, con il {result.next_percent}% ne otterresti {result.next_points}.</>}
         </p>
         <div className="flex flex-wrap justify-end gap-2">
           <Button variant="outline" className="h-9" onClick={onReplay} data-testid="outcome-continue">
-            <RotateCcw className="size-4" /> Continua a giocare
+            <RotateCcw className="size-4" /> Rigioca per di più
           </Button>
           <Button className="h-9" disabled={claiming} onClick={onClaim} data-testid="outcome-claim-button">
             <Coins className="size-4" /> Prendi {result.points_available} punti
@@ -59,7 +61,7 @@ function Outcome({ result, game, onClaim, claiming, onReplay, onExit }: { result
       ? "Attiva la partecipazione nello Shop per ottenere punti dai giochi."
       : result.reason === "author"
         ? `Sei l'autore di «${game.title}»: puoi giocarci ma senza punti.`
-        : `Servono almeno il ${result.next_percent ?? 40}% per ottenere punti. Riprova!`;
+        : `Servono almeno il ${result.next_percent ?? 40}% in un round per ottenere punti. Riprova!`;
   return (
     <div className="space-y-4" data-testid="outcome-none">
       <p className="text-sm text-[#C9D1D9]">{note}</p>
