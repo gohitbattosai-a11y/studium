@@ -1,7 +1,9 @@
 import math
 from typing import Optional
 
-POINTS_OFFSET = 5
+GRADE_POINTS_OFFSET = 0
+
+GAME_TIERS: list[tuple[int, int]] = [(100, 5), (90, 4), (75, 3), (60, 2), (40, 1)]
 
 Window = Optional[tuple[str, str]]
 
@@ -9,6 +11,10 @@ ITEMS: list[dict] = [
     {"id": "fiamma-spettrale", "kind": "decoration", "name": "Fiamma spettrale", "description": "Fiamme viola e blu che avvolgono l'avatar.", "price": 10, "window": None},
     {"id": "aura-oro", "kind": "decoration", "name": "Aura dorata", "description": "Scintille dorate in orbita attorno all'avatar.", "price": 15, "window": None},
     {"id": "drago-spettrale", "kind": "decoration", "name": "Drago spettrale", "description": "Un drago di spirito che gira senza sosta attorno all'avatar.", "price": 35, "window": None},
+    {"id": "ghiaccio-cristalli", "kind": "decoration", "name": "Cristalli di ghiaccio", "description": "Schegge di ghiaccio e brillantini in orbita.", "price": 15, "window": None},
+    {"id": "fulmine-elettrico", "kind": "decoration", "name": "Scarica elettrica", "description": "Fulmini che crepitano attorno all'avatar.", "price": 20, "window": None},
+    {"id": "sakura", "kind": "decoration", "name": "Petali di ciliegio", "description": "Petali rosa che girano dolcemente.", "price": 15, "window": None},
+    {"id": "arcobaleno", "kind": "decoration", "name": "Anello arcobaleno", "description": "Un anello dai sette colori che ruota.", "price": 25, "window": None},
     {"id": "zucca-halloween", "kind": "decoration", "name": "Zucca stregata", "description": "Zucca luminosa con pipistrelli in orbita.", "price": 15, "window": ("10-15", "11-02")},
     {"id": "corona-natale", "kind": "decoration", "name": "Corona di Natale", "description": "Ghirlanda con luci che lampeggiano.", "price": 15, "window": ("12-01", "01-06")},
     {"id": "halloween", "kind": "background", "name": "Notte di Halloween", "description": "Luna piena, casa stregata, pipistrelli e zucche.", "price": 20, "window": ("10-15", "11-02")},
@@ -19,7 +25,7 @@ ITEMS_BY_ID: dict[str, dict] = {i["id"]: i for i in ITEMS}
 
 
 def grade_to_points(grade: float) -> int:
-    return max(0, math.floor(grade + 0.5) - POINTS_OFFSET)
+    return max(1, math.floor(grade + 0.5) - GRADE_POINTS_OFFSET)
 
 
 def in_window(window: Window, today: str) -> bool:
@@ -38,3 +44,17 @@ def window_label(window: Window) -> Optional[str]:
     start, end = window
     fmt = lambda md: f"{md[3:5]}/{md[0:2]}"
     return f"Dal {fmt(start)} al {fmt(end)}"
+
+
+def game_points(percent: int) -> int:
+    for threshold, points in GAME_TIERS:
+        if percent >= threshold:
+            return points
+    return 0
+
+
+def next_tier(percent: int) -> Optional[tuple[int, int]]:
+    for threshold, points in sorted(GAME_TIERS):
+        if threshold > percent:
+            return threshold, points
+    return None
