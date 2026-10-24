@@ -1,5 +1,3 @@
-"""Idempotent demo seed: (re)creates the '3°B Liceo' group. Run: cd /app/backend && python seed.py"""
-
 import asyncio
 from datetime import date, datetime, timedelta, timezone
 
@@ -25,7 +23,7 @@ async def main() -> None:
         poll_ids = [p["id"] for p in await db.polls.find({"group_id": gid}).to_list(1000)]
         await db.sessions.delete_many({"member_id": {"$in": member_ids}})
         await db.poll_votes.delete_many({"poll_id": {"$in": poll_ids}})
-        for coll in ("members", "homework", "polls", "folders", "materials", "files", "notices"):
+        for coll in ("members", "homework", "polls", "folders", "materials", "files", "notices", "point_events", "purchases"):
             await db[coll].delete_many({"group_id": gid})
         await db.groups.delete_one({"id": gid})
 
@@ -35,7 +33,7 @@ async def main() -> None:
     )
     members = {}
     for i, (nick, pin) in enumerate(MEMBERS):
-        m = {"id": new_id(), "group_id": gid, "nickname": nick, "nickname_key": nick.casefold(), "pin_hash": hash_secret(pin), "joined_at": ts(24 * 30 - i)}
+        m = {"id": new_id(), "group_id": gid, "nickname": nick, "nickname_key": nick.casefold(), "pin_hash": hash_secret(pin), "joined_at": ts(24 * 30 - i), "role": "admin" if i == 0 else "member", "participating": False}
         members[nick] = m
         await db.members.insert_one(m)
 
