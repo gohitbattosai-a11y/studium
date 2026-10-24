@@ -173,41 +173,50 @@ function Corona() {
   );
 }
 
-function CyberGlitch() {
+function Dinosauri() {
   return (
     <g transform="translate(50 50)">
-      <circle r="36" fill="none" stroke="url(#dc-cyber-grad)" strokeWidth="6" filter="url(#dc-neon-glow)" opacity="0.85" />
-      <g className="dc-cyber-glitch-layer">
-        <path d="M-38 -15 L-48 -18 L-42 -8 Z" fill="#00f0ff" filter="url(#dc-neon-glow)" />
-        <path d="M35 12 L46 8 L40 22 Z" fill="#ff0055" filter="url(#dc-neon-glow)" />
-        <rect x="-20" y="-45" width="40" height="3" fill="#00f0ff" opacity="0.9" />
-        <rect x="-30" y="42" width="60" height="2" fill="#ff0055" opacity="0.9" />
+      <circle r="41" fill="none" stroke="url(#dc-dino-ring)" strokeWidth="3.5" strokeDasharray="12 8 24 8" className="dc-spin" />
+      <circle r="35" fill="none" stroke="#22c55e" strokeWidth="1" opacity="0.6" className="dc-spin-rev" />
+      <g className="dc-spin-slow">
+        <path d="M-38 -12 L-48 -18 L-40 -26 Z" fill="#22c55e" filter="url(#dc-neon-glow)" />
+        <path d="M38 12 L48 18 L40 26 Z" fill="#f59e0b" filter="url(#dc-neon-glow)" />
       </g>
-      <g className="dc-spin-fast">
-        <circle cx="0" cy="-36" r="3.5" fill="#ffffff" filter="url(#dc-neon-glow)" />
-        <circle cx="0" cy="36" r="2.5" fill="#00f0ff" />
+      <g className="dc-flicker">
+        <path d="M-30 -30 L-22 -42 M30 30 L22 42 M-30 30 L-22 42 M30 -30 L22 -42" stroke="#ef4444" strokeWidth="3" strokeLinecap="round" filter="url(#dc-neon-glow)" />
       </g>
-      <path d="M-28 -28 L-34 -34 M28 28 L34 34 M-28 28 L-34 34 M28 -28 L34 -34" stroke="#00f0ff" strokeWidth="2.5" strokeLinecap="round" filter="url(#dc-neon-glow)" />
+      <g className="dc-spin">
+        {Array.from({ length: 6 }).map((_, i) => {
+          const a = i * 60;
+          const [x, y] = pt(43, a);
+          return <circle key={i} cx={x} cy={y} r="2.2" fill="#fde047" className="dc-twinkle" style={{ animationDelay: `${i * 0.4}s` }} />;
+        })}
+      </g>
     </g>
   );
 }
 
-function NebulosaCosmica() {
+function Compleanno() {
   return (
     <g transform="translate(50 50)">
-      <circle r="42" fill="url(#dc-nebula-bg)" opacity="0.4" filter="url(#dc-heavy-glow)" className="dc-pulse-slow" />
+      <circle r="42" fill="none" stroke="url(#dc-party-ring)" strokeWidth="4" strokeDasharray="8 10" className="dc-spin" style={{ animationDuration: "14s" }} />
       <g className="dc-spin-slow">
-        <ellipse cx="0" cy="0" rx="44" ry="16" fill="none" stroke="url(#dc-nebula-ring)" strokeWidth="3" transform="rotate(-28)" filter="url(#dc-soft-glow)" />
-        <ellipse cx="0" cy="0" rx="44" ry="16" fill="none" stroke="#ffffff" strokeWidth="1" strokeDasharray="4 12" transform="rotate(-28)" />
+        {Array.from({ length: 8 }).map((_, i) => {
+          const a = i * 45;
+          const colors = ["#ec4899", "#38bdf8", "#facc15", "#a855f7", "#4ade80", "#f87171"];
+          const col = colors[i % colors.length];
+          const [x, y] = pt(38, a);
+          return (
+            <g key={i} transform={`translate(${x} ${y})`}>
+              <ellipse rx="3.5" ry="5" fill={col} filter="url(#dc-soft-glow)" />
+              <line x1="0" y1="5" x2="0" y2="10" stroke="#ffffff" strokeWidth="0.8" opacity="0.7" />
+            </g>
+          );
+        })}
       </g>
-      <g className="dc-spin-rev">
-        <path d="M-32 -32 L-20 -28 L-28 -20 Z" fill="#a855f7" filter="url(#dc-soft-glow)" />
-        <path d="M25 25 L38 20 L30 35 Z" fill="#ec4899" filter="url(#dc-soft-glow)" />
-        <circle cx="28" cy="-28" r="2" fill="#ffffff" className="dc-twinkle" />
-        <circle cx="-30" cy="25" r="2.5" fill="#38bdf8" className="dc-twinkle" style={{ animationDelay: "0.7s" }} />
-      </g>
-      <g className="dc-comet-path">
-        <path d="M-45 -40 Q0 -30 45 35" fill="none" stroke="url(#dc-comet-grad)" strokeWidth="2" strokeLinecap="round" filter="url(#dc-soft-glow)" />
+      <g transform="translate(0 -44)" className="dc-bounce">
+        <polygon points="0,0 -6,12 6,12" fill="#f59e0b" filter="url(#dc-neon-glow)" />
+        <circle cx="0" cy="-3" r="2.5" fill="#ef4444" className="dc-flicker" />
       </g>
     </g>
   );
@@ -224,8 +233,8 @@ const ART: Record<string, ComponentType> = {
   "drago-spettrale": Drago,
   "zucca-halloween": Zucca,
   "corona-natale": Corona,
-  "cyber-glitch": CyberGlitch,
-  "nebulosa-cosmica": NebulosaCosmica,
+  "dinosauri": Dinosauri,
+  "compleanno": Compleanno,
 };
 
 export function AvatarDecoration({ id }: { id: string | null | undefined }) {
@@ -260,32 +269,17 @@ export function DecorationDefs() {
           </feMerge>
         </filter>
 
-        <filter id="dc-heavy-glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="5" result="blur" />
-        </filter>
-
-        <linearGradient id="dc-cyber-grad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#00f0ff" />
-          <stop offset="50%" stopColor="#7000ff" />
-          <stop offset="100%" stopColor="#ff0055" />
+        <linearGradient id="dc-dino-ring" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#22c55e" />
+          <stop offset="50%" stopColor="#f59e0b" />
+          <stop offset="100%" stopColor="#ef4444" />
         </linearGradient>
 
-        <radialGradient id="dc-nebula-bg" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#c084fc" stopOpacity="0.8" />
-          <stop offset="60%" stopColor="#38bdf8" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="#000000" stopOpacity="0" />
-        </radialGradient>
-
-        <linearGradient id="dc-nebula-ring" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#a855f7" />
-          <stop offset="50%" stopColor="#ec4899" />
-          <stop offset="100%" stopColor="#38bdf8" />
-        </linearGradient>
-
-        <linearGradient id="dc-comet-grad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
-          <stop offset="30%" stopColor="#38bdf8" stopOpacity="0.8" />
-          <stop offset="100%" stopColor="#a855f7" stopOpacity="0" />
+        <linearGradient id="dc-party-ring" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#ec4899" />
+          <stop offset="33%" stopColor="#38bdf8" />
+          <stop offset="66%" stopColor="#facc15" />
+          <stop offset="100%" stopColor="#a855f7" />
         </linearGradient>
 
         <linearGradient id="dc-flame" x1="0" y1="1" x2="0" y2="0">
