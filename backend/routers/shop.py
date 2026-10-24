@@ -109,6 +109,8 @@ async def buy(body: BuyRequest, member: dict = Depends(current_member)):
     earned, spent = await totals(member["group_id"])
     if earned.get(member["id"], 0) - spent.get(member["id"], 0) < item["price"]:
         raise HTTPException(status_code=409, detail="Punti insufficienti")
+    if await db.purchases.find_one({"member_id": member["id"], "item_id": item["id"]}):
+        raise HTTPException(status_code=409, detail="Possiedi già questo oggetto")
     try:
         await db.purchases.insert_one(
             {
