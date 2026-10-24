@@ -5,16 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useGameActions } from "@/lib/gameActions";
-import { cleanInput, emptyContent, templateOf, TEMPLATES, validateInput } from "@/lib/games";
+import { blankBlock, cleanInput, defaultRules, emptyContent, templateOf, TEMPLATES, validateInput } from "@/lib/games";
 import type { GameContent, GameInput, GameOut, GameTemplate, Me } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Field, NativeSelect, Panel } from "@/components/shop/ui";
+import BuilderEditor from "./BuilderEditor";
 import GameRunner from "./GameRunner";
 
 const blankQuestion = () => ({ prompt: "", options: ["", ""], correct: 0 });
 
 const starter = (t: GameTemplate): GameContent => {
   const c = emptyContent();
+  if (t === "custom") c.custom = { scene: "car", rules: defaultRules(), blocks: [blankBlock("choice")] };
   if (t === "quiz") c.questions = [blankQuestion()];
   if (t === "sort") {
     c.categories = ["", ""];
@@ -191,10 +193,10 @@ function StepsEditor({ content, onChange }: { content: GameContent; onChange: (c
 
 export default function GameEditor({ me, initial, onDone, onCancel }: { me: Me; initial?: GameOut; onDone: () => void; onCancel: () => void }) {
   const actions = useGameActions();
-  const [template, setTemplate] = useState<GameTemplate>(initial?.template ?? "quiz");
+  const [template, setTemplate] = useState<GameTemplate>(initial?.template ?? "custom");
   const [title, setTitle] = useState(initial?.title ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
-  const [content, setContent] = useState<GameContent>(() => (initial ? structuredClone(initial.content) : starter("quiz")));
+  const [content, setContent] = useState<GameContent>(() => (initial ? structuredClone(initial.content) : starter("custom")));
   const [previewing, setPreviewing] = useState(false);
 
   const isAdmin = me.role === "admin";
@@ -276,7 +278,9 @@ export default function GameEditor({ me, initial, onDone, onCancel }: { me: Me; 
         </div>
       </Panel>
 
-      <Panel title="Contenuto">
+      {template === "custom" && content.custom && <BuilderEditor custom={content.custom} onChange={(custom) => setContent({ ...content, custom })} />}
+
+      <Panel title="Contenuto" className={template === "custom" ? "hidden" : undefined}>
         {template === "quiz" && <QuizEditor content={content} onChange={setContent} />}
         {template === "sort" && <SortEditor content={content} onChange={setContent} />}
         {(template === "abbina" || template === "memory" || template === "indovina") && <PairsEditor template={template} content={content} onChange={setContent} />}
