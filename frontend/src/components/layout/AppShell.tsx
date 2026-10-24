@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BarChart3, BookOpen, FolderOpen, LayoutGrid, LogOut, Megaphone, ShieldCheck, ShoppingBag, Users } from "lucide-react";
+import { BarChart3, BookOpen, FolderOpen, Gamepad2, LayoutGrid, LogOut, Megaphone, ShieldCheck, ShoppingBag, Users } from "lucide-react";
 import type { Me } from "@/lib/types";
 import { endSession } from "@/lib/session";
 import { useMembers, useShop } from "@/lib/queries";
@@ -11,13 +11,14 @@ import ThemeBackground from "@/components/theme/ThemeBackground";
 import ThemePicker from "@/components/theme/ThemePicker";
 import { DecorationDefs } from "@/components/shop/decorations";
 import ShopPanel from "@/components/shop/ShopPanel";
+import GamesPanel from "@/components/games/GamesPanel";
 import Overview from "@/components/Overview";
 import HomeworkPanel from "@/components/agenda/HomeworkPanel";
 import PollsPanel from "@/components/polls/PollsPanel";
 import MaterialsPanel from "@/components/materials/MaterialsPanel";
 import NoticesPanel from "@/components/notices/NoticesPanel";
 
-export type Tab = "home" | "compiti" | "sondaggi" | "materiali" | "bacheca" | "shop";
+export type Tab = "home" | "compiti" | "sondaggi" | "materiali" | "bacheca" | "shop" | "giochi";
 
 const NAV: { id: Tab; label: string; icon: typeof BookOpen }[] = [
   { id: "home", label: "Home", icon: LayoutGrid },
@@ -25,6 +26,7 @@ const NAV: { id: Tab; label: string; icon: typeof BookOpen }[] = [
   { id: "sondaggi", label: "Sondaggi", icon: BarChart3 },
   { id: "materiali", label: "Materiali", icon: FolderOpen },
   { id: "bacheca", label: "Bacheca", icon: Megaphone },
+  { id: "giochi", label: "Giochi", icon: Gamepad2 },
   { id: "shop", label: "Shop", icon: ShoppingBag },
 ];
 
@@ -148,6 +150,9 @@ export default function AppShell({ me }: { me: Me }) {
           <div className={panel("bacheca")} data-testid="panel-bacheca">
             <NoticesPanel />
           </div>
+          <div className={panel("giochi")} data-testid="panel-giochi">
+            <GamesPanel me={me} />
+          </div>
           <div className={panel("shop")} data-testid="panel-shop">
             <ShopPanel me={me} />
           </div>
@@ -155,7 +160,7 @@ export default function AppShell({ me }: { me: Me }) {
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[#30363D] bg-[#161B22]/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden" data-testid="bottom-nav">
-        <div className="grid h-16 grid-cols-6">
+        <div className="grid h-16 grid-cols-7">
           {NAV.map((n) => {
             const active = tab === n.id;
             return (
@@ -170,7 +175,7 @@ export default function AppShell({ me }: { me: Me }) {
                 <span className={cn("grid h-7 w-12 place-items-center rounded-full transition-colors duration-150", active ? "bg-[#388BFD]/15 text-[#58A6FF]" : "text-[#8B949E]")}>
                   <n.icon className="size-[18px]" />
                 </span>
-                <span className={cn("text-[11px] leading-none", active ? "text-[#F0F6FC]" : "text-[#8B949E]")}>{n.label}</span>
+                <span className={cn("text-[10px] leading-none", active ? "text-[#F0F6FC]" : "text-[#8B949E]")}>{n.label}</span>
               </button>
             );
           })}
