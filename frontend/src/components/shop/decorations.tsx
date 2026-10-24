@@ -173,32 +173,59 @@ function Corona() {
   );
 }
 
-function CyberGlitch() {
+function FeniceAstrale() {
   return (
     <g transform="translate(50 50)">
-      <rect x="-44" y="-44" width="88" height="88" fill="none" stroke="#22d3ee" strokeWidth="1" strokeDasharray="12 35 15 20" className="dc-glitch-box" />
-      <g className="dc-scanline">
-        <line x1="-50" y1="-25" x2="50" y2="-25" stroke="#f43f5e" strokeWidth="1.5" opacity="0.8" />
-        <line x1="-50" y1="25" x2="50" y2="25" stroke="#38bdf8" strokeWidth="1.5" opacity="0.8" />
+      <circle r="42" fill="none" stroke="url(#dc-phoenix-ring)" strokeWidth="2" strokeDasharray="8 6 15 6" className="dc-spin" />
+      <circle r="36" fill="none" stroke="#f97316" strokeWidth="0.8" opacity="0.7" className="dc-spin-rev" />
+      <g className="dc-phoenix-wings">
+        <path d="M-32 12 Q-52 -18 -38 -45 Q-18 -22 -30 5 Z" fill="url(#dc-phoenix-grad)" opacity="0.9" />
+        <path d="M32 12 Q52 -18 38 -45 Q18 -22 30 5 Z" fill="url(#dc-phoenix-grad)" opacity="0.9" />
       </g>
-      <g className="dc-spin">
-        <path d="M-40 -40 L-32 -40 L-40 -32 Z" fill="#22d3ee" />
-        <path d="M40 40 L32 40 L40 32 Z" fill="#f43f5e" />
+      <g className="dc-spin-slow">
+        {Array.from({ length: 6 }).map((_, i) => {
+          const a = i * 60;
+          return (
+            <g key={i} transform={`rotate(${a}) translate(0 -44)`}>
+              <path d="M0 -4 L2 2 L-2 2 Z" fill="#fbbf24" className="dc-twinkle" style={{ animationDelay: `${i * 0.3}s` }} />
+            </g>
+          );
+        })}
       </g>
     </g>
   );
 }
 
-function NebulosaCosmica() {
+function PortaleVuoto() {
   return (
     <g transform="translate(50 50)">
-      <circle r="46" fill="none" stroke="url(#dc-nebula-grad)" strokeWidth="2.5" opacity="0.6" className="dc-pulse" />
+      <circle r="45" fill="none" stroke="#8b5cf6" strokeWidth="3" strokeDasharray="4 8" className="dc-spin-rev" style={{ animationDuration: "14s" }} />
+      <circle r="38" fill="none" stroke="#06b6d4" strokeWidth="1.5" strokeDasharray="20 10" className="dc-spin" style={{ animationDuration: "8s" }} />
       <g className="dc-spin-slow">
-        <path d="M-45 -10 Q-20 -45 10 -40 Q45 -35 40 5 Q35 45 0 42 Q-40 40 -45 -10 Z" fill="none" stroke="#c084fc" strokeWidth="1" strokeDasharray="6 10" opacity="0.7" />
+        {Array.from({ length: 8 }).map((_, i) => {
+          const a = i * 45;
+          const [x, y] = pt(40, a);
+          return (
+            <ellipse key={i} cx={x} cy={y} rx="3" ry="1.5" fill="#c084fc" transform={`rotate(${a} ${x} ${y})`} className="dc-flicker" style={{ animationDelay: `${i * 0.25}s` }} />
+          );
+        })}
       </g>
-      <g className="dc-spin-rev">
-        <path d="M-48 22 L-33 27 L-38 42 Z" fill="#f472b6" className="dc-twinkle" />
-        <path d="M38 -32 L48 -22 L33 -27 Z" fill="#38bdf8" className="dc-twinkle" style={{ animationDelay: "0.5s" }} />
+      <circle r="32" fill="none" stroke="#ffffff" strokeWidth="0.8" opacity="0.5" className="dc-pulse" />
+    </g>
+  );
+}
+
+function CyberOverdrive() {
+  return (
+    <g transform="translate(50 50)">
+      <rect x="-43" y="-43" width="86" height="86" rx="14" fill="none" stroke="#10b981" strokeWidth="1.5" strokeDasharray="16 28 12 28" className="dc-spin" style={{ animationDuration: "12s" }} />
+      <rect x="-47" y="-47" width="94" height="94" rx="18" fill="none" stroke="#3b82f6" strokeWidth="1" strokeDasharray="8 45" className="dc-spin-rev" style={{ animationDuration: "16s" }} />
+      <g className="dc-scanline">
+        <line x1="-48" y1="0" x2="48" y2="0" stroke="#10b981" strokeWidth="1" opacity="0.7" />
+      </g>
+      <g className="dc-spin-slow">
+        <path d="M-44 -12 L-36 -12 L-40 -4 Z" fill="#3b82f6" />
+        <path d="M44 12 L36 12 L40 4 Z" fill="#10b981" />
       </g>
     </g>
   );
@@ -215,15 +242,16 @@ const ART: Record<string, ComponentType> = {
   "drago-spettrale": Drago,
   "zucca-halloween": Zucca,
   "corona-natale": Corona,
-  "cyber-glitch": CyberGlitch,
-  "nebulosa-cosmica": NebulosaCosmica,
+  "cyber-glitch": CyberOverdrive,
+  "nebulosa-cosmica": PortaleVuoto,
+  "fenice-astrale": FeniceAstrale,
 };
 
 export function AvatarDecoration({ id }: { id: string | null | undefined }) {
   const Art = id ? ART[id] : undefined;
   if (!Art) return null;
   return (
-    <span className="dc pointer-events-none absolute -inset-[40%] z-10" aria-hidden>
+    <span className="dc pointer-events-none absolute -inset-[60%] z-10" aria-hidden>
       <svg viewBox="0 0 100 100" className="size-full overflow-visible">
         <Art />
       </svg>
@@ -250,10 +278,15 @@ export function DecorationDefs() {
           <stop offset="0.5" stopColor="#f4731a" />
           <stop offset="1" stopColor="#b53d06" />
         </radialGradient>
-        <linearGradient id="dc-nebula-grad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#c084fc" />
-          <stop offset="0.5" stopColor="#38bdf8" />
-          <stop offset="1" stopColor="#f43f5e" />
+        <linearGradient id="dc-phoenix-grad" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0" stopColor="#b91c1c" />
+          <stop offset="0.5" stopColor="#f97316" />
+          <stop offset="1" stopColor="#fbbf24" />
+        </linearGradient>
+        <linearGradient id="dc-phoenix-ring" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#ef4444" />
+          <stop offset="0.5" stopColor="#f59e0b" />
+          <stop offset="1" stopColor="#ec4899" />
         </linearGradient>
       </defs>
     </svg>
