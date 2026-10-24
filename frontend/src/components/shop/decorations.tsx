@@ -213,45 +213,55 @@ function NebulosaCosmica() {
   );
 }
 
-function PerfectTRex() {
+function RealisticTRex() {
   return (
-    <g>
-      <path d="M-22 4 C-19 -4 -12 -12 -2 -14 C8 -16 18 -10 24 -4 C28 0 26 6 20 8 C14 10 6 8 0 8 C-8 10 -16 8 -22 4 Z" fill="url(#dc-dino-green)" stroke="#052e16" strokeWidth="1.2" filter="url(#dc-neon-glow)" />
-      <path d="M12 -2 L16 6 L20 2 L24 8 L18 5 L12 0 Z" fill="#22c55e" stroke="#052e16" strokeWidth="0.8" />
-      <path d="M14 2 L16 6 L18 3 L20 7 L22 4" stroke="#ffffff" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      <circle cx="15" cy="-5" r="2.6" fill="#facc15" filter="url(#dc-neon-glow)" />
-      <circle cx="15" cy="-5" r="1" fill="#000000" />
-      <path d="M-10 -11 L-6 -17 L-2 -12 L2 -16 L6 -10" fill="none" stroke="#86efac" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    <g filter="url(#dc-neon-glow)">
+      <path d="M-18 6 C-18 -2 -14 -10 -4 -13 C4 -15 13 -13 18 -6 C21 -2 22 4 19 8 C16 11 9 11 2 8 C-6 8 -13 8 -18 6 Z" fill="url(#dc-dino-green)" stroke="#052e16" strokeWidth="0.8" />
+      <path d="M-10 -11 L-7 -16 L-3 -11 L1 -15 L5 -10 L9 -13 L12 -8" fill="none" stroke="#15803d" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M2 2 C6 0 12 -1 17 2 C15 5 11 7 6 6 C2 5 0 3 2 2 Z" fill="#14532d" />
+      <path d="M3 2 L5 5 L7 2 L9 5 L11 2 L13 5 L15 2" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path d="M12 -8 C13 -8 15 -7 15 -5 C15 -3 13 -3 12 -5 Z" fill="#052e16" />
+      <circle cx="8" cy="-5" r="2.4" fill="#facc15" />
+      <circle cx="8.3" cy="-5" r="1.1" fill="#000000" />
+      <circle cx="7.8" cy="-5.5" r="0.4" fill="#ffffff" />
+      <path d="M3 -4 C6 -7 11 -7 13 -4" fill="none" stroke="#052e16" strokeWidth="0.8" strokeLinecap="round" />
     </g>
   );
 }
 
-function PerfectSpinosaurus() {
+function RealisticSpinosaurus() {
   return (
-    <g>
-      <path d="M-22 4 C-18 -4 -10 -10 0 -12 C10 -14 20 -8 26 -2 C30 2 28 8 22 8 C16 8 6 6 0 6 C-8 8 -16 6 -22 4 Z" fill="url(#dc-dino-orange)" stroke="#7c2d12" strokeWidth="1.2" filter="url(#dc-neon-glow)" />
-      <path d="M-4 -12 C-1 -22 8 -22 14 -14 C17 -10 12 -6 8 -8 C4 -10 0 -10 -4 -12 Z" fill="url(#dc-dino-green)" stroke="#7c2d12" strokeWidth="1" />
-      <path d="M16 -2 L26 -4 L24 2 L18 4 Z" fill="#ea580c" stroke="#7c2d12" strokeWidth="0.8" />
-      <path d="M18 0 L22 -2 L24 1" stroke="#ffffff" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      <circle cx="10" cy="-6" r="2.6" fill="#38bdf8" filter="url(#dc-neon-glow)" />
-      <circle cx="10" cy="-6" r="1" fill="#000000" />
+    <g filter="url(#dc-neon-glow)">
+      <path d="M-6 -10 C0 -22 10 -22 16 -12 C18 -8 15 -3 10 -5 C5 -7 0 -7 -6 -10 Z" fill="#ea580c" stroke="#7c2d12" strokeWidth="0.8" />
+      <path d="M-2 -12 L0 -19 M4 -13 L7 -21 M10 -11 L13 -17" stroke="#c2410c" strokeWidth="1" strokeLinecap="round" />
+      <path d="M18 6 C18 -2 14 -8 4 -11 C-4 -13 -13 -11 -18 -6 C-21 -2 -22 4 -19 8 C-16 11 -9 11 -2 8 C6 8 13 8 18 6 Z" fill="url(#dc-dino-orange)" stroke="#7c2d12" strokeWidth="0.8" />
+      <path d="M-2 2 C-6 0 -12 -1 -17 2 C-15 5 -11 7 -6 6 C-2 5 0 3 -2 2 Z" fill="#7c2d12" />
+      <path d="M-3 2 L-5 5 L-7 2 L-9 5 L-11 2 L-13 5 L-15 2" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path d="M-12 -6 C-13 -6 -15 -5 -15 -3 C-15 -1 -13 -1 -12 -3 Z" fill="#451a03" />
+      <circle cx="-8" cy="-4" r="2.4" fill="#38bdf8" />
+      <circle cx="-8.3" cy="-4" r="1.1" fill="#000000" />
+      <circle cx="-8.6" cy="-4.5" r="0.4" fill="#ffffff" />
+      <path d="M-3 -3 C-6 -6 -11 -6 -13 -3" fill="none" stroke="#451a03" strokeWidth="0.8" strokeLinecap="round" />
     </g>
   );
 }
 
 function Dinosauri() {
   const [x1, y1] = pt(36, 135);
-  const [x2, y2] = pt(36, 315);
+  const [x2, y2] = pt(36, 225);
 
   return (
     <g transform="translate(50 50)">
       <circle r="36" fill="none" stroke="url(#dc-dino-ring)" strokeWidth="2.5" strokeDasharray="6 6 18 6" className="dc-spin" />
-      <g transform={`translate(${x1.toFixed(1)} ${y1.toFixed(1)}) rotate(315)`}>
-        <PerfectTRex />
+
+      <g transform={`translate(${x1.toFixed(1)} ${y1.toFixed(1)}) rotate(-45)`}>
+        <RealisticTRex />
       </g>
-      <g transform={`translate(${x2.toFixed(1)} ${y2.toFixed(1)}) rotate(135)`}>
-        <PerfectSpinosaurus />
+
+      <g transform={`translate(${x2.toFixed(1)} ${y2.toFixed(1)}) rotate(45)`}>
+        <RealisticSpinosaurus />
       </g>
+
       <g className="dc-spin-fast" style={{ animationDuration: "10s" }}>
         {Array.from({ length: 4 }).map((_, i) => {
           const a = i * 90 + 45;
