@@ -1,5 +1,3 @@
-"""Shared Mongo handle — import `client`/`db` from here (server.py, routers, seed.py)."""
-
 import logging
 import os
 from pathlib import Path
@@ -16,7 +14,6 @@ db = client[os.environ["DB_NAME"]]
 
 logger = logging.getLogger(__name__)
 
-# One entry per collection: every field a route filters, sorts, or dedupes on. Applied by ensure_indexes() at startup.
 INDEXES: dict[str, list[IndexModel]] = {
     "groups": [
         IndexModel([("id", ASCENDING)], name="id", unique=True),
@@ -34,13 +31,34 @@ INDEXES: dict[str, list[IndexModel]] = {
     "materials": [IndexModel([("group_id", ASCENDING), ("created_at", DESCENDING)], name="group_created")],
     "files": [IndexModel([("id", ASCENDING)], name="id", unique=True)],
     "notices": [IndexModel([("group_id", ASCENDING), ("created_at", DESCENDING)], name="group_created")],
+    "point_events": [
+        IndexModel([("group_id", ASCENDING), ("created_at", DESCENDING)], name="group_created"),
+        IndexModel([("member_id", ASCENDING)], name="member"),
+    ],
+    "purchases": [
+        IndexModel([("member_id", ASCENDING), ("item_id", ASCENDING)], name="member_item", unique=True),
+        IndexModel([("group_id", ASCENDING)], name="group"),
+    ],
 }
 
 
 async def ensure_indexes() -> None:
     for collection, models in INDEXES.items():
-        for model in models:  # one at a time so a bad spec skips only itself
+        for model in models:
             try:
                 await db[collection].create_indexes([model])
-            except Exception as exc:  # never block boot on an index; the log line names what to fix
+            except Exception as exc:
                 logger.error("ensure_indexes(%s.%s): %s", collection, model.document["name"], exc)
+
+
+async def ensure_roles() -> None:
+    try:
+        async for group in db.groups.find({}, {"_id": 0, "id": 1}):
+            members = await db.members.find({"group_id": group["id"]}, {"_id": 0}).sort("joined_at", 1).to_list(1000)
+            if not members:
+                continue
+            if not any(m.get("role") == "admin" for m in members):
+                await db.members.update_one({"id": members[0]["id"]}, {"$set": {"role": "admin"}})
+            await db.members.update_many({"group_id": group["id"], "role": {"$exists": False}}, {"$set": {"role": "member"}})
+    except Exception as exc:
+        logger.error("ensure_roles: %s", exc)
