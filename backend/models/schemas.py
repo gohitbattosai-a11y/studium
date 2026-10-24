@@ -212,7 +212,9 @@ class RoleUpdate(BaseModel):
     role: Role
 
 
-GameTemplate = Literal["quiz", "sort", "abbina", "memory", "indovina", "ordina"]
+GameTemplate = Literal["quiz", "sort", "abbina", "memory", "indovina", "ordina", "custom"]
+BlockKind = Literal["choice", "type", "number", "order", "match", "info"]
+SceneId = Literal["none", "car", "rocket", "climb", "boss", "plant"]
 GameStatus = Literal["draft", "pending", "published", "rejected"]
 
 
@@ -232,12 +234,41 @@ class SortItem(BaseModel):
     category: int = Field(ge=0, le=5)
 
 
+class Block(BaseModel):
+    kind: BlockKind
+    prompt: Text(0, 300) = ""
+    value: int = Field(default=1, ge=0, le=10)
+    explain: Text(0, 200) = ""
+    options: List[Text(1, 80)] = Field(default_factory=list, max_length=6)
+    correct: int = Field(default=0, ge=0, le=5)
+    answer: Text(0, 80) = ""
+    number: Optional[float] = None
+    tolerance: float = Field(default=0, ge=0, le=1000)
+    steps: List[Text(1, 80)] = Field(default_factory=list, max_length=8)
+    pairs: List[PairItem] = Field(default_factory=list, max_length=6)
+
+
+class Rules(BaseModel):
+    lives: int = Field(default=0, ge=0, le=5)
+    seconds: int = Field(default=0, ge=0, le=120)
+    penalty: int = Field(default=0, ge=0, le=5)
+    streak_bonus: bool = False
+    shuffle: bool = True
+
+
+class CustomContent(BaseModel):
+    scene: SceneId = "none"
+    rules: Rules = Field(default_factory=Rules)
+    blocks: List[Block] = Field(default_factory=list, max_length=40)
+
+
 class GameContent(BaseModel):
     questions: List[QuizQuestion] = Field(default_factory=list, max_length=30)
     pairs: List[PairItem] = Field(default_factory=list, max_length=30)
     categories: List[Text(1, 40)] = Field(default_factory=list, max_length=6)
     sort_items: List[SortItem] = Field(default_factory=list, max_length=30)
     steps: List[Text(1, 100)] = Field(default_factory=list, max_length=12)
+    custom: Optional[CustomContent] = None
 
 
 class GameInput(BaseModel):
@@ -286,3 +317,18 @@ class FinishResult(BaseModel):
 class ReviewRequest(BaseModel):
     approve: bool
     note: Text(0, 200) = ""
+
+
+class GradeRow(BaseModel):
+    grade: int
+    points: int
+
+
+class TierRow(BaseModel):
+    min_percent: int
+    points: int
+
+
+class PointsTable(BaseModel):
+    grades: List[GradeRow]
+    game_tiers: List[TierRow]
