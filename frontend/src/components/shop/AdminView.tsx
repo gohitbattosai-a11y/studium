@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Award, ClipboardCheck, Trash2, Users } from "lucide-react";
 import { useGroupEvents, useMembers } from "@/lib/queries";
-import { gradeToPoints, useShopActions } from "@/lib/shop";
+import { gradeToPoints, useShopActions } from "@/lib/shopActions";
 import { relTime } from "@/lib/format";
 import type { Me } from "@/lib/types";
 import { cn } from "@/lib/utils";
