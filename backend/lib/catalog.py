@@ -21,6 +21,7 @@ ITEMS: list[dict] = [
     {"id": "natale", "kind": "background", "name": "Notte di Natale", "description": "Neve, albero illuminato e baita nel bosco.", "price": 20, "window": ("12-01", "01-06")},
     {"id": "cyber-glitch", "kind": "decoration", "name": "Cyber Glitch", "description": "Effetto digitale avanzato con linee e glitch al neon.", "price": 30, "window": None},
     {"id": "nebulosa-cosmica", "kind": "decoration", "name": "Nebulosa Cosmica", "description": "Stelle cadenti e polvere interstellare.", "price": 35, "window": None},
+    {"id": "dinosauri", "kind": "decoration", "name": "Mondo Giurassico", "description": "Artigli infuocati, fossili e ambientazione vulcanica.", "price": 50, "window": None},
 ]
 
 ITEMS_BY_ID: dict[str, dict] = {i["id"]: i for i in ITEMS}
