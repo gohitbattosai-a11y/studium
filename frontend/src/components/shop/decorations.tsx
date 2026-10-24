@@ -213,10 +213,10 @@ function NebulosaCosmica() {
   );
 }
 
-function CleanTRex() {
+function PerfectTRex() {
   return (
     <g>
-      <path d="M-18 10 C-14 -2 -4 -10 8 -12 C18 -14 26 -6 28 4 C29 10 18 14 10 12 C2 12 -8 10 -18 10 Z" fill="url(#dc-dino-green)" stroke="#052e16" strokeWidth="1.2" filter="url(#dc-neon-glow)" />
+      <path d="M-16 8 C-14 -4 -4 -12 8 -14 C18 -16 26 -8 28 2 C29 8 18 12 10 10 C2 10 -8 8 -16 8 Z" fill="url(#dc-dino-green)" stroke="#052e16" strokeWidth="1.2" filter="url(#dc-neon-glow)" />
       <path d="M4 2 L8 10 L12 2 L16 10 L20 2 L24 8" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" fill="none" />
       <circle cx="14" cy="-4" r="2.8" fill="#facc15" filter="url(#dc-neon-glow)" />
       <circle cx="14" cy="-4" r="1" fill="#000000" />
@@ -224,11 +224,11 @@ function CleanTRex() {
   );
 }
 
-function CleanTriceratops() {
+function PerfectSpinosaurus() {
   return (
     <g>
-      <path d="M18 10 C14 -2 4 -10 -8 -12 C-18 -14 -26 -6 -28 4 C-29 10 -18 14 -10 12 C-2 12 8 10 18 10 Z" fill="url(#dc-dino-orange)" stroke="#7c2d12" strokeWidth="1.2" filter="url(#dc-neon-glow)" />
-      <path d="M-6 -12 L-10 -22 L-4 -14 Z" fill="#fde047" stroke="#7c2d12" strokeWidth="0.8" />
+      <path d="M16 8 C14 -4 4 -12 -8 -14 C-18 -16 -26 -8 -28 2 C-29 8 -18 12 -10 10 C-2 10 8 8 16 8 Z" fill="url(#dc-dino-orange)" stroke="#7c2d12" strokeWidth="1.2" filter="url(#dc-neon-glow)" />
+      <path d="M-2 -12 C2 -22 10 -22 14 -14 C16 -10 12 -4 8 -6 C4 -8 0 -12 -2 -12 Z" fill="#ea580c" stroke="#7c2d12" strokeWidth="0.8" />
       <path d="M-4 2 L-8 10 L-12 2 L-16 10 L-20 2 L-24 8" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" fill="none" />
       <circle cx="-14" cy="-4" r="2.8" fill="#38bdf8" filter="url(#dc-neon-glow)" />
       <circle cx="-14" cy="-4" r="1" fill="#000000" />
@@ -237,16 +237,19 @@ function CleanTriceratops() {
 }
 
 function Dinosauri() {
+  const [x1, y1] = pt(37, 220);
+  const [x2, y2] = pt(37, 40);
+
   return (
     <g transform="translate(50 50)">
       <circle r="36" fill="none" stroke="url(#dc-dino-ring)" strokeWidth="2.5" strokeDasharray="6 6 18 6" className="dc-spin" />
 
-      <g transform="translate(-29 29) rotate(-45)">
-        <CleanTRex />
+      <g transform={`translate(${x1.toFixed(1)} ${y1.toFixed(1)}) rotate(130)`}>
+        <PerfectTRex />
       </g>
 
-      <g transform="translate(29 -29) rotate(-225)">
-        <CleanTriceratops />
+      <g transform={`translate(${x2.toFixed(1)} ${y2.toFixed(1)}) rotate(-50)`}>
+        <PerfectSpinosaurus />
       </g>
 
       <g className="dc-spin-fast" style={{ animationDuration: "10s" }}>
