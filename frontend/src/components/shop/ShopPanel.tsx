@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Check, Clock, Coins, Lock, ShoppingBag, Sparkles, Trophy } from "lucide-react";
 import { useMyEvents, useShop } from "@/lib/queries";
-import { useShopActions } from "@/lib/shop";
+import { useShopActions } from "@/lib/shopActions";
 import { avatarTone, initials, relTime } from "@/lib/format";
 import { isBackgroundId } from "@/lib/theme";
 import type { Me, ShopItem, ShopState } from "@/lib/types";
