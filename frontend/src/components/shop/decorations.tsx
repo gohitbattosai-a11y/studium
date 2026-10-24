@@ -216,22 +216,18 @@ function NebulosaCosmica() {
 function Dinosauri() {
   return (
     <g transform="translate(50 50)">
-      <circle r="41" fill="none" stroke="url(#dc-dino-ring)" strokeWidth="3.5" strokeDasharray="12 8 24 8" className="dc-spin" />
-      <circle r="35" fill="none" stroke="#22c55e" strokeWidth="1" opacity="0.6" className="dc-spin-rev" />
-      <g className="dc-spin-slow">
-        <path d="M-38 -12 L-48 -18 L-40 -26 Z" fill="#22c55e" filter="url(#dc-neon-glow)" />
-        <path d="M38 12 L48 18 L40 26 Z" fill="#f59e0b" filter="url(#dc-neon-glow)" />
+      <circle r="39" fill="none" stroke="url(#dc-dino-ring)" strokeWidth="3" strokeDasharray="15 8" className="dc-spin" />
+      <g className="dc-dino-roar">
+        <path d="M-30 -14 C-22 -36 2 -38 24 -24 C34 -16 40 2 32 16 C26 24 16 30 6 22 C0 18 -4 10 -10 22 C-18 30 -26 24 -30 14 C-35 4 -35 -4 -30 -14 Z" fill="url(#dc-dino-body)" stroke="#4ade80" strokeWidth="1.5" filter="url(#dc-neon-glow)" />
+        <path d="M14 -10 L26 -16 L20 -2 Z" fill="#facc15" filter="url(#dc-neon-glow)" />
+        <path d="M24 4 L34 -1 L28 10 Z" fill="#facc15" filter="url(#dc-neon-glow)" />
       </g>
-      <g className="dc-flicker">
-        <path d="M-30 -30 L-22 -42 M30 30 L22 42 M-30 30 L-22 42 M30 -30 L22 -42" stroke="#ef4444" strokeWidth="3" strokeLinecap="round" filter="url(#dc-neon-glow)" />
+      <g className="dc-spin-rev">
+        <path d="M-38 -32 L-48 -40 L-40 -28 Z" fill="#f97316" filter="url(#dc-neon-glow)" />
+        <path d="M38 32 L48 40 L40 28 Z" fill="#22c55e" filter="url(#dc-neon-glow)" />
       </g>
-      <g className="dc-spin">
-        {Array.from({ length: 6 }).map((_, i) => {
-          const a = i * 60;
-          const [x, y] = pt(43, a);
-          return <circle key={i} cx={x} cy={y} r="2.2" fill="#fde047" className="dc-twinkle" style={{ animationDelay: `${i * 0.4}s` }} />;
-        })}
-      </g>
+      <circle cx="16" cy="-16" r="3" fill="#ef4444" filter="url(#dc-neon-glow)" className="dc-flicker" />
+      <circle cx="16" cy="-16" r="1.1" fill="#ffffff" />
     </g>
   );
 }
@@ -316,6 +312,12 @@ export function DecorationDefs() {
           <stop offset="0%" stopColor="#22c55e" />
           <stop offset="50%" stopColor="#f59e0b" />
           <stop offset="100%" stopColor="#ef4444" />
+        </linearGradient>
+
+        <linearGradient id="dc-dino-body" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#14532d" />
+          <stop offset="50%" stopColor="#16a34a" />
+          <stop offset="100%" stopColor="#ca8a04" />
         </linearGradient>
 
         <linearGradient id="dc-flame" x1="0" y1="1" x2="0" y2="0">
