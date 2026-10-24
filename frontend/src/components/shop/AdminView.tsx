@@ -10,8 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Avatar, EmptyState } from "@/components/common";
 import { Field, NativeSelect, Panel, RoleBadge } from "./ui";
 
-const TABLE = [10, 9, 8, 7, 6, 5];
-
 export default function AdminView({ me }: { me: Me }) {
   const members = useMembers();
   const events = useGroupEvents(true);
@@ -59,7 +57,7 @@ export default function AdminView({ me }: { me: Me }) {
 
   return (
     <div className="grid gap-4 lg:grid-cols-2" data-testid="admin-view">
-      <Panel title="Inserisci un voto" hint="Il voto diventa punti: voto meno 5, senza decimali." testId="admin-grade-panel">
+      <Panel title="Inserisci un voto" hint="Un voto da 1 a 10 vale altrettanti punti, senza decimali." testId="admin-grade-panel">
         {participants.length === 0 ? (
           <p className="text-sm text-[#8B949E]">Nessun compagno partecipa ancora alla classifica.</p>
         ) : (
@@ -96,13 +94,6 @@ export default function AdminView({ me }: { me: Me }) {
               <Button type="submit" className="h-9" disabled={!gradeMember || !subject.trim() || !gradeValid || actions.grade.isPending} data-testid="grade-submit">
                 <ClipboardCheck className="size-4" /> Assegna
               </Button>
-            </div>
-            <div className="flex flex-wrap gap-1.5 border-t border-[#30363D] pt-3">
-              {TABLE.map((v) => (
-                <span key={v} className="rounded border border-[#30363D] bg-[#21262D] px-2 py-0.5 text-xs text-[#C9D1D9]">
-                  {v === 5 ? "5 o meno" : v} → {gradeToPoints(v)}
-                </span>
-              ))}
             </div>
           </form>
         )}
