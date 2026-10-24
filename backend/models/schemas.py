@@ -187,7 +187,7 @@ class PointEvent(BaseModel):
     id: str
     member_id: str
     nickname: str
-    kind: Literal["grade", "bonus"]
+    kind: Literal["grade", "bonus", "game"]
     subject: Optional[str] = None
     grade: Optional[float] = None
     points: int
@@ -210,3 +210,79 @@ class BonusCreate(BaseModel):
 
 class RoleUpdate(BaseModel):
     role: Role
+
+
+GameTemplate = Literal["quiz", "sort", "abbina", "memory", "indovina", "ordina"]
+GameStatus = Literal["draft", "pending", "published", "rejected"]
+
+
+class QuizQuestion(BaseModel):
+    prompt: Text(1, 160)
+    options: List[Text(1, 80)] = Field(min_length=2, max_length=6)
+    correct: int = Field(ge=0, le=5)
+
+
+class PairItem(BaseModel):
+    left: Text(1, 80)
+    right: Text(1, 80)
+
+
+class SortItem(BaseModel):
+    text: Text(1, 80)
+    category: int = Field(ge=0, le=5)
+
+
+class GameContent(BaseModel):
+    questions: List[QuizQuestion] = Field(default_factory=list, max_length=30)
+    pairs: List[PairItem] = Field(default_factory=list, max_length=30)
+    categories: List[Text(1, 40)] = Field(default_factory=list, max_length=6)
+    sort_items: List[SortItem] = Field(default_factory=list, max_length=30)
+    steps: List[Text(1, 100)] = Field(default_factory=list, max_length=12)
+
+
+class GameInput(BaseModel):
+    title: Text(2, 60)
+    description: Text(0, 200) = ""
+    template: GameTemplate
+    content: GameContent
+
+
+class GameSummary(BaseModel):
+    id: str
+    title: str
+    description: str
+    template: GameTemplate
+    status: GameStatus
+    author: str
+    author_id: str
+    plays: int
+    item_count: int
+    created_at: str
+    review_note: Optional[str] = None
+    is_mine: bool
+    my_best: Optional[int] = None
+    my_claimed: Optional[int] = None
+
+
+class GameOut(GameSummary):
+    content: GameContent
+
+
+class FinishRequest(BaseModel):
+    score: int = Field(ge=0, le=100)
+
+
+class FinishResult(BaseModel):
+    round_percent: int
+    best_percent: int
+    points_available: int
+    claimed_points: Optional[int] = None
+    can_claim: bool
+    reason: Optional[Literal["non_participating", "author", "too_low"]] = None
+    next_percent: Optional[int] = None
+    next_points: Optional[int] = None
+
+
+class ReviewRequest(BaseModel):
+    approve: bool
+    note: Text(0, 200) = ""
