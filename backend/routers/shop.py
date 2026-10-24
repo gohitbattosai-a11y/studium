@@ -3,7 +3,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from pymongo.errors import DuplicateKeyError
 
-from lib.catalog import ITEMS, ITEMS_BY_ID, grade_to_points, in_window, window_label
+from lib.catalog import GAME_TIERS, GRADE_POINTS, ITEMS, ITEMS_BY_ID, grade_to_points, in_window, window_label
 from lib.dates import today_iso
 from lib.db import db
 from lib.security import TZ, current_member, new_id, now_iso
@@ -12,13 +12,16 @@ from models.schemas import (
     BuyRequest,
     EquipRequest,
     GradeCreate,
+    GradeRow,
     LeaderboardEntry,
     MemberOut,
     ParticipationRequest,
     PointEvent,
+    PointsTable,
     RoleUpdate,
     ShopItem,
     ShopState,
+    TierRow,
 )
 from routers.auth import member_out
 
@@ -160,6 +163,14 @@ async def leaderboard(member: dict = Depends(current_member)):
             )
         )
     return out
+
+
+@router.get("/points/table", response_model=PointsTable)
+async def points_table(member: dict = Depends(current_member)):
+    return PointsTable(
+        grades=[GradeRow(grade=g, points=p) for g, p in sorted(GRADE_POINTS.items())],
+        game_tiers=[TierRow(min_percent=m, points=p) for m, p in sorted(GAME_TIERS)],
+    )
 
 
 @router.get("/points/mine", response_model=List[PointEvent])
