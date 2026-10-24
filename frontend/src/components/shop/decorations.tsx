@@ -213,17 +213,27 @@ function NebulosaCosmica() {
   );
 }
 
-function DetailedDinoHead({ color, eyeColor, scale = 1 }: { color: string; eyeColor: string; scale?: number }) {
+function DetailedTRex() {
   return (
-    <g transform={`scale(${scale})`}>
-      <path d="M-20 8 C-18 0 -12 -8 -2 -12 C10 -15 22 -10 24 -2 C25 3 20 6 12 6 C8 6 2 4 -2 8 C-6 11 -12 16 -18 14 Z" fill={color} stroke="#052e16" strokeWidth="0.8" filter="url(#dc-neon-glow)" />
-      <path d="M-12 12 C-6 10 2 12 10 10 C16 9 22 14 16 18 C8 20 -4 18 -12 14 Z" fill={color} stroke="#052e16" strokeWidth="0.8" />
-      <path d="M0 6 L2 10 L4 6 L6 10 L8 6 L10 9 L12 6 L14 8" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" fill="none" />
-      <path d="M-10 -10 L-6 -16 L-2 -11 M-2 -11 L2 -17 L5 -10 M5 -10 L9 -16 L12 -9" fill="#15803d" stroke="#facc15" strokeWidth="0.6" />
-      <circle cx="8" cy="-5" r="2.8" fill={eyeColor} filter="url(#dc-neon-glow)" className="dc-flicker" />
-      <ellipse cx="8" cy="-5" rx="0.8" ry="2" fill="#000000" />
-      <path d="M3 -8 C7 -12 12 -10 14 -7" stroke="#052e16" strokeWidth="1" fill="none" />
-      <circle cx="18" cy="-2" r="0.8" fill="#052e16" />
+    <g>
+      <path d="M-18 6 C-14 -4 -6 -10 2 -12 C12 -15 22 -10 24 -2 C25 4 18 8 10 7 C4 7 -2 5 -8 8 C-12 11 -16 14 -20 10 Z" fill="url(#dc-dino-green)" stroke="#052e16" strokeWidth="0.8" filter="url(#dc-neon-glow)" />
+      <path d="M-10 10 C-4 8 4 10 10 8 C15 7 20 12 14 16 C8 18 0 16 -10 12 Z" fill="#15803d" stroke="#052e16" strokeWidth="0.8" />
+      <path d="M2 6 L4 10 L6 6 L8 10 L10 6 L12 9" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+      <circle cx="8" cy="-5" r="2.5" fill="#facc15" filter="url(#dc-neon-glow)" />
+      <circle cx="8" cy="-5" r="0.8" fill="#000000" />
+    </g>
+  );
+}
+
+function DetailedPterodactyl() {
+  return (
+    <g>
+      <path d="M0 -4 L-16 -18 C-22 -12 -18 -4 -12 2 Z" fill="url(#dc-pterodactyl-wing)" stroke="#1e1b4b" strokeWidth="0.8" filter="url(#dc-neon-glow)" opacity="0.9" />
+      <path d="M0 -4 L16 -18 C22 -12 18 -4 12 2 Z" fill="url(#dc-pterodactyl-wing)" stroke="#1e1b4b" strokeWidth="0.8" filter="url(#dc-neon-glow)" opacity="0.9" />
+      <path d="M-6 -10 C-2 -18 10 -16 16 -8 C22 0 14 8 4 6 C-2 5 -6 0 -6 -10 Z" fill="url(#dc-pterodactyl-body)" stroke="#312e81" strokeWidth="0.8" filter="url(#dc-neon-glow)" />
+      <path d="M14 -6 L24 -2 L14 2 Z" fill="#38bdf8" stroke="#1e1b4b" strokeWidth="0.8" />
+      <circle cx="8" cy="-3" r="2" fill="#ff0055" filter="url(#dc-neon-glow)" />
+      <circle cx="8" cy="-3" r="0.7" fill="#ffffff" />
     </g>
   );
 }
@@ -233,21 +243,21 @@ function Dinosauri() {
     <g transform="translate(50 50)">
       <circle r="36" fill="none" stroke="url(#dc-dino-ring)" strokeWidth="2.5" strokeDasharray="6 6 18 6" className="dc-spin" />
       <path d="M-28 22 A36 36 0 0 1 22 -28" fill="none" stroke="#ef4444" strokeWidth="2" strokeDasharray="3 7" className="dc-flicker" filter="url(#dc-neon-glow)" />
-      <path d="M-22 28 A36 36 0 0 0 28 -22" fill="none" stroke="#22c55e" strokeWidth="2" strokeDasharray="3 7" className="dc-flicker" style={{ animationDelay: "1s" }} filter="url(#dc-neon-glow)" />
+      <path d="M-22 28 A36 36 0 0 0 28 -22" fill="none" stroke="#38bdf8" strokeWidth="2" strokeDasharray="3 7" className="dc-flicker" style={{ animationDelay: "1s" }} filter="url(#dc-neon-glow)" />
 
-      <g transform="translate(-25 25) rotate(-35)" className="dc-dino-bottom">
-        <DetailedDinoHead color="url(#dc-dino-green)" eyeColor="#facc15" scale={0.7} />
+      <g transform="translate(-25 25) rotate(-40)" className="dc-dino-bottom">
+        <DetailedTRex />
         <g className="dc-roaring-wave-bottom">
           <path d="M18 -2 Q26 -8 32 -4" fill="none" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" filter="url(#dc-neon-glow)" />
           <path d="M22 2 Q30 -3 36 2" fill="none" stroke="#facc15" strokeWidth="1" strokeLinecap="round" filter="url(#dc-neon-glow)" />
         </g>
       </g>
 
-      <g transform="translate(25 -25) rotate(145)" className="dc-dino-top">
-        <DetailedDinoHead color="url(#dc-dino-orange)" eyeColor="#00f0ff" scale={0.7} />
+      <g transform="translate(25 -25) rotate(45)" className="dc-dino-top">
+        <DetailedPterodactyl />
         <g className="dc-roaring-wave-top">
-          <path d="M18 -2 Q26 -8 32 -4" fill="none" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" filter="url(#dc-neon-glow)" />
-          <path d="M22 2 Q30 -3 36 2" fill="none" stroke="#38bdf8" strokeWidth="1" strokeLinecap="round" filter="url(#dc-neon-glow)" />
+          <path d="M18 -2 Q26 -8 32 -4" fill="none" stroke="#38bdf8" strokeWidth="1.5" strokeLinecap="round" filter="url(#dc-neon-glow)" />
+          <path d="M22 2 Q30 -3 36 2" fill="none" stroke="#a855f7" strokeWidth="1" strokeLinecap="round" filter="url(#dc-neon-glow)" />
         </g>
       </g>
 
@@ -350,10 +360,15 @@ export function DecorationDefs() {
           <stop offset="100%" stopColor="#86efac" />
         </linearGradient>
 
-        <linearGradient id="dc-dino-orange" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#9a3412" />
-          <stop offset="60%" stopColor="#ea580c" />
-          <stop offset="100%" stopColor="#fde047" />
+        <linearGradient id="dc-pterodactyl-body" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#3b82f6" />
+          <stop offset="50%" stopColor="#1d4ed8" />
+          <stop offset="100%" stopColor="#93c5fd" />
+        </linearGradient>
+
+        <linearGradient id="dc-pterodactyl-wing" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#1e3a8a" />
+          <stop offset="100%" stopColor="#60a5fa" />
         </linearGradient>
 
         <linearGradient id="dc-flame" x1="0" y1="1" x2="0" y2="0">
