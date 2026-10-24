@@ -213,26 +213,25 @@ function NebulosaCosmica() {
   );
 }
 
-function PerfectTRex() {
+function CleanTRex() {
   return (
     <g>
-      <path d="M-16 10 C-14 -2 -4 -12 8 -14 C18 -16 26 -8 28 2 C29 8 20 12 10 10 C2 10 -8 8 -16 10 Z" fill="url(#dc-dino-green)" stroke="#052e16" strokeWidth="1" filter="url(#dc-neon-glow)" />
-      <path d="M6 -14 L12 -22 L16 -12 Z" fill="#22c55e" />
-      <path d="M2 2 L6 10 L10 2 L14 10 L18 2 L22 8" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-      <circle cx="14" cy="-6" r="2.8" fill="#facc15" filter="url(#dc-neon-glow)" />
-      <circle cx="14" cy="-6" r="1" fill="#000000" />
+      <path d="M-18 10 C-14 -2 -4 -10 8 -12 C18 -14 26 -6 28 4 C29 10 18 14 10 12 C2 12 -8 10 -18 10 Z" fill="url(#dc-dino-green)" stroke="#052e16" strokeWidth="1.2" filter="url(#dc-neon-glow)" />
+      <path d="M4 2 L8 10 L12 2 L16 10 L20 2 L24 8" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+      <circle cx="14" cy="-4" r="2.8" fill="#facc15" filter="url(#dc-neon-glow)" />
+      <circle cx="14" cy="-4" r="1" fill="#000000" />
     </g>
   );
 }
 
-function PerfectRaptor() {
+function CleanTriceratops() {
   return (
     <g>
-      <path d="M16 -10 C14 2 4 12 -8 14 C-18 16 -26 8 -28 -2 C-29 -8 -20 -12 -10 -10 C-2 -10 8 -8 16 -10 Z" fill="url(#dc-dino-orange)" stroke="#7c2d12" strokeWidth="1" filter="url(#dc-neon-glow)" />
-      <path d="M-6 10 L-12 18 L-16 8 Z" fill="#ea580c" />
-      <path d="M-2 -2 L-6 -10 L-10 -2 L-14 -10 L-18 -2 L-22 -8" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-      <circle cx="-14" cy="2" r="2.8" fill="#38bdf8" filter="url(#dc-neon-glow)" />
-      <circle cx="-14" cy="2" r="1" fill="#000000" />
+      <path d="M18 10 C14 -2 4 -10 -8 -12 C-18 -14 -26 -6 -28 4 C-29 10 -18 14 -10 12 C-2 12 8 10 18 10 Z" fill="url(#dc-dino-orange)" stroke="#7c2d12" strokeWidth="1.2" filter="url(#dc-neon-glow)" />
+      <path d="M-6 -12 L-10 -22 L-4 -14 Z" fill="#fde047" stroke="#7c2d12" strokeWidth="0.8" />
+      <path d="M-4 2 L-8 10 L-12 2 L-16 10 L-20 2 L-24 8" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+      <circle cx="-14" cy="-4" r="2.8" fill="#38bdf8" filter="url(#dc-neon-glow)" />
+      <circle cx="-14" cy="-4" r="1" fill="#000000" />
     </g>
   );
 }
@@ -242,20 +241,12 @@ function Dinosauri() {
     <g transform="translate(50 50)">
       <circle r="36" fill="none" stroke="url(#dc-dino-ring)" strokeWidth="2.5" strokeDasharray="6 6 18 6" className="dc-spin" />
 
-      <g transform="translate(-29 29) rotate(-45)" className="dc-dino-bottom">
-        <PerfectTRex />
-        <g className="dc-roar-waves">
-          <path d="M24 6 C30 8 36 6 42 2" fill="none" stroke="#facc15" strokeWidth="2.5" strokeLinecap="round" filter="url(#dc-neon-glow)" />
-          <path d="M26 12 C34 15 42 12 50 6" fill="none" stroke="#22c55e" strokeWidth="1.8" strokeLinecap="round" filter="url(#dc-neon-glow)" />
-        </g>
+      <g transform="translate(-29 29) rotate(-45)">
+        <CleanTRex />
       </g>
 
-      <g transform="translate(29 -29) rotate(-225)" className="dc-dino-top">
-        <PerfectRaptor />
-        <g className="dc-roar-waves">
-          <path d="M-24 -6 C-30 -8 -36 -6 -42 -2" fill="none" stroke="#38bdf8" strokeWidth="2.5" strokeLinecap="round" filter="url(#dc-neon-glow)" />
-          <path d="M-26 -12 C-34 -15 -42 -12 -50 -6" fill="none" stroke="#ef4444" strokeWidth="1.8" strokeLinecap="round" filter="url(#dc-neon-glow)" />
-        </g>
+      <g transform="translate(29 -29) rotate(-225)">
+        <CleanTriceratops />
       </g>
 
       <g className="dc-spin-fast" style={{ animationDuration: "10s" }}>
