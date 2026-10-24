@@ -165,7 +165,7 @@ export interface PointEvent {
   id: string;
   member_id: string;
   nickname: string;
-  kind: "grade" | "bonus";
+  kind: "grade" | "bonus" | "game";
   subject: string | null;
   grade: number | null;
   points: number;
@@ -184,4 +184,70 @@ export interface BonusCreate {
   member_id: string;
   points: number;
   reason: string;
+}
+
+export type GameTemplate = "quiz" | "sort" | "abbina" | "memory" | "indovina" | "ordina";
+export type GameStatus = "draft" | "pending" | "published" | "rejected";
+
+export interface QuizQuestion {
+  prompt: string;
+  options: string[];
+  correct: number;
+}
+
+export interface PairItem {
+  left: string;
+  right: string;
+}
+
+export interface SortItem {
+  text: string;
+  category: number;
+}
+
+export interface GameContent {
+  questions: QuizQuestion[];
+  pairs: PairItem[];
+  categories: string[];
+  sort_items: SortItem[];
+  steps: string[];
+}
+
+export interface GameInput {
+  title: string;
+  description: string;
+  template: GameTemplate;
+  content: GameContent;
+}
+
+export interface GameSummary {
+  id: string;
+  title: string;
+  description: string;
+  template: GameTemplate;
+  status: GameStatus;
+  author: string;
+  author_id: string;
+  plays: number;
+  item_count: number;
+  created_at: string;
+  review_note: string | null;
+  is_mine: boolean;
+  my_best: number | null;
+  my_claimed: number | null;
+}
+
+export interface GameOut extends GameSummary {
+  content: GameContent;
+}
+
+export interface FinishResult {
+  round_percent: number;
+  best_percent: number;
+  points_available: number;
+  claimed_points: number | null;
+  can_claim: boolean;
+  reason: "non_participating" | "author" | "too_low" | null;
+  next_percent: number | null;
+  next_points: number | null;
 }
