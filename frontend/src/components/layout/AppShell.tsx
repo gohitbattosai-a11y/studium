@@ -3,7 +3,7 @@ import { BarChart3, BookOpen, FolderOpen, LayoutGrid, LogOut, Megaphone, ShieldC
 import type { Me } from "@/lib/types";
 import { endSession } from "@/lib/session";
 import { useMembers, useShop } from "@/lib/queries";
-import { useShopActions } from "@/lib/shop";
+import { useShopActions } from "@/lib/shopActions";
 import { isBackgroundId, type BackgroundId } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { Avatar, BrandMark, Eyebrow } from "@/components/common";
