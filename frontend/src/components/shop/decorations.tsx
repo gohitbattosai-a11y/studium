@@ -173,6 +173,37 @@ function Corona() {
   );
 }
 
+function CyberGlitch() {
+  return (
+    <g transform="translate(50 50)">
+      <rect x="-44" y="-44" width="88" height="88" fill="none" stroke="#22d3ee" strokeWidth="1" strokeDasharray="12 35 15 20" className="dc-glitch-box" />
+      <g className="dc-scanline">
+        <line x1="-50" y1="-25" x2="50" y2="-25" stroke="#f43f5e" strokeWidth="1.5" opacity="0.8" />
+        <line x1="-50" y1="25" x2="50" y2="25" stroke="#38bdf8" strokeWidth="1.5" opacity="0.8" />
+      </g>
+      <g className="dc-spin">
+        <path d="M-40 -40 L-32 -40 L-40 -32 Z" fill="#22d3ee" />
+        <path d="M40 40 L32 40 L40 32 Z" fill="#f43f5e" />
+      </g>
+    </g>
+  );
+}
+
+function NebulosaCosmica() {
+  return (
+    <g transform="translate(50 50)">
+      <circle r="46" fill="none" stroke="url(#dc-nebula-grad)" strokeWidth="2.5" opacity="0.6" className="dc-pulse" />
+      <g className="dc-spin-slow">
+        <path d="M-45 -10 Q-20 -45 10 -40 Q45 -35 40 5 Q35 45 0 42 Q-40 40 -45 -10 Z" fill="none" stroke="#c084fc" strokeWidth="1" strokeDasharray="6 10" opacity="0.7" />
+      </g>
+      <g className="dc-spin-rev">
+        <path d="M-48 22 L-33 27 L-38 42 Z" fill="#f472b6" className="dc-twinkle" />
+        <path d="M38 -32 L48 -22 L33 -27 Z" fill="#38bdf8" className="dc-twinkle" style={{ animationDelay: "0.5s" }} />
+      </g>
+    </g>
+  );
+}
+
 const SPEC_ART: Record<string, ComponentType> = Object.fromEntries(
   Object.entries(SPECS).map(([id, spec]) => [id, () => <SpecArt spec={spec} />]),
 );
@@ -184,6 +215,8 @@ const ART: Record<string, ComponentType> = {
   "drago-spettrale": Drago,
   "zucca-halloween": Zucca,
   "corona-natale": Corona,
+  "cyber-glitch": CyberGlitch,
+  "nebulosa-cosmica": NebulosaCosmica,
 };
 
 export function AvatarDecoration({ id }: { id: string | null | undefined }) {
@@ -217,6 +250,11 @@ export function DecorationDefs() {
           <stop offset="0.5" stopColor="#f4731a" />
           <stop offset="1" stopColor="#b53d06" />
         </radialGradient>
+        <linearGradient id="dc-nebula-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#c084fc" />
+          <stop offset="0.5" stopColor="#38bdf8" />
+          <stop offset="1" stopColor="#f43f5e" />
+        </linearGradient>
       </defs>
     </svg>
   );
