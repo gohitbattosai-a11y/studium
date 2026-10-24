@@ -1,5 +1,3 @@
-"""Pydantic models — mirrored by hand in frontend/src/lib/types.ts. Keep both in sync."""
-
 from typing import Annotated, List, Literal, Optional
 
 from pydantic import BaseModel, Field, StringConstraints
@@ -11,9 +9,10 @@ def Text(min_len: int, max_len: int):
 
 Priority = Literal["bassa", "media", "alta"]
 NoticeTag = Literal["avviso", "urgente", "info"]
+Role = Literal["admin", "member"]
+ItemKind = Literal["decoration", "background"]
 
 
-# ---- auth ----
 class JoinRequest(BaseModel):
     mode: Literal["join", "create"]
     group_name: Text(2, 60)
@@ -28,15 +27,20 @@ class Me(BaseModel):
     group_id: str
     group_name: str
     member_count: int
-    today: str  # YYYY-MM-DD, Europe/Rome
+    today: str
+    role: Role = "member"
+    participating: bool = False
 
 
 class MemberOut(BaseModel):
+    member_id: str
     nickname: str
     joined_at: str
+    role: Role = "member"
+    participating: bool = False
+    decoration: Optional[str] = None
 
 
-# ---- homework ----
 class HomeworkCreate(BaseModel):
     subject: Text(1, 40)
     due_date: Annotated[str, StringConstraints(pattern=r"^\d{4}-\d{2}-\d{2}$")]
@@ -57,7 +61,6 @@ class Homework(BaseModel):
     created_at: str
 
 
-# ---- polls ----
 class PollCreate(BaseModel):
     question: Text(3, 200)
     options: List[Text(1, 100)] = Field(min_length=2, max_length=8)
@@ -68,7 +71,7 @@ class PollOption(BaseModel):
     id: str
     text: str
     votes: int
-    voters: List[str]  # empty when the poll is anonymous
+    voters: List[str]
 
 
 class Poll(BaseModel):
@@ -86,7 +89,6 @@ class VoteRequest(BaseModel):
     option_id: str
 
 
-# ---- materials ----
 class FolderCreate(BaseModel):
     name: Text(1, 40)
 
@@ -121,7 +123,6 @@ class Material(BaseModel):
     created_at: str
 
 
-# ---- notices ----
 class NoticeCreate(BaseModel):
     title: Text(2, 120)
     body: Text(1, 2000)
@@ -135,3 +136,77 @@ class Notice(BaseModel):
     tag: NoticeTag
     author: str
     created_at: str
+
+
+class ShopItem(BaseModel):
+    id: str
+    kind: ItemKind
+    name: str
+    description: str
+    price: int
+    owned: bool
+    equipped: bool
+    available: bool
+    window_label: Optional[str] = None
+
+
+class ShopState(BaseModel):
+    participating: bool
+    role: Role
+    total_points: int
+    spent: int
+    balance: int
+    equipped_decoration: Optional[str] = None
+    equipped_background: Optional[str] = None
+    items: List[ShopItem]
+
+
+class ParticipationRequest(BaseModel):
+    participating: bool
+
+
+class BuyRequest(BaseModel):
+    item_id: str
+
+
+class EquipRequest(BaseModel):
+    kind: ItemKind
+    item_id: Optional[str] = None
+
+
+class LeaderboardEntry(BaseModel):
+    rank: int
+    member_id: str
+    nickname: str
+    role: Role
+    total_points: int
+    is_me: bool
+
+
+class PointEvent(BaseModel):
+    id: str
+    member_id: str
+    nickname: str
+    kind: Literal["grade", "bonus"]
+    subject: Optional[str] = None
+    grade: Optional[float] = None
+    points: int
+    reason: Optional[str] = None
+    created_by: str
+    created_at: str
+
+
+class GradeCreate(BaseModel):
+    member_id: str
+    subject: Text(1, 40)
+    grade: float = Field(ge=1, le=10)
+
+
+class BonusCreate(BaseModel):
+    member_id: str
+    points: int = Field(ge=-50, le=50)
+    reason: Text(1, 80)
+
+
+class RoleUpdate(BaseModel):
+    role: Role
