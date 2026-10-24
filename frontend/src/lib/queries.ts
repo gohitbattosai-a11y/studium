@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiGet } from "./api";
-import type { Folder, Homework, LeaderboardEntry, Material, MemberOut, Notice, PointEvent, Poll, ShopState } from "./types";
+import type { Folder, Homework, GameSummary, LeaderboardEntry, Material, MemberOut, Notice, PointEvent, Poll, ShopState } from "./types";
 
 const REFRESH = 30_000;
 
@@ -24,3 +24,7 @@ export const useMyEvents = (enabled: boolean) =>
   useQuery({ queryKey: ["my-events"], queryFn: () => apiGet<PointEvent[]>("/points/mine"), enabled });
 export const useGroupEvents = (enabled: boolean) =>
   useQuery({ queryKey: ["group-events"], queryFn: () => apiGet<PointEvent[]>("/points/events"), enabled });
+export const useGames = () =>
+  useQuery({ queryKey: ["games"], queryFn: () => apiGet<GameSummary[]>("/games"), refetchInterval: REFRESH });
+export const useReviewQueue = (enabled: boolean) =>
+  useQuery({ queryKey: ["games-review"], queryFn: () => apiGet<GameSummary[]>("/games/review"), enabled, refetchInterval: REFRESH });
