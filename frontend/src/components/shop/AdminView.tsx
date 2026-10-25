@@ -140,7 +140,7 @@ export default function AdminView({ me }: { me: Me }) {
       <Panel title="Ruoli" hint="Gli admin inseriscono i voti e gestiscono i ruoli." testId="admin-roles-panel" action={<Users className="size-4 text-[#8B949E]" />}>
         <ul className="space-y-2">
           {all.map((m) => (
-            <li key={m.member_id} className="flex items-center gap-3">
+            <li key={m.member_id} className="flex flex-wrap items-center gap-x-3 gap-y-2">
               <Avatar name={m.nickname} size="sm" />
               <span className="min-w-0 flex-1 truncate text-sm">
                 {m.nickname}
@@ -150,6 +150,7 @@ export default function AdminView({ me }: { me: Me }) {
               <Button
                 variant="outline"
                 size="sm"
+                className="ml-auto"
                 disabled={actions.setRole.isPending}
                 onClick={() => actions.setRole.mutate({ member_id: m.member_id, role: m.role === "admin" ? "member" : "admin" })}
                 data-testid={`role-toggle-${m.member_id}`}
