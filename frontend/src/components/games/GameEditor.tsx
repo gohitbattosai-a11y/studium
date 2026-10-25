@@ -112,14 +112,16 @@ function SortEditor({ content, onChange }: { content: GameContent; onChange: (c:
         <h3 className="text-sm font-medium">Elementi da smistare</h3>
         {items.map((it, ii) => (
           <div key={ii} className="flex items-center gap-2">
-            <Input className="h-9" value={it.text} maxLength={80} placeholder="Elemento" onChange={(e) => onChange({ ...content, sort_items: replaceAt(items, ii, { ...it, text: e.target.value }) })} data-testid={`sort-item-${ii}`} />
-            <NativeSelect className="w-40 shrink-0" value={it.category} onChange={(e) => onChange({ ...content, sort_items: replaceAt(items, ii, { ...it, category: Number(e.target.value) }) })}>
-              {cats.map((c, ci) => (
-                <option key={ci} value={ci}>
-                  {c.trim() || `Categoria ${ci + 1}`}
-                </option>
-              ))}
-            </NativeSelect>
+            <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-[1fr_10rem]">
+              <Input className="h-9" value={it.text} maxLength={80} placeholder="Elemento" onChange={(e) => onChange({ ...content, sort_items: replaceAt(items, ii, { ...it, text: e.target.value }) })} data-testid={`sort-item-${ii}`} />
+              <NativeSelect value={it.category} onChange={(e) => onChange({ ...content, sort_items: replaceAt(items, ii, { ...it, category: Number(e.target.value) }) })}>
+                {cats.map((c, ci) => (
+                  <option key={ci} value={ci}>
+                    {c.trim() || `Categoria ${ci + 1}`}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
             <Button variant="ghost" size="icon-sm" aria-label="Elimina elemento" disabled={items.length <= 2} onClick={() => onChange({ ...content, sort_items: removeAt(items, ii) })}>
               <Trash2 className="size-4 text-[#8B949E]" />
             </Button>
@@ -143,8 +145,10 @@ function PairsEditor({ template, content, onChange }: { template: GameTemplate; 
       <h3 className="text-sm font-medium">{title}</h3>
       {pairs.map((p, i) => (
         <div key={i} className="flex items-center gap-2">
-          <Input className="h-9" value={p.left} maxLength={80} placeholder={a} onChange={(e) => onChange({ ...content, pairs: replaceAt(pairs, i, { ...p, left: e.target.value }) })} data-testid={`pair-left-${i}`} />
-          <Input className="h-9" value={p.right} maxLength={80} placeholder={b} onChange={(e) => onChange({ ...content, pairs: replaceAt(pairs, i, { ...p, right: e.target.value }) })} data-testid={`pair-right-${i}`} />
+          <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2">
+            <Input className="h-9" value={p.left} maxLength={80} placeholder={a} onChange={(e) => onChange({ ...content, pairs: replaceAt(pairs, i, { ...p, left: e.target.value }) })} data-testid={`pair-left-${i}`} />
+            <Input className="h-9" value={p.right} maxLength={80} placeholder={b} onChange={(e) => onChange({ ...content, pairs: replaceAt(pairs, i, { ...p, right: e.target.value }) })} data-testid={`pair-right-${i}`} />
+          </div>
           <Button variant="ghost" size="icon-sm" aria-label="Elimina riga" disabled={pairs.length <= min} onClick={() => onChange({ ...content, pairs: removeAt(pairs, i) })}>
             <Trash2 className="size-4 text-[#8B949E]" />
           </Button>
