@@ -17,6 +17,9 @@
 .pet[data-state="walk"] .pt-tail { animation-duration: calc(0.6s * var(--pt-slow, 1)); }
 .pet[data-state="walk"] .pt-wing { animation-duration: 0.5s; }
 .pet[data-state="hop"] .pt-body { animation: pt-hop 0.6s ease-out; }
+.pet[data-state="sleep"] .pt-body { animation: pt-breathe 4.2s ease-in-out infinite; translate: 0 5px; }
+.pet[data-state="sleep"] .pt-eye { animation: none; transform: scaleY(0.12); }
+.pet[data-state="sleep"] .pt-tail, .pet[data-state="sleep"] .pt-ear, .pet[data-state="sleep"] .pt-wing { animation-play-state: paused; }
 
 @keyframes pt-breathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.035); } }
 @keyframes pt-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2.2px); } }
