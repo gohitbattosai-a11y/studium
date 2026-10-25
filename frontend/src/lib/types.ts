@@ -287,3 +287,56 @@ export interface PointsTable {
   grades: { grade: number; points: number }[];
   game_tiers: { min_percent: number; points: number }[];
 }
+
+export type Rarity = "comune" | "non_comune" | "raro" | "epico" | "leggendario";
+
+export interface SiteStatus {
+  updating: boolean;
+  update_type: string;
+  message: string;
+  features: Record<string, string>;
+}
+
+export interface BoxOdd {
+  rarity: Rarity;
+  percent: number;
+}
+
+export interface BoxInfo {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  odds: BoxOdd[];
+  guaranteed_in: number;
+}
+
+export interface PetInfo {
+  id: string;
+  name: string;
+  rarity: Rarity;
+  owned: boolean;
+  copies: number;
+  active: boolean;
+}
+
+export interface PetsState {
+  participating: boolean;
+  balance: number;
+  active_pet: string | null;
+  boxes: BoxInfo[];
+  pets: PetInfo[];
+}
+
+export interface RollResult {
+  box_id: string;
+  pet_id: string;
+  name: string;
+  rarity: Rarity;
+  is_new: boolean;
+  copies: number;
+  refund: number;
+  cost: number;
+  balance: number;
+  guaranteed_in: number;
+}
