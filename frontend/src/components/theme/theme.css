@@ -4,6 +4,8 @@
   z-index: -10;
   overflow: hidden;
   pointer-events: none;
+  contain: strict;
+  transform: translateZ(0);
 }
 
 .bgx-fill {
@@ -106,13 +108,29 @@
 }
 
 [data-background]:not([data-background="none"]) .bg-\[\#161B22\] {
-  background-color: rgb(22 27 34 / 0.74);
-  backdrop-filter: blur(6px);
+  background-color: rgb(22 27 34 / 0.88);
 }
 
-[data-background]:not([data-background="none"]) aside.bg-\[\#0D1117\] {
-  background-color: rgb(13 17 23 / 0.8);
-  backdrop-filter: blur(10px);
+@media (hover: hover) and (pointer: fine) {
+  [data-background]:not([data-background="none"]) .bg-\[\#161B22\] {
+    background-color: rgb(22 27 34 / 0.74);
+    backdrop-filter: blur(6px);
+  }
+
+  [data-background]:not([data-background="none"]) aside.bg-\[\#0D1117\] {
+    background-color: rgb(13 17 23 / 0.8);
+    backdrop-filter: blur(10px);
+  }
+}
+
+@media (max-width: 767px) {
+  .bgx-flake:nth-child(n + 17) {
+    display: none;
+  }
+
+  .bgx-ember:nth-child(n + 11) {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
