@@ -62,6 +62,26 @@
   animation: bgx-snow linear infinite;
 }
 
+.bgx-dust {
+  position: absolute;
+  border-radius: 9999px;
+  background: #ffda73;
+  box-shadow: 0 0 6px 1px rgba(255, 218, 115, 0.4);
+  opacity: 0;
+  animation: bgx-float ease-in-out infinite;
+}
+
+@keyframes bgx-float {
+  0%, 100% {
+    transform: translate(0, 0) scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: translate(var(--sway, 20px), -35px) scale(1.2);
+    opacity: 0.75;
+  }
+}
+
 @keyframes bgx-twinkle { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
 @keyframes bgx-drift { from { transform: translateX(-140px); } to { transform: translateX(140px); } }
 @keyframes bgx-fly {
