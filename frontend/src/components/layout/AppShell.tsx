@@ -85,7 +85,7 @@ export default function AppShell({ me }: { me: Me }) {
           <Eyebrow className="mb-2">Compagni</Eyebrow>
           <ul className="space-y-3" data-testid="sidebar-members">
             {(members.data ?? []).map((m) => (
-              <li key={m.nickname} className="flex items-center gap-2 text-sm text-[#C9D1D9]">
+              <li key={m.nickname} className="flex items-center gap-2.5 text-sm text-[#C9D1D9]">
                 <Avatar name={m.nickname} size="sm" />
                 <span className="truncate">{m.nickname}</span>
                 {m.nickname === me.nickname && <span className="text-xs text-[#8B949E]">(tu)</span>}
