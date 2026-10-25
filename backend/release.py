@@ -1,4 +1,4 @@
-IS_UPDATING = False
+IS_UPDATING = True
 
 UPDATE_TYPE = "pets"
 
