@@ -4,60 +4,36 @@ export const PET_LINES: Record<string, string[]> = {
     "Le mie orecchie sentono i compiti in arrivo.",
     "Un coniglio salta altissimo: tu puoi finire quel compito!",
     "Sto saltellando per fare il tifo per te.",
-    "Nelle orecchie ho solo tifo per te!",
-    "Un piccolo salto alla volta e finiamo tutto.",
-    "Ho nascosto una carota per quando finisci lo studio.",
-    "Metti a posto la scrivania e poi saltiamo di gioia!",
   ],
   gatto: [
     "Miao. Non mi serve un motivo per fissarti.",
     "Se ti siedi sulla tastiera è colpa mia, scusa.",
     "Sai che i gatti dormono 16 ore al giorno? Io sono in pausa.",
     "Ho fatto cadere un bicchiere. Per scienza.",
-    "Fai una fusa di sollievo: stai andando benissimo.",
-    "Sto facendo lo stretching pre-studio. Tu a che punto sei?",
-    "Ti osservo dall'alto del mio scaffale preferito.",
-    "Se finisci prima, mi lasci il posto caldo sedia?",
   ],
   cane: [
     "Bau! Hai fatto una pausa? Io aspetto una carezza!",
     "Sei un bravissimo studente, bravo!",
     "Pronto a riportarti la pallina... o i compiti!",
     "Ho sentito la parola 'passeggiata'? No? Peccato.",
-    "Coda scodinzolante = livello di motivazione al massimo!",
-    "Se finisci questa pagina ti porto la mia pallina preferita.",
-    "Ti sto guardando con occhi dolci: ce la farai!",
-    "Il mio fiuto dice che prenderai un bel voto.",
   ],
   tartaruga: [
     "Piano piano si arriva lontano.",
     "Le tartarughe vivono anche più di 100 anni. Ho tutto il tempo.",
     "Sto camminando da stamattina per arrivare qui.",
     "Respira con calma: i compiti non scappano... io nemmeno.",
-    "La fretta è nemica dello studio. Passo dopo passo!",
-    "Mi sto godendo ogni singolo minuto di questo studio.",
-    "Il mio guscio protegge tutte le tue idee geniali.",
-    "Un concetto alla volta e la cima si raggiunge.",
   ],
   lupo: [
     "Auuu! Il branco studia insieme.",
     "Un lupo solitario non prende bei voti. Fate gruppo!",
     "Di notte vedo meglio, ma i compiti falli di giorno.",
     "Fiuto una bella interrogazione in arrivo.",
-    "Il fiuto del lupo non sbaglia mai: hai grande potenziale.",
-    "Auuu! Questo capitolo lo superiamo insieme.",
-    "Nessun esercizio è troppo difficile per il nostro branco.",
-    "Mantieni la concentrazione: la meta è vicina.",
   ],
   drago: [
     "Ho sputato fuoco sui compiti difficili: ora sono cenere.",
     "Custodisco un tesoro: i vostri punti.",
     "Vola alto, studia meglio.",
     "Un drago non ha paura delle verifiche. Quasi.",
-    "Scalda i motori! Anzi, incendia questi esercizi!",
-    "Sulle mie ali voliamo dritti verso la sufficienza... ed oltre!",
-    "Ho bruciato le tue ansie con una fiammata.",
-    "Un vero drago si allena ogni giorno senza arrendersi.",
   ],
 };
 
@@ -72,31 +48,32 @@ export const GENERIC_LINES = [
   "Fai un respiro profondo. Ce la fai!",
   "Sapevi che il miele non scade mai?",
   "I polpi hanno tre cuori. Io ne ho uno solo, ma enorme.",
-  "Stacca gli occhi dallo schermo per 20 secondi e guarda lontano.",
-  "Sorridi! Sei più vicino al traguardo di quanto pensi.",
-  "Una mente riposata memorizza il doppio delle cose.",
-  "Hai fatto caso alla luce della stanza? Non studiare al buio!",
-  "Sapevi che le banane sono botanicamente delle bacche?",
-  "Scrivere gli appunti a mano aiuta a fissare meglio i concetti.",
-  "Mettere ordine sulla scrivania aiuta a mettere ordine nella testa.",
-  "Organizza le cose da fare: spuntare una lista dà grande soddisfazione!",
-  "La curiosità è il motore di ogni grande scoperta.",
-  "Ricordati di fare qualche passo per sgranchirti le gambe.",
-  "Sapevi che le mucche hanno migliori amiche e si stressano se divise?",
-  "Nessuno sa tutto, l'importante è continuare a chiedere.",
-  "Un errore è solo il primo passo per capire meglio.",
-  "Ascolta la tua canzone preferita durante la pausa!",
-  "Dividi i compiti grandi in tanti piccoli passi facili.",
-  "Sapevi che le lontre si tengono per mano mentre dormono per non andare alla deriva?",
-  "Visualizza il tuo obiettivo e dai il massimo!",
-  "Mangia uno snack sano per ricaricare le energie.",
-  "Anche i più grandi geni hanno iniziato da zero.",
-  "Complimenti per l'impegno che ci stai mettendo oggi!",
 ];
 
-export const greeting = (hour: number, nick: string): string => {
+export const greeting = (hour: number, nick: string) => {
   if (hour < 6) return `${nick}, è tardi! Un po' di riposo?`;
   if (hour < 12) return `Buongiorno ${nick}!`;
   if (hour < 18) return `Buon pomeriggio ${nick}!`;
   return `Buonasera ${nick}!`;
 };
+
+export const ADVICE = [
+  "Consiglio: studia 25 minuti e riposa 5. Funziona!",
+  "Consiglio: ripeti ad alta voce, così ricordi meglio.",
+  "Consiglio: inizia dalla materia che ti piace meno, poi sarà tutto in discesa.",
+  "Consiglio: spegni le notifiche mentre studi, ti faccio io la guardia.",
+  "Consiglio: dormi bene prima di una verifica, vale più di un'ora di ripasso.",
+  "Consiglio: dividi un compito grande in tre piccoli passi.",
+  "Consiglio: spiega l'argomento a qualcuno, anche a me. Io ascolto!",
+  "Consiglio: fai gli esercizi difficili quando sei riposato.",
+  "Consiglio: scrivi a mano i concetti chiave, restano più impressi.",
+  "Consiglio: premiati dopo aver finito: te lo sei meritato!",
+];
+
+export const LOOK_LINES = [
+  "Ehi, ti vedo! Cosa stai facendo col mouse?",
+  "Ti seguo con lo sguardo... non scappare!",
+  "Eccomi! Sono venuto a vedere cosa fai.",
+  "Cosa clicchi di bello?",
+  "Che c'è là? Ho visto qualcosa muoversi.",
+];
