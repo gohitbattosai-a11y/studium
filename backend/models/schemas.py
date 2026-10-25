@@ -332,3 +332,65 @@ class TierRow(BaseModel):
 class PointsTable(BaseModel):
     grades: List[GradeRow]
     game_tiers: List[TierRow]
+
+
+Rarity = Literal["comune", "non_comune", "raro", "epico", "leggendario"]
+
+
+class SiteStatus(BaseModel):
+    updating: bool
+    update_type: str
+    message: str
+    features: dict[str, str]
+
+
+class BoxOdd(BaseModel):
+    rarity: Rarity
+    percent: int
+
+
+class BoxInfo(BaseModel):
+    id: str
+    name: str
+    description: str
+    price: int
+    odds: List[BoxOdd]
+    guaranteed_in: int
+
+
+class PetInfo(BaseModel):
+    id: str
+    name: str
+    rarity: Rarity
+    owned: bool
+    copies: int
+    active: bool
+
+
+class PetsState(BaseModel):
+    participating: bool
+    balance: int
+    active_pet: Optional[str] = None
+    boxes: List[BoxInfo]
+    pets: List[PetInfo]
+
+
+class RollRequest(BaseModel):
+    box_id: str
+
+
+class ActivePetRequest(BaseModel):
+    pet_id: Optional[str] = None
+
+
+class RollResult(BaseModel):
+    box_id: str
+    pet_id: str
+    name: str
+    rarity: Rarity
+    is_new: bool
+    copies: int
+    refund: int
+    cost: int
+    balance: int
+    guaranteed_in: int
