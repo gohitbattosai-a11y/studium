@@ -12,7 +12,7 @@ import { BoxArt } from "./BoxArt";
 import GachaOpening from "./GachaOpening";
 import { PetSprite } from "./PetSprite";
 import { RARITY } from "./rarity";
-import { setPetSettings, usePetSettings, type Chatter } from "./petSettings";
+import { setPetSettings, usePetSettings, type Chatter, type PetArea, type PetSize } from "./petSettings";
 
 function BoxCard({ box, balance, onOpen }: { box: BoxInfo; balance: number; onOpen: () => void }) {
   const missing = box.price - balance;
@@ -93,7 +93,7 @@ function Settings() {
   return (
     <Panel title="Il tuo compagno" hint="Queste impostazioni valgono solo su questo dispositivo." testId="pet-settings">
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-sm sm:col-span-2">
           <input type="checkbox" className="size-4 accent-[#388BFD]" checked={settings.visible} onChange={(e) => setPetSettings({ visible: e.target.checked })} data-testid="pet-visible" />
           Mostra il pet mentre uso il sito
         </label>
@@ -102,6 +102,19 @@ function Settings() {
             <option value="tanto">Chiacchierone</option>
             <option value="normale">Normale</option>
             <option value="muto">Silenzioso</option>
+          </NativeSelect>
+        </Field>
+        <Field label="Dove cammina">
+          <NativeSelect value={settings.area} onChange={(e) => setPetSettings({ area: e.target.value as PetArea })} data-testid="pet-area">
+            <option value="tutto">Su tutto lo schermo</option>
+            <option value="basso">Solo in basso</option>
+          </NativeSelect>
+        </Field>
+        <Field label="Dimensione">
+          <NativeSelect value={settings.size} onChange={(e) => setPetSettings({ size: e.target.value as PetSize })} data-testid="pet-size">
+            <option value="piccolo">Piccolo</option>
+            <option value="normale">Normale</option>
+            <option value="grande">Grande</option>
           </NativeSelect>
         </Field>
       </div>
