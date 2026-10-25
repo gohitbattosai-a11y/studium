@@ -2,8 +2,6 @@ import { useEffect, useRef, useSyncExternalStore, type CSSProperties, type React
 import type { BackgroundId } from "@/lib/theme";
 import "./theme.css";
 
-export type BackgroundId = "halloween" | "natale" | "biblioteca";
-
 const PORTRAIT = "(max-aspect-ratio: 1/1)";
 
 const subscribePortrait = (notify: () => void) => {
@@ -710,7 +708,7 @@ function LibraryScene() {
         {DUST.map((d, i) => (
           <span 
             key={i} 
-            className="bgx-ember" 
+            className="bgx-dust" 
             style={{ 
               left: `${d.left}%`, 
               top: `${d.top}%`, 
@@ -763,7 +761,7 @@ export default function ThemeBackground({ id }: { id: BackgroundId }) {
 
   return (
     <div ref={ref} className="bgx" aria-hidden>
-      {id === "halloween" ? <HalloweenScene /> : id === "natale" ? <ChristmasScene /> : <LibraryScene />}
+      {id === "halloween" ? <HalloweenScene /> : id === "natale" ? <ChristmasScene /> : id === "biblioteca" ? <LibraryScene /> : null}
     </div>
   );
 }
