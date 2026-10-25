@@ -2,7 +2,7 @@ import type { ComponentType, CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 import "./pets.css";
 
-export type PetState = "idle" | "walk" | "hop";
+export type PetState = "idle" | "walk" | "hop" | "sleep";
 
 function Leg({ x, y = 58, h = 13, w = 6, color, foot, group }: { x: number; y?: number; h?: number; w?: number; color: string; foot?: string; group: "a" | "b" }) {
   return (
