@@ -106,6 +106,14 @@ ITEMS: list[dict] = [
         "window": ("10-15", "11-02"),
     },
     {
+        "id": "biblioteca",
+        "kind": "background",
+        "name": "Biblioteca notturna",
+        "description": "Scaffali di libri, lampada da tavolo accesa e cielo stellato.",
+        "price": 60,
+        "window": None,
+    },
+    {
         "id": "natale",
         "kind": "background",
         "name": "Notte di Natale",
