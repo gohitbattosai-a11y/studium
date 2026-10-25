@@ -2,6 +2,8 @@ import { useEffect, useRef, useSyncExternalStore, type CSSProperties, type React
 import type { BackgroundId } from "@/lib/theme";
 import "./theme.css";
 
+export type BackgroundId = "halloween" | "natale" | "biblioteca";
+
 const PORTRAIT = "(max-aspect-ratio: 1/1)";
 
 const subscribePortrait = (notify: () => void) => {
@@ -54,6 +56,14 @@ const SNOW_NEAR = Array.from({ length: 22 }, () => ({
   delay: -rand() * 13,
   sway: (rand() - 0.5) * 140,
   op: 0.75 + rand() * 0.2,
+}));
+
+const DUST = Array.from({ length: 25 }, () => ({
+  left: 55 + rand() * 35,
+  top: 40 + rand() * 30,
+  size: 1.5 + rand() * 2,
+  dur: 4 + rand() * 3,
+  delay: -rand() * 5,
 }));
 
 const BAT = "M0 -4 C-6 -14 -18 -16 -30 -8 C-24 -8 -20 -4 -18 2 C-14 -2 -10 -1 -8 4 C-5 1 -2 2 0 8 C2 2 5 1 8 4 C10 -1 14 -2 18 2 C20 -4 24 -8 30 -8 C18 -16 6 -14 0 -4 Z";
@@ -635,8 +645,96 @@ function ChristmasScene() {
   );
 }
 
+function LibraryScene() {
+  return (
+    <>
+      <div className="bgx-fill" style={{ background: "linear-gradient(180deg, #090612 0%, #171126 50%, #201732 100%)" }} />
+      
+      <Layer depth={2}>
+        <Stars />
+      </Layer>
+
+      <Layer depth={5}>
+        <Svg sky>
+          <rect x="550" y="50" width="420" height="550" fill="#120c1f" stroke="#251a38" strokeWidth="2" />
+          {Array.from({ length: 3 }).map((_, r) => (
+            <g key={r} transform={`translate(550, ${150 + r * 140})`}>
+              <rect x="0" y="0" width="420" height="12" fill="#1f1630" />
+              {Array.from({ length: 12 }).map((__, b) => {
+                const bw = 18 + ((b * 7) % 15);
+                const bh = 70 + ((b * 13) % 40);
+                const bx = 15 + b * 33;
+                const colors = ["#2d2242", "#3a2a52", "#241b36", "#45325c", "#1d152b"];
+                return <rect key={b} x={bx} y={12 - bh} width={bw} height={bh} fill={colors[b % colors.length]} rx="2" />;
+              })}
+            </g>
+          ))}
+        </Svg>
+      </Layer>
+
+      <Layer depth={12}>
+        <Svg>
+          <defs>
+            <radialGradient id="lib-lamp-glow" cx="0.5" cy="0.3" r="0.7">
+              <stop offset="0" stopColor="#ffda73" stopOpacity="0.7" />
+              <stop offset="0.5" stopColor="#ffb347" stopOpacity="0.3" />
+              <stop offset="1" stopColor="#ffb347" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <ellipse cx="760" cy="350" rx="220" ry="180" fill="url(#lib-lamp-glow)" className="bgx-flicker" />
+          
+          <path d="M450 680 L1150 640 L1250 900 L350 900 Z" fill="#181026" />
+          <path d="M420 660 L1200 660 L1240 700 L380 700 Z" fill="#2d1e3e" />
+          
+          <g transform="translate(730 550)">
+            <ellipse cx="0" cy="115" rx="35" ry="10" fill="#0d0814" />
+            <path d="M-12 110 C-12 70 15 60 15 25 C15 5 -10 -5 -10 -25 L10 -25 C10 -10 25 0 25 30 C25 65 -5 75 -5 110 Z" fill="#26222b" />
+            <path d="M-22 -28 L22 -28 L15 -45 L-15 -45 Z" fill="#1c1920" />
+            <path d="M-35 -45 L35 -45 L20 -70 L-20 -70 Z" fill="#ffda73" className="bgx-flicker" />
+          </g>
+
+          <g transform="translate(480 620)">
+            <rect x="0" y="0" width="160" height="25" fill="#251a38" rx="3" />
+            <rect x="5" y="-22" width="150" height="24" fill="#322247" rx="3" />
+            <rect x="10" y="-40" width="140" height="20" fill="#1c142b" rx="2" />
+          </g>
+
+          <g transform="translate(980 600)">
+            <rect x="0" y="0" width="150" height="22" fill="#251a38" rx="2" />
+            <rect x="8" y="-18" width="134" height="20" fill="#3b2b52" rx="2" />
+          </g>
+        </Svg>
+      </Layer>
+
+      <Layer depth={20}>
+        {DUST.map((d, i) => (
+          <span 
+            key={i} 
+            className="bgx-ember" 
+            style={{ 
+              left: `${d.left}%`, 
+              top: `${d.top}%`, 
+              width: d.size, 
+              height: d.size, 
+              animationDuration: `${d.dur}s`, 
+              animationDelay: `${d.delay}s`, 
+              "--sway": "30px" 
+            } as CSSProperties} 
+          />
+        ))}
+      </Layer>
+
+      <Vignette />
+    </>
+  );
+}
+
 export function BackgroundPreview({ id }: { id: BackgroundId }) {
-  return <div className="bgx-fill">{id === "halloween" ? <HalloweenScene /> : id === "natale" ? <ChristmasScene /> : null}</div>;
+  return (
+    <div className="bgx-fill">
+      {id === "halloween" ? <HalloweenScene /> : id === "natale" ? <ChristmasScene /> : id === "biblioteca" ? <LibraryScene /> : null}
+    </div>
+  );
 }
 
 export default function ThemeBackground({ id }: { id: BackgroundId }) {
@@ -665,7 +763,7 @@ export default function ThemeBackground({ id }: { id: BackgroundId }) {
 
   return (
     <div ref={ref} className="bgx" aria-hidden>
-      {id === "halloween" ? <HalloweenScene /> : <ChristmasScene />}
+      {id === "halloween" ? <HalloweenScene /> : id === "natale" ? <ChristmasScene /> : <LibraryScene />}
     </div>
   );
 }
