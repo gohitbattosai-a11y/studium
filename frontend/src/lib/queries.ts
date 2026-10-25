@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiGet } from "./api";
-import type { Folder, Homework, GameSummary, LeaderboardEntry, Material, MemberOut, Notice, PointEvent, PointsTable, Poll, ShopState } from "./types";
+import type { Folder, Homework, GameSummary, LeaderboardEntry, Material, MemberOut, Notice, PetsState, PointEvent, PointsTable, Poll, ShopState, SiteStatus } from "./types";
 
 const REFRESH = 30_000;
 
@@ -30,3 +30,7 @@ export const useReviewQueue = (enabled: boolean) =>
   useQuery({ queryKey: ["games-review"], queryFn: () => apiGet<GameSummary[]>("/games/review"), enabled, refetchInterval: REFRESH });
 export const usePointsTable = () =>
   useQuery({ queryKey: ["points-table"], queryFn: () => apiGet<PointsTable>("/points/table"), staleTime: 10 * 60 * 1000 });
+export const useStatus = () =>
+  useQuery({ queryKey: ["status"], queryFn: () => apiGet<SiteStatus>("/status"), refetchInterval: 15_000, retry: false });
+export const usePets = (enabled: boolean) =>
+  useQuery({ queryKey: ["pets"], queryFn: () => apiGet<PetsState>("/pets"), enabled, refetchInterval: REFRESH });
