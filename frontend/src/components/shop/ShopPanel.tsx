@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Check, Clock, Coins, Lock, ShoppingBag, Sparkles, Trophy } from "lucide-react";
-import { useMyEvents, useShop } from "@/lib/queries";
+import { useMyEvents, useShop, useStatus } from "@/lib/queries";
+import { featureOpen, featureStage } from "@/lib/release";
 import { useShopActions } from "@/lib/shopActions";
 import { avatarTone, initials, relTime } from "@/lib/format";
 import { isBackgroundId } from "@/lib/theme";
@@ -13,8 +14,9 @@ import { AvatarDecoration } from "./decorations";
 import AdminView from "./AdminView";
 import LeaderboardView from "./LeaderboardView";
 import { Panel } from "./ui";
+import PetsView from "@/components/pets/PetsView";
 
-type View = "shop" | "classifica" | "gestione";
+type View = "shop" | "pet" | "classifica" | "gestione";
 type Actions = ReturnType<typeof useShopActions>;
 
 function DecorationPreview({ id, name }: { id: string; name: string }) {
@@ -197,20 +199,26 @@ function OptIn({ actions }: { actions: Actions }) {
 
 export default function ShopPanel({ me }: { me: Me }) {
   const shop = useShop();
+  const status = useStatus();
   const actions = useShopActions();
   const [view, setView] = useState<View>("shop");
 
   const isAdmin = (shop.data?.role ?? me.role) === "admin";
-  const current: View = view === "gestione" && !isAdmin ? "shop" : view;
+  const role = shop.data?.role ?? me.role;
+  const petsOpen = featureOpen(status.data, "pets", role);
+  const petsBeta = featureStage(status.data, "pets") === "admins";
+  const current: View = (view === "gestione" && !isAdmin) || (view === "pet" && !petsOpen) ? "shop" : view;
 
   const options: { value: View; label: string }[] = [
     { value: "shop", label: "Shop" },
+    ...(petsOpen ? [{ value: "pet" as View, label: petsBeta ? "Pet (beta)" : "Pet" }] : []),
     { value: "classifica", label: "Classifica" },
     ...(isAdmin ? [{ value: "gestione" as View, label: "Gestione" }] : []),
   ];
 
   let body;
   if (current === "classifica") body = <LeaderboardView />;
+  else if (current === "pet") body = <PetsView />;
   else if (current === "gestione") body = <AdminView me={me} />;
   else if (shop.isPending) body = <SkeletonList rows={3} />;
   else if (shop.isError) body = <LoadError testId="shop-error" />;
