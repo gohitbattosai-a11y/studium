@@ -109,7 +109,7 @@ export default function Overview({ me, onNavigate }: { me: Me; onNavigate: (t: T
           ) : (
             <ul className="space-y-3">
               {latestNotices.map((n) => (
-                <li key={n.id} className="flex gap-3">
+                <li key={n.id} className="flex items-center gap-3">
                   <Avatar name={n.author} size="sm" />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{n.title}</p>
