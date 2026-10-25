@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { BarChart3, BookOpen, FolderOpen, Gamepad2, LayoutGrid, LogOut, Megaphone, ShieldCheck, ShoppingBag, Users } from "lucide-react";
-import type { Me } from "@/lib/types";
+import type { Me, SiteStatus } from "@/lib/types";
 import { endSession } from "@/lib/session";
-import { useMembers, useShop } from "@/lib/queries";
+import { useMembers, usePets, useShop } from "@/lib/queries";
+import { featureOpen } from "@/lib/release";
 import { useShopActions } from "@/lib/shopActions";
 import { isBackgroundId, type BackgroundId } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -11,6 +12,9 @@ import ThemeBackground from "@/components/theme/ThemeBackground";
 import ThemePicker from "@/components/theme/ThemePicker";
 import { DecorationDefs } from "@/components/shop/decorations";
 import ShopPanel from "@/components/shop/ShopPanel";
+import StatusBanner from "@/components/release/StatusBanner";
+import PetCompanion from "@/components/pets/PetCompanion";
+import { usePetSettings } from "@/components/pets/petSettings";
 import GamesPanel from "@/components/games/GamesPanel";
 import Overview from "@/components/Overview";
 import HomeworkPanel from "@/components/agenda/HomeworkPanel";
@@ -30,10 +34,13 @@ const NAV: { id: Tab; label: string; icon: typeof BookOpen }[] = [
   { id: "shop", label: "Shop", icon: ShoppingBag },
 ];
 
-export default function AppShell({ me }: { me: Me }) {
+export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }) {
   const [tab, setTab] = useState<Tab>("home");
   const members = useMembers();
   const shop = useShop();
+  const petsOpen = featureOpen(status, "pets", me.role);
+  const pets = usePets(petsOpen);
+  const petSettings = usePetSettings();
   const { equip } = useShopActions();
   const equipped = shop.data?.equipped_background;
   const background: BackgroundId = isBackgroundId(equipped) ? equipped : "none";
@@ -51,6 +58,7 @@ export default function AppShell({ me }: { me: Me }) {
   return (
     <div className="relative isolate min-h-dvh md:flex" data-background={background}>
       <DecorationDefs />
+      {petsOpen && petSettings.visible && pets.data?.active_pet && <PetCompanion key={pets.data.active_pet} petId={pets.data.active_pet} me={me} />}
       <ThemeBackground id={background} />
       <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-[#30363D] bg-[#0D1117] md:flex" data-testid="sidebar">
         <div className="flex h-14 items-center gap-2.5 px-5">
@@ -135,6 +143,9 @@ export default function AppShell({ me }: { me: Me }) {
         </header>
 
         <main className="mx-auto max-w-6xl px-4 pt-5 pb-28 md:px-8 md:pt-8 md:pb-12">
+          <div className="mb-4 empty:hidden">
+            <StatusBanner status={status} />
+          </div>
           <div className={panel("home")} data-testid="panel-home">
             <Overview me={me} onNavigate={go} />
           </div>
