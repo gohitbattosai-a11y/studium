@@ -2,13 +2,18 @@ import { useSyncExternalStore } from "react";
 
 export type Chatter = "tanto" | "normale" | "muto";
 
+export type PetArea = "tutto" | "basso";
+export type PetSize = "piccolo" | "normale" | "grande";
+
 export interface PetSettings {
   visible: boolean;
   chatter: Chatter;
+  area: PetArea;
+  size: PetSize;
 }
 
 const KEY = "studium:pet:settings";
-const DEFAULTS: PetSettings = { visible: true, chatter: "normale" };
+const DEFAULTS: PetSettings = { visible: true, chatter: "normale", area: "tutto", size: "normale" };
 
 const read = (): PetSettings => {
   try {
