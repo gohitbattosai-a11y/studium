@@ -85,7 +85,7 @@ export default function EnginePlayer({ game, onFinish }: { game: GameOut; onFini
 
   return (
     <div className="space-y-4" data-testid="player-engine">
-      <div className="flex items-center justify-between gap-3 text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-sm">
         <span className="text-[#8B949E]">
           Sfida {Math.min(answered + (phase === "ask" && block.kind !== "info" ? 1 : 0), total)}/{total}
         </span>
