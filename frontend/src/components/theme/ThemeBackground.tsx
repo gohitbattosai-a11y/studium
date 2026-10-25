@@ -1,6 +1,16 @@
-import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import type { BackgroundId } from "@/lib/theme";
 import "./theme.css";
+
+const PORTRAIT = "(max-aspect-ratio: 1/1)";
+
+const subscribePortrait = (notify: () => void) => {
+  const query = window.matchMedia(PORTRAIT);
+  query.addEventListener("change", notify);
+  return () => query.removeEventListener("change", notify);
+};
+
+const usePortrait = () => useSyncExternalStore(subscribePortrait, () => window.matchMedia(PORTRAIT).matches, () => false);
 
 const rng = (seed: number) => {
   let s = seed;
@@ -93,9 +103,17 @@ function Layer({ depth = 0, children }: { depth?: number; children: ReactNode })
   );
 }
 
-function Svg({ children }: { children: ReactNode }) {
+function Svg({ children, sky = false }: { children: ReactNode; sky?: boolean }) {
+  const portrait = usePortrait();
+  if (!portrait) {
+    return (
+      <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice" aria-hidden>
+        {children}
+      </svg>
+    );
+  }
   return (
-    <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice" aria-hidden>
+    <svg viewBox={sky ? "400 -150 800 1050" : "400 0 800 1000"} preserveAspectRatio={sky ? "xMidYMin meet" : "xMidYMax meet"} aria-hidden>
       {children}
     </svg>
   );
@@ -103,7 +121,7 @@ function Svg({ children }: { children: ReactNode }) {
 
 function Stars() {
   return (
-    <Svg>
+    <Svg sky>
       {STARS.map((s, i) => (
         <circle key={i} cx={s.x} cy={s.y} r={s.r} fill="#ffffff" className="bgx-twinkle" style={{ animationDelay: `${s.d}s`, animationDuration: `${s.t}s` }} />
       ))}
@@ -222,7 +240,7 @@ function HalloweenScene() {
         <Stars />
       </Layer>
       <Layer depth={5}>
-        <Svg>
+        <Svg sky>
           <defs>
             <radialGradient id="hw-moon" cx="0.4" cy="0.38" r="0.7">
               <stop offset="0" stopColor="#fff4cf" />
@@ -273,7 +291,7 @@ function HalloweenScene() {
         </Svg>
       </Layer>
       <Layer depth={8}>
-        <Svg>
+        <Svg sky>
           <g className="bgx-drift" style={{ animationDuration: "38s" }}>
             <ellipse cx="640" cy="360" rx="240" ry="22" fill="#1d0c35" opacity="0.75" />
             <ellipse cx="720" cy="346" rx="150" ry="18" fill="#1d0c35" opacity="0.75" />
@@ -299,13 +317,13 @@ function HalloweenScene() {
               </feMerge>
             </filter>
           </defs>
-          <path d="M0 690 C220 640 420 650 620 676 C820 702 1000 650 1240 648 C1400 646 1500 676 1600 664 L1600 900 L0 900 Z" fill="url(#hw-hill)" />
+          <path d="M0 690 C220 640 420 650 620 676 C820 702 1000 650 1240 648 C1400 646 1500 676 1600 664 L1600 1100 L0 1100 Z" fill="url(#hw-hill)" />
           <HauntedHouse x={640} y={690} />
         </Svg>
       </Layer>
       <Layer depth={14}>
         <Svg>
-          <path d="M0 760 C300 730 600 770 900 750 C1200 730 1400 760 1600 745 L1600 900 L0 900 Z" fill="#0f0719" />
+          <path d="M0 760 C300 730 600 770 900 750 C1200 730 1400 760 1600 745 L1600 1100 L0 1100 Z" fill="#0f0719" />
           <DeadTree x={250} y={772} s={1.2} />
           <DeadTree x={1390} y={762} s={1.3} />
           <DeadTree x={975} y={752} s={0.85} />
@@ -339,7 +357,7 @@ function HalloweenScene() {
         </Svg>
       </Layer>
       <Layer depth={22}>
-        <Svg>
+        <Svg sky>
           <Bat y={120} s={1.3} dur={16} delay={-3} />
           <Bat y={210} s={0.9} dur={22} delay={-9} />
           <Bat y={310} s={1.1} dur={13} delay={-1} />
@@ -449,7 +467,7 @@ function ChristmasScene() {
         <Stars />
       </Layer>
       <Layer depth={3}>
-        <Svg>
+        <Svg sky>
           <defs>
             <radialGradient id="xm-aur1">
               <stop offset="0" stopColor="#4cffb0" stopOpacity="0.35" />
@@ -474,7 +492,7 @@ function ChristmasScene() {
         </Svg>
       </Layer>
       <Layer depth={5}>
-        <Svg>
+        <Svg sky>
           <defs>
             <linearGradient id="xm-text" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0" stopColor="#ffffff" />
@@ -515,7 +533,7 @@ function ChristmasScene() {
               <stop offset="1" stopColor="#1a2f55" />
             </linearGradient>
           </defs>
-          <path d="M0 640 L180 470 L300 560 L470 400 L640 580 L760 500 L900 600 L1100 430 L1290 590 L1420 500 L1600 620 L1600 900 L0 900 Z" fill="url(#xm-mount)" />
+          <path d="M0 640 L180 470 L300 560 L470 400 L640 580 L760 500 L900 600 L1100 430 L1290 590 L1420 500 L1600 620 L1600 1100 L0 1100 Z" fill="url(#xm-mount)" />
           {[
             [180, 470],
             [470, 400],
@@ -539,7 +557,7 @@ function ChristmasScene() {
               <stop offset="1" stopColor="#ffc857" stopOpacity="0" />
             </radialGradient>
           </defs>
-          <path d="M0 700 C260 650 520 690 800 680 C1100 670 1350 640 1600 690 L1600 900 L0 900 Z" fill="url(#xm-hill)" />
+          <path d="M0 700 C260 650 520 690 800 680 C1100 670 1350 640 1600 690 L1600 1100 L0 1100 Z" fill="url(#xm-hill)" />
           <Pine x={120} y={700} s={1.1} />
           <Pine x={250} y={712} s={0.8} />
           <Pine x={430} y={704} s={0.7} />
@@ -599,7 +617,7 @@ function ChristmasScene() {
       </Layer>
       <Layer depth={26}>
         <Svg>
-          <path d="M0 850 C300 820 600 860 900 840 C1200 820 1400 850 1600 835 L1600 900 L0 900 Z" fill="#f4f9ff" />
+          <path d="M0 850 C300 820 600 860 900 840 C1200 820 1400 850 1600 835 L1600 1100 L0 1100 Z" fill="#f4f9ff" />
         </Svg>
       </Layer>
       <Layer depth={14}>
@@ -627,7 +645,7 @@ export default function ThemeBackground({ id }: { id: BackgroundId }) {
   useEffect(() => {
     const el = ref.current;
     if (!el || id === "none") return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce), (pointer: coarse)").matches) return;
     let raf = 0;
     const onMove = (e: PointerEvent) => {
       cancelAnimationFrame(raf);
