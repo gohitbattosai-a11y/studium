@@ -23,7 +23,7 @@ async def main() -> None:
         poll_ids = [p["id"] for p in await db.polls.find({"group_id": gid}).to_list(1000)]
         await db.sessions.delete_many({"member_id": {"$in": member_ids}})
         await db.poll_votes.delete_many({"poll_id": {"$in": poll_ids}})
-        for coll in ("members", "homework", "polls", "folders", "materials", "files", "notices", "point_events", "purchases"):
+        for coll in ("members", "homework", "polls", "folders", "materials", "files", "notices", "point_events", "purchases", "member_pets"):
             await db[coll].delete_many({"group_id": gid})
         await db.groups.delete_one({"id": gid})
 
