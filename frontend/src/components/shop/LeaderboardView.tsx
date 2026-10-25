@@ -20,7 +20,7 @@ export default function LeaderboardView() {
       {board.data.map((e) => (
         <li
           key={e.member_id}
-          className={cn("flex items-center gap-4 rounded-lg border bg-[#161B22] px-4 py-3.5", e.is_me ? "border-[#388BFD]/50" : "border-[#30363D]")}
+          className={cn("flex items-center gap-3 rounded-lg border bg-[#161B22] px-3 py-3 sm:gap-4 sm:px-4 sm:py-3.5", e.is_me ? "border-[#388BFD]/50" : "border-[#30363D]")}
           data-testid={`leaderboard-row-${e.member_id}`}
         >
           <span className={cn("grid size-8 shrink-0 place-items-center rounded-full border text-sm font-semibold", PODIUM[e.rank - 1] ?? "border-[#30363D] bg-[#21262D] text-[#8B949E]")}>{e.rank}</span>
