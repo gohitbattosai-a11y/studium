@@ -20,17 +20,15 @@ export function Avatar({ name, size = "md", decoration }: { name: string; size?:
   const members = useMembers();
   const deco = decoration !== undefined ? decoration : (members.data?.find((m) => m.nickname === name)?.decoration ?? null);
   return (
-    <span className="relative inline-flex shrink-0">
-      <span
-        className={cn(
-          "inline-grid shrink-0 place-items-center rounded-full font-semibold",
-          size === "sm" ? "size-6 text-[10px]" : "size-8 text-xs",
-          avatarTone(name),
-        )}
-        aria-hidden
-      >
-        {initials(name)}
-      </span>
+    <span
+      className={cn(
+        "relative mx-1 inline-grid shrink-0 place-items-center rounded-full font-semibold",
+        size === "sm" ? "size-6 text-[10px]" : "size-8 text-xs",
+        avatarTone(name),
+      )}
+      aria-hidden
+    >
+      {initials(name)}
       <AvatarDecoration id={deco} />
     </span>
   );
