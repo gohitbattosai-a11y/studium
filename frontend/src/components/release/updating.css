@@ -1,0 +1,19 @@
+.upd-gear { animation: upd-spin 6s linear infinite; }
+.upd-gear-rev { animation: upd-spin 5s linear infinite reverse; }
+.upd-bar-fill { animation: upd-slide 1.6s ease-in-out infinite; }
+.upd-glow {
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(56, 139, 253, 0.18), rgba(56, 139, 253, 0) 65%);
+  animation: upd-pulse 4s ease-in-out infinite;
+}
+
+@keyframes upd-spin { to { transform: rotate(360deg); } }
+@keyframes upd-slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(300%); } }
+@keyframes upd-pulse { 0%, 100% { opacity: 0.6; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.05); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .upd-gear, .upd-gear-rev, .upd-bar-fill, .upd-glow { animation: none; }
+}

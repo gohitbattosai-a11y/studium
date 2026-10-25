@@ -1,0 +1,51 @@
+.gc-stage { position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; overflow: hidden; background: radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--gc-color) 22%, #05070b) 0%, #05070b 70%); }
+.gc-stage[data-phase="burst"], .gc-stage[data-phase="reveal"][data-rarity="leggendario"] { animation: gc-quake 0.5s ease-out; }
+.gc-aura { position: absolute; width: 380px; height: 380px; border-radius: 9999px; background: radial-gradient(circle, color-mix(in srgb, var(--gc-color) 55%, transparent), transparent 68%); opacity: 0.35; animation: gc-aura 1.2s ease-in-out infinite alternate; }
+.gc-stage[data-phase="shake"] .gc-aura { animation: gc-aura-grow 1.9s ease-in forwards; }
+.gc-rays { position: absolute; width: 150vmax; height: 150vmax; opacity: 0; background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--gc-color) 55%, transparent) 0deg 5deg, transparent 5deg 18deg); -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 62%); mask-image: radial-gradient(circle, #000 0%, transparent 62%); }
+.gc-stage[data-phase="burst"] .gc-rays, .gc-stage[data-phase="reveal"] .gc-rays { opacity: 0.55; animation: gc-rays 22s linear infinite, gc-fade-in 0.6s ease-out; }
+.gc-box { position: relative; width: 190px; height: 180px; }
+.gc-stage[data-phase="shake"] .gc-box { animation: gc-shake 0.42s ease-in-out infinite, gc-grow 1.9s ease-in forwards; }
+.gc-stage[data-phase="intro"] .gc-box { animation: gc-float 2.2s ease-in-out infinite alternate; }
+.gc-box .gc-lid { transform-box: view-box; transform-origin: 30px 62px; }
+.gc-stage[data-phase="burst"] .gc-lid, .gc-stage[data-phase="reveal"] .gc-lid { animation: gc-lid-pop 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) forwards; }
+.gc-stage[data-phase="burst"] .gc-body, .gc-stage[data-phase="reveal"] .gc-body { transform-box: view-box; transform-origin: 80px 130px; animation: gc-body-drop 0.9s ease-out forwards; }
+.gc-leak { opacity: 0; }
+.gc-stage[data-phase="shake"] .gc-leak { animation: gc-leak 1.9s ease-in forwards; }
+.gc-beam { opacity: 0; transform-box: view-box; transform-origin: 80px 62px; }
+.gc-stage[data-phase="burst"] .gc-beam, .gc-stage[data-phase="reveal"] .gc-beam { animation: gc-beam 1.1s ease-out forwards; }
+.box-float { animation: gc-float 2.6s ease-in-out infinite alternate; }
+.gc-flash { position: absolute; inset: 0; background: #ffffff; opacity: 0; pointer-events: none; }
+.gc-stage[data-phase="burst"] .gc-flash { animation: gc-flash 0.9s ease-out; }
+.gc-particle { position: absolute; left: 50%; top: 50%; border-radius: 9999px; opacity: 0; }
+.gc-stage[data-phase="burst"] .gc-particle, .gc-stage[data-phase="reveal"] .gc-particle { animation: gc-particle 1.5s cubic-bezier(0.1, 0.8, 0.3, 1) forwards; }
+.gc-shock { position: absolute; width: 220px; height: 220px; border-radius: 9999px; border: 3px solid var(--gc-color); opacity: 0; }
+.gc-stage[data-phase="burst"] .gc-shock, .gc-stage[data-phase="reveal"] .gc-shock { animation: gc-shock 1.1s ease-out forwards; }
+.gc-card { animation: gc-pop 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+.gc-card .gc-pet { animation: gc-float 1.8s ease-in-out infinite alternate; }
+.gc-label { background: linear-gradient(100deg, var(--gc-color) 20%, #ffffff 45%, var(--gc-color) 70%); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: gc-shimmer 2.4s linear infinite; }
+.gc-sparkle { animation: gc-twinkle 1.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+
+@keyframes gc-shake { 0%, 100% { transform: translate(0, 0) rotate(0deg); } 20% { transform: translate(-4px, 0) rotate(-4deg); } 40% { transform: translate(4px, -3px) rotate(4deg); } 60% { transform: translate(-3px, 2px) rotate(-3deg); } 80% { transform: translate(3px, 0) rotate(3deg); } }
+@keyframes gc-grow { from { scale: 1; } to { scale: 1.3; } }
+@keyframes gc-float { from { transform: translateY(-5px); } to { transform: translateY(6px); } }
+@keyframes gc-lid-pop { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(-110px) rotate(-30deg); opacity: 0; } }
+@keyframes gc-body-drop { 0% { transform: scale(1); opacity: 1; } 30% { transform: scale(1.12, 0.86); } 100% { transform: scale(0.9) translateY(18px); opacity: 0; } }
+@keyframes gc-leak { 0% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes gc-beam { 0% { opacity: 0; transform: scaleY(0.1); } 35% { opacity: 1; transform: scaleY(1.1); } 100% { opacity: 0; transform: scaleY(1.3); } }
+@keyframes gc-flash { 0% { opacity: 0; } 14% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes gc-particle { 0% { transform: translate(-50%, -50%) rotate(0deg) scale(0.2); opacity: 1; } 65% { opacity: 1; } 100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--rot)) scale(1); opacity: 0; } }
+@keyframes gc-shock { 0% { transform: scale(0.2); opacity: 0.9; } 100% { transform: scale(3); opacity: 0; } }
+@keyframes gc-rays { to { rotate: 360deg; } }
+@keyframes gc-fade-in { from { opacity: 0; } }
+@keyframes gc-aura { from { transform: scale(0.9); opacity: 0.3; } to { transform: scale(1.1); opacity: 0.5; } }
+@keyframes gc-aura-grow { from { transform: scale(0.8); opacity: 0.25; } to { transform: scale(1.9); opacity: 0.85; } }
+@keyframes gc-pop { 0% { transform: scale(0.1) rotate(-14deg); opacity: 0; } 60% { transform: scale(1.1) rotate(3deg); opacity: 1; } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
+@keyframes gc-quake { 0%, 100% { transform: translate(0, 0); } 15% { transform: translate(-7px, 4px); } 30% { transform: translate(6px, -5px); } 45% { transform: translate(-5px, 3px); } 60% { transform: translate(4px, -2px); } 80% { transform: translate(-2px, 1px); } }
+@keyframes gc-shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+@keyframes gc-twinkle { 0%, 100% { transform: scale(0.4); opacity: 0.3; } 50% { transform: scale(1.1); opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .gc-stage *, .gc-stage { animation-duration: 0.01s !important; animation-iteration-count: 1 !important; }
+  .gc-rays { display: none; }
+}
