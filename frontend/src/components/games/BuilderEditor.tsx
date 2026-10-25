@@ -133,8 +133,10 @@ function BlockBody({ block, onChange }: { block: Block; onChange: (b: Block) => 
         <div className="space-y-2">
           {block.pairs.map((p, pi) => (
             <div key={pi} className="flex items-center gap-2">
-              <Input className="h-8" value={p.left} maxLength={80} placeholder="Termine" onChange={(e) => set({ pairs: replaceAt(block.pairs, pi, { ...p, left: e.target.value }) })} />
-              <Input className="h-8" value={p.right} maxLength={80} placeholder="Corrispondenza" onChange={(e) => set({ pairs: replaceAt(block.pairs, pi, { ...p, right: e.target.value }) })} />
+              <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2">
+                <Input className="h-8" value={p.left} maxLength={80} placeholder="Termine" onChange={(e) => set({ pairs: replaceAt(block.pairs, pi, { ...p, left: e.target.value }) })} />
+                <Input className="h-8" value={p.right} maxLength={80} placeholder="Corrispondenza" onChange={(e) => set({ pairs: replaceAt(block.pairs, pi, { ...p, right: e.target.value }) })} />
+              </div>
               <Button variant="ghost" size="icon-sm" aria-label="Elimina coppia" disabled={block.pairs.length <= 2} onClick={() => set({ pairs: removeAt(block.pairs, pi) })}>
                 <Trash2 className="size-3.5 text-[#8B949E]" />
               </Button>
@@ -236,7 +238,7 @@ export default function BuilderEditor({ custom, onChange }: { custom: CustomCont
             const meta = blockMeta(b.kind);
             return (
               <div key={i} className="space-y-2.5 rounded-lg border border-[#30363D] bg-[#0D1117] p-3" data-testid={`block-card-${i}`}>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="inline-flex items-center gap-1.5 rounded-md bg-[#21262D] px-2 py-1 text-xs">
                     <meta.icon className="size-3.5 text-[#58A6FF]" /> {meta.label}
                   </span>
