@@ -23,6 +23,12 @@ export const PET_LINES: Record<string, string[]> = {
     "Sto camminando da stamattina per arrivare qui.",
     "Respira con calma: i compiti non scappano... io nemmeno.",
   ],
+  gufo: [
+    "Uhu! I gufi studiano meglio di notte, ma tu dormi.",
+    "Ruoto la testa di 270 gradi: nessun compito mi sfugge.",
+    "Un gufo saggio ripassa un po' ogni giorno.",
+    "Sto vegliando sui tuoi appunti.",
+  ],
   lupo: [
     "Auuu! Il branco studia insieme.",
     "Un lupo solitario non prende bei voti. Fate gruppo!",
