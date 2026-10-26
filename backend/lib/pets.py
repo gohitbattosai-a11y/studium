@@ -10,7 +10,9 @@ PETS: list[dict] = [
     {"id": "gatto", "name": "Gatto", "rarity": "comune"},
     {"id": "cane", "name": "Cane", "rarity": "non_comune"},
     {"id": "tartaruga", "name": "Tartaruga", "rarity": "raro"},
+    {"id": "gufo", "name": "Gufo", "rarity": "raro"},
     {"id": "lupo", "name": "Lupo", "rarity": "epico"},
+    {"id": "volpe", "name": "Volpe", "rarity": "epico"},
     {"id": "drago", "name": "Drago", "rarity": "leggendario"},
 ]
 
