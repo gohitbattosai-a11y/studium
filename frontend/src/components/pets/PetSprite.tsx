@@ -236,11 +236,49 @@ function Drago() {
   );
 }
 
+function Gufo() {
+  return (
+    <g>
+      <Shadow rx={24} />
+      <Leg x={40} y={60} h={11} w={5} color="#f59e0b" foot="#d97706" group="b" />
+      <Leg x={56} y={60} h={11} w={5} color="#f59e0b" foot="#d97706" group="a" />
+      <g className="pt-body">
+        <g className="pt-tail" style={{ transformOrigin: "28px 56px" }}>
+          <path d="M28 50 L9 62 L14 67 L31 62 Z" fill="#78350f" />
+        </g>
+        <ellipse cx="46" cy="50" rx="23" ry="17" fill="#92400e" />
+        <ellipse cx="52" cy="54" rx="14" ry="11" fill="#fde68a" />
+        <path d="M46 50 q3 3 6 0 M52 56 q3 3 6 0 M44 57 q3 3 6 0" fill="none" stroke="#b45309" strokeWidth="1.2" strokeLinecap="round" />
+        <g className="pt-wing" style={{ transformOrigin: "36px 44px" }}>
+          <path d="M40 40 C24 40 18 54 24 64 C34 62 44 54 46 44 Z" fill="#78350f" stroke="#451a03" strokeWidth="0.8" strokeLinejoin="round" />
+        </g>
+        <g className="pt-ear" style={{ transformOrigin: "62px 24px" }}>
+          <path d="M55 24 L57 11 L65 21 Z" fill="#78350f" />
+        </g>
+        <g className="pt-ear" style={{ transformOrigin: "74px 24px", animationDelay: "-1.4s" }}>
+          <path d="M69 21 L77 11 L79 24 Z" fill="#78350f" />
+        </g>
+        <circle cx="67" cy="34" r="14" fill="#a16207" />
+        <circle cx="61" cy="34" r="6.8" fill="#fef3c7" />
+        <circle cx="73" cy="34" r="6.8" fill="#fef3c7" />
+        <g className="pt-eye">
+          <circle cx="61" cy="34" r="4" fill="#fbbf24" />
+          <circle cx="61.6" cy="34" r="2" fill="#111827" />
+          <circle cx="73" cy="34" r="4" fill="#fbbf24" />
+          <circle cx="73.6" cy="34" r="2" fill="#111827" />
+        </g>
+        <path d="M64.5 38 L67 45 L69.5 38 Z" fill="#f97316" />
+      </g>
+    </g>
+  );
+}
+
 const ART: Record<string, ComponentType> = {
   coniglio: Coniglio,
   gatto: Gatto,
   cane: Cane,
   tartaruga: Tartaruga,
+  gufo: Gufo,
   lupo: Lupo,
   drago: Drago,
 };
