@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BarChart3, BookOpen, FolderOpen, Gamepad2, LayoutGrid, LogOut, Megaphone, ShieldCheck, ShoppingBag, Users } from "lucide-react";
+import { BarChart3, BookOpen, FolderOpen, Gamepad2, LayoutGrid, LogOut, Megaphone, ShoppingBag, Users } from "lucide-react";
 import type { Me, SiteStatus } from "@/lib/types";
 import { endSession } from "@/lib/session";
 import { useMembers, usePets, useShop } from "@/lib/queries";
@@ -8,6 +8,7 @@ import { useShopActions } from "@/lib/shopActions";
 import { isBackgroundId, type BackgroundId } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { Avatar, BrandMark, Eyebrow } from "@/components/common";
+import MemberRow from "@/components/layout/MemberRow";
 import ThemeBackground from "@/components/theme/ThemeBackground";
 import ThemePicker from "@/components/theme/ThemePicker";
 import { DecorationDefs } from "@/components/shop/decorations";
@@ -91,14 +92,9 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
         </nav>
         <div className="mt-6 min-h-0 flex-1 overflow-y-auto px-5">
           <Eyebrow className="mb-2">Compagni</Eyebrow>
-          <ul className="space-y-3" data-testid="sidebar-members">
+          <ul className="space-y-1.5" data-testid="sidebar-members">
             {(members.data ?? []).map((m) => (
-              <li key={m.nickname} className="flex items-center gap-2.5 text-sm text-[#C9D1D9]">
-                <Avatar name={m.nickname} size="sm" />
-                <span className="truncate">{m.nickname}</span>
-                {m.nickname === me.nickname && <span className="text-xs text-[#8B949E]">(tu)</span>}
-                {m.role === "admin" && <ShieldCheck className="size-3.5 shrink-0 text-[#58A6FF]" aria-label="Admin" />}
-              </li>
+              <MemberRow key={m.nickname} member={m} isMe={m.nickname === me.nickname} showPet={petsOpen && petSettings.visible} />
             ))}
           </ul>
         </div>
