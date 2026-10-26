@@ -62,6 +62,24 @@
   animation: bgx-snow linear infinite;
 }
 
+.bgx-bubble {
+  position: absolute;
+  bottom: -20px;
+  border-radius: 9999px;
+  border: 1px solid rgb(186 230 253 / 0.7);
+  background: rgb(186 230 253 / 0.12);
+  opacity: 0;
+  animation: bgx-rise linear infinite;
+}
+
+.bgx-petal {
+  position: absolute;
+  top: 0;
+  border-radius: 80% 0 80% 0;
+  background: #f9a8d4;
+  animation: bgx-snow linear infinite;
+}
+
 .bgx-dust {
   position: absolute;
   border-radius: 9999px;
@@ -148,7 +166,9 @@
     display: none;
   }
 
-  .bgx-ember:nth-child(n + 11) {
+  .bgx-ember:nth-child(n + 11),
+  .bgx-bubble:nth-child(n + 11),
+  .bgx-petal:nth-child(n + 13) {
     display: none;
   }
 }
@@ -159,7 +179,9 @@
     animation: none !important;
   }
   .bgx-ember,
-  .bgx-flake {
+  .bgx-flake,
+  .bgx-bubble,
+  .bgx-petal {
     display: none;
   }
 }
