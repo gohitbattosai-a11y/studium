@@ -62,6 +62,30 @@
   animation: bgx-snow linear infinite;
 }
 
+.bgx-mini {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  contain: strict;
+  border-radius: 6px;
+}
+
+.bgx-mini * {
+  animation-play-state: paused !important;
+}
+
+.bgx-mini-host:hover .bgx-mini * {
+  animation-play-state: running !important;
+}
+
+.bgx-mini .bgx-ember,
+.bgx-mini .bgx-flake,
+.bgx-mini .bgx-dust,
+.bgx-mini .bgx-bubble,
+.bgx-mini .bgx-petal {
+  display: none;
+}
+
 .bgx-bubble {
   position: absolute;
   bottom: -20px;
