@@ -38,6 +38,16 @@
 .pw-flip { display: block; animation: pw-flip calc(var(--pw-dur, 11s) * 2) steps(1, end) infinite; }
 .pw-sprite { width: var(--pw-size); height: auto; }
 
+.bgx-mini-host .pw,
+.bgx-mini-host .pw * {
+  animation-play-state: paused !important;
+}
+
+.bgx-mini-host:hover .pw,
+.bgx-mini-host:hover .pw * {
+  animation-play-state: running !important;
+}
+
 @keyframes pw-walk { from { transform: translateX(0); } to { transform: translateX(calc(100cqw - var(--pw-size))); } }
 @keyframes pw-flip { 0% { transform: scaleX(1); } 50% { transform: scaleX(-1); } }
 
