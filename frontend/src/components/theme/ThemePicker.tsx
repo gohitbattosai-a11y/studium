@@ -28,7 +28,7 @@ export default function ThemePicker({
         <Palette className="size-4" />
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-lg" data-testid="background-dialog">
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg" data-testid="background-dialog">
           <DialogHeader>
             <DialogTitle>Sfondo della classe</DialogTitle>
             <DialogDescription>Gli sfondi a tema si sbloccano nello shop con i punti.</DialogDescription>
