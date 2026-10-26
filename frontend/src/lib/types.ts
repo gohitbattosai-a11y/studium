@@ -30,6 +30,8 @@ export interface MemberOut {
   role: Role;
   participating: boolean;
   decoration: string | null;
+  background: string | null;
+  pet: string | null;
 }
 
 export interface HomeworkCreate {
