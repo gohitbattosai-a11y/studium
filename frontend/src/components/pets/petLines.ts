@@ -35,6 +35,12 @@ export const PET_LINES: Record<string, string[]> = {
     "Di notte vedo meglio, ma i compiti falli di giorno.",
     "Fiuto una bella interrogazione in arrivo.",
   ],
+  volpe: [
+    "Furba come una volpe: ho già ripassato tutto.",
+    "La coda è morbida, la memoria ancora di più.",
+    "Ho fiutato una buona idea per quel compito.",
+    "Studiare con astuzia: prima le parti difficili!",
+  ],
   drago: [
     "Ho sputato fuoco sui compiti difficili: ora sono cenere.",
     "Custodisco un tesoro: i vostri punti.",
