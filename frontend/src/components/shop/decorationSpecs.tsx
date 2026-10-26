@@ -52,6 +52,37 @@ export const SPECS: Record<string, DecorationSpec> = {
       { shape: "petal", count: 5, radius: 44, size: 1.1, colors: ["#fce7f3"], spin: "rev", twinkle: true },
     ],
   },
+  cuori: {
+    rings: [{ r: 31, color: "#fb7185", width: 1.2, opacity: 0.8 }],
+    orbits: [
+      { shape: "heart", count: 8, radius: 37, size: 1.4, colors: ["#fb7185", "#f43f5e", "#fda4af"], spin: "slow" },
+      { shape: "heart", count: 5, radius: 44, size: 0.9, colors: ["#ffe4e6"], spin: "rev", twinkle: true },
+    ],
+  },
+  "bolle-acqua": {
+    rings: [
+      { r: 31, color: "#67e8f9", width: 1, opacity: 0.7 },
+      { r: 35, color: "#a5f3fc", width: 0.8, dash: "1 5", spin: "rev" },
+    ],
+    orbits: [
+      { shape: "dot", count: 10, radius: 38, size: 1.3, colors: ["#22d3ee", "#38bdf8", "#a5f3fc"], spin: "slow", twinkle: true },
+      { shape: "dot", count: 6, radius: 44, size: 0.8, colors: ["#ffffff"], spin: "rev", twinkle: true },
+    ],
+  },
+  "veleno-tossico": {
+    rings: [{ r: 31, color: "#84cc16", width: 1.6, dash: "5 3", spin: "fast" }],
+    orbits: [
+      { shape: "shard", count: 8, radius: 37, size: 1.4, colors: ["#a3e635", "#4d7c0f", "#bef264"], spin: "slow", flicker: true },
+      { shape: "dot", count: 6, radius: 43, size: 0.9, colors: ["#d9f99d"], spin: "rev", twinkle: true },
+    ],
+  },
+  "stelle-notte": {
+    rings: [{ r: 32, width: 3, segments: ["#312e81", "#4338ca", "#6366f1", "#818cf8"], spin: "slow" }],
+    orbits: [
+      { shape: "star", count: 8, radius: 38, size: 1, colors: ["#fde68a", "#ffffff"], spin: "rev", twinkle: true },
+      { shape: "star", count: 4, radius: 44, size: 1.4, colors: ["#fef08a"], spin: "slow" },
+    ],
+  },
   arcobaleno: {
     rings: [
       { r: 33, width: 4, segments: ["#ef4444", "#f97316", "#facc15", "#22c55e", "#06b6d4", "#6366f1", "#a855f7", "#ec4899"], spin: "slow" },
