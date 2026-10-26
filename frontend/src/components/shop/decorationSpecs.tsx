@@ -83,6 +83,40 @@ export const SPECS: Record<string, DecorationSpec> = {
       { shape: "star", count: 4, radius: 44, size: 1.4, colors: ["#fef08a"], spin: "slow" },
     ],
   },
+  "neve-fiocchi": {
+    rings: [
+      { r: 31, color: "#e0f2fe", width: 1.2, opacity: 0.85 },
+      { r: 36, color: "#ffffff", width: 0.7, dash: "1 6", spin: "rev" },
+    ],
+    orbits: [
+      { shape: "star", count: 8, radius: 38, size: 1.2, colors: ["#ffffff", "#bae6fd"], spin: "slow", twinkle: true },
+      { shape: "dot", count: 10, radius: 44, size: 0.6, colors: ["#e0f2fe"], spin: "rev", twinkle: true },
+    ],
+  },
+  "lava-fuoco": {
+    rings: [{ r: 31, color: "#f97316", width: 2, dash: "4 2 8 2", spin: "fast" }],
+    orbits: [
+      { shape: "shard", count: 8, radius: 37, size: 1.5, colors: ["#f97316", "#ef4444", "#fde047"], spin: "slow", flicker: true },
+      { shape: "dot", count: 8, radius: 43, size: 0.8, colors: ["#fdba74"], spin: "rev", twinkle: true },
+    ],
+  },
+  "foglie-bosco": {
+    rings: [{ r: 31, color: "#22c55e", width: 1.4, opacity: 0.8 }],
+    orbits: [
+      { shape: "petal", count: 10, radius: 37, size: 1.6, colors: ["#16a34a", "#4ade80", "#86efac"], spin: "slow" },
+      { shape: "petal", count: 5, radius: 44, size: 1.1, colors: ["#bbf7d0"], spin: "rev", twinkle: true },
+    ],
+  },
+  "ombra-viola": {
+    rings: [
+      { r: 30.5, color: "#7c3aed", width: 2, opacity: 0.8 },
+      { r: 34, color: "#c084fc", width: 0.9, dash: "2 4", spin: "rev" },
+    ],
+    orbits: [
+      { shape: "dot", count: 8, radius: 38, size: 1.4, colors: ["#a855f7", "#6d28d9"], spin: "slow", flicker: true },
+      { shape: "star", count: 4, radius: 44, size: 1, colors: ["#e9d5ff"], spin: "rev", twinkle: true },
+    ],
+  },
   arcobaleno: {
     rings: [
       { r: 33, width: 4, segments: ["#ef4444", "#f97316", "#facc15", "#22c55e", "#06b6d4", "#6366f1", "#a855f7", "#ec4899"], spin: "slow" },
