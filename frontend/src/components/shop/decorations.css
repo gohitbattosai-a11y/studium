@@ -234,6 +234,43 @@
   }
 }
 
+.dc-grow { transform-box: fill-box; transform-origin: 50% 100%; animation: dc-grow 2.6s ease-in-out infinite alternate; }
+.dc-flash { animation: dc-flash 2.8s steps(1, end) infinite; opacity: 0; }
+.dc-crackle { animation: dc-crackle 0.5s steps(1, end) infinite; }
+.dc-fall { transform-box: fill-box; transform-origin: center; animation: dc-fall 4.4s ease-in infinite; }
+.dc-rise { transform-box: fill-box; transform-origin: center; animation: dc-rise 3.4s ease-out infinite; }
+.dc-beat { transform-box: fill-box; transform-origin: center; animation: dc-beat 1.6s ease-in-out infinite; }
+.dc-wave { animation: dc-wave 3s linear infinite; }
+.dc-sway { transform-box: fill-box; transform-origin: 50% 100%; animation: dc-sway 3s ease-in-out infinite alternate; }
+.dc-drip { transform-box: fill-box; transform-origin: 50% 0; animation: dc-drip 3.2s ease-in infinite; }
+.dc-pop { transform-box: fill-box; transform-origin: center; animation: dc-pop 3s ease-out infinite; }
+.dc-shoot { animation: dc-shoot 3.8s ease-in infinite; }
+.dc-glow { transform-box: fill-box; transform-origin: center; animation: dc-pulse-slow 3.5s ease-in-out infinite alternate; }
+.dc-eye { transform-box: fill-box; transform-origin: center; animation: dc-eye 5s ease-in-out infinite; }
+.dc-leaf { transform-box: fill-box; transform-origin: 50% 100%; animation: dc-leaf 6s ease-in-out infinite; transform: scale(0); }
+.dc-fly { animation: dc-fly 10s ease-in-out infinite; }
+.dc-wing { transform-box: fill-box; transform-origin: center; animation: dc-wing 0.28s ease-in-out infinite alternate; }
+.dc-lava { animation: dc-lava 1.8s ease-in-out infinite alternate; }
+.dc-dash { animation: dc-dash 3s linear infinite; }
+
+@keyframes dc-grow { from { transform: scale(1, 0.55); opacity: 0.7; } to { transform: scale(1, 1.15); opacity: 1; } }
+@keyframes dc-flash { 0%, 100% { opacity: 0; } 4% { opacity: 1; } 8% { opacity: 0; } 12% { opacity: 0.9; } 16% { opacity: 0; } }
+@keyframes dc-crackle { 0% { opacity: 1; } 33% { opacity: 0.15; } 66% { opacity: 0.7; } }
+@keyframes dc-fall { 0% { transform: translate(0, 0) rotate(0deg); opacity: 0; } 15% { opacity: 1; } 100% { transform: translate(var(--dx, 6px), 28px) rotate(170deg); opacity: 0; } }
+@keyframes dc-rise { 0% { transform: translate(0, 4px) scale(0.4); opacity: 0; } 20% { opacity: 1; } 100% { transform: translate(var(--dx, 0px), -18px) scale(1.15); opacity: 0; } }
+@keyframes dc-beat { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.07); } 28% { transform: scale(1); } 42% { transform: scale(1.045); } }
+@keyframes dc-wave { from { transform: translateX(0); } to { transform: translateX(-20px); } }
+@keyframes dc-sway { from { transform: rotate(-9deg); } to { transform: rotate(9deg); } }
+@keyframes dc-drip { 0% { transform: scaleY(0.2); opacity: 1; } 60% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(1) translateY(9px); opacity: 0; } }
+@keyframes dc-pop { 0% { transform: scale(0.3); opacity: 0; } 60% { transform: scale(1); opacity: 1; } 75% { transform: scale(1.3); opacity: 0; } 100% { transform: scale(1.3); opacity: 0; } }
+@keyframes dc-shoot { 0% { transform: translate(-6px, -4px); opacity: 0; } 8% { opacity: 1; } 35% { transform: translate(52px, 32px); opacity: 0; } 100% { transform: translate(52px, 32px); opacity: 0; } }
+@keyframes dc-eye { 0%, 86%, 100% { transform: scaleY(1); } 92% { transform: scaleY(0.08); } }
+@keyframes dc-leaf { 0% { transform: scale(0); } 12%, 80% { transform: scale(1); } 92%, 100% { transform: scale(0); } }
+@keyframes dc-fly { 0%, 100% { transform: translate(-34px, -30px) rotate(20deg); } 25% { transform: translate(34px, -22px) rotate(100deg); } 50% { transform: translate(40px, 26px) rotate(170deg); } 75% { transform: translate(-30px, 34px) rotate(250deg); } }
+@keyframes dc-wing { from { transform: scaleX(1); } to { transform: scaleX(0.3); } }
+@keyframes dc-lava { from { opacity: 0.55; } to { opacity: 1; } }
+@keyframes dc-dash { from { stroke-dashoffset: 160; } to { stroke-dashoffset: 0; } }
+
 @media (prefers-reduced-motion: reduce) {
   .dc *, .dc {
     animation: none !important;
