@@ -273,6 +273,39 @@ function Gufo() {
   );
 }
 
+function Volpe() {
+  return (
+    <g>
+      <Shadow rx={27} />
+      <Leg x={30} color="#9a3412" foot="#1f2937" group="b" />
+      <Leg x={58} color="#9a3412" foot="#1f2937" group="a" />
+      <g className="pt-body">
+        <g className="pt-tail" style={{ transformOrigin: "26px 50px" }}>
+          <path d="M26 52 C6 58 -2 38 10 26 C14 36 21 40 29 43 Z" fill="#ea580c" />
+          <path d="M10 26 C5 31 3 37 5 43 C10 40 12 33 15 30 Z" fill="#fff7ed" />
+        </g>
+        <ellipse cx="46" cy="51" rx="24" ry="16" fill="#ea580c" />
+        <ellipse cx="50" cy="59" rx="15" ry="7" fill="#fff7ed" />
+        <g className="pt-ear" style={{ transformOrigin: "66px 28px" }}>
+          <path d="M60 31 L61 10 L72 26 Z" fill="#ea580c" />
+          <path d="M62 27 L63 16 L69 25 Z" fill="#1f2937" />
+        </g>
+        <g className="pt-ear" style={{ transformOrigin: "76px 28px", animationDelay: "-1s" }}>
+          <path d="M72 26 L81 10 L83 33 Z" fill="#c2410c" />
+          <path d="M76 27 L80 17 L80 30 Z" fill="#1f2937" />
+        </g>
+        <circle cx="70" cy="39" r="12.8" fill="#ea580c" />
+        <ellipse cx="80" cy="45" rx="9" ry="5.6" fill="#fff7ed" />
+        <circle cx="88" cy="43" r="2.2" fill="#1f2937" />
+        <path d="M76 48 Q82 51 87 47" fill="none" stroke="#9a3412" strokeWidth="1" strokeLinecap="round" />
+        <Eye cx={76} cy={36} r={2.2} />
+      </g>
+      <Leg x={40} color="#ea580c" foot="#fff7ed" group="a" />
+      <Leg x={68} color="#ea580c" foot="#fff7ed" group="b" />
+    </g>
+  );
+}
+
 const ART: Record<string, ComponentType> = {
   coniglio: Coniglio,
   gatto: Gatto,
@@ -280,6 +313,7 @@ const ART: Record<string, ComponentType> = {
   tartaruga: Tartaruga,
   gufo: Gufo,
   lupo: Lupo,
+  volpe: Volpe,
   drago: Drago,
 };
 
