@@ -33,7 +33,7 @@
 @keyframes pt-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
 @keyframes pt-hop { 0% { transform: translateY(0); } 35% { transform: translateY(-14px); } 70% { transform: translateY(0); } 85% { transform: translateY(-3px); } 100% { transform: translateY(0); } }
 
-.pw { container-type: inline-size; height: 22px; margin-top: 2px; --pw-size: 28px; }
+.pw { container-type: inline-size; height: 16px; --pw-size: 20px; }
 .pw-move { position: absolute; left: 0; bottom: 0; width: var(--pw-size); animation: pw-walk var(--pw-dur, 11s) linear infinite alternate; }
 .pw-flip { display: block; animation: pw-flip calc(var(--pw-dur, 11s) * 2) steps(1, end) infinite; }
 .pw-sprite { width: var(--pw-size); height: auto; }
