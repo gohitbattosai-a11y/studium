@@ -22,6 +22,8 @@ def member_out(d: dict) -> MemberOut:
         role=d.get("role", "member"),
         participating=bool(d.get("participating", False)),
         decoration=d.get("equipped_decoration"),
+        background=d.get("equipped_background"),
+        pet=d.get("active_pet"),
     )
 
 
