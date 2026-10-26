@@ -81,6 +81,15 @@ const PETALS = Array.from({ length: 34 }, () => ({
   op: 0.6 + rand() * 0.35,
 }));
 
+const FIREFLIES = Array.from({ length: 30 }, () => ({
+  left: rand() * 100,
+  top: 35 + rand() * 55,
+  size: 2 + rand() * 2.5,
+  dur: 4 + rand() * 4,
+  delay: -rand() * 8,
+  sway: (rand() - 0.5) * 70,
+}));
+
 const BAT = "M0 -4 C-6 -14 -18 -16 -30 -8 C-24 -8 -20 -4 -18 2 C-14 -2 -10 -1 -8 4 C-5 1 -2 2 0 8 C2 2 5 1 8 4 C10 -1 14 -2 18 2 C20 -4 24 -8 30 -8 C18 -16 6 -14 0 -4 Z";
 
 const LIGHT_COLORS = ["#ff5a5a", "#ffd36b", "#6bd0ff", "#9dff8a"];
@@ -966,6 +975,218 @@ function JapanScene() {
   );
 }
 
+function ForestScene() {
+  return (
+    <>
+      <div className="bgx-fill" style={{ background: "linear-gradient(180deg, #03100c 0%, #0a2a1e 55%, #123b2b 100%)" }} />
+      <Layer depth={2}>
+        <Stars />
+      </Layer>
+      <Layer depth={5}>
+        <Svg sky>
+          <defs>
+            <radialGradient id="fo-moon" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0.3" stopColor="#d9f99d" stopOpacity="0.55" />
+              <stop offset="1" stopColor="#d9f99d" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <circle cx="1180" cy="170" r="190" fill="url(#fo-moon)" className="bgx-pulse" />
+          <circle cx="1180" cy="170" r="70" fill="#f7fee7" />
+        </Svg>
+      </Layer>
+      <Layer depth={9}>
+        <Svg>
+          {Array.from({ length: 12 }, (_, i) => (
+            <g key={i} transform={`translate(${i * 150 + 20} ${470 + (i % 3) * 30})`}>
+              <rect x="-8" y="120" width="16" height="320" fill="#06180f" />
+              <circle cx="0" cy="90" r="80" fill="#0a2417" />
+              <circle cx="-40" cy="140" r="55" fill="#0a2417" />
+              <circle cx="42" cy="140" r="55" fill="#0a2417" />
+            </g>
+          ))}
+        </Svg>
+      </Layer>
+      <Layer depth={15}>
+        <Svg>
+          {Array.from({ length: 6 }, (_, i) => (
+            <g key={i} transform={`translate(${i * 300 + 90} 560)`}>
+              <rect x="-14" y="60" width="28" height="360" fill="#03100a" />
+              <circle cx="0" cy="40" r="110" fill="#05160e" />
+              <circle cx="-70" cy="110" r="80" fill="#05160e" />
+              <circle cx="72" cy="110" r="80" fill="#05160e" />
+            </g>
+          ))}
+          <path d="M0 820 C300 790 600 840 900 805 C1200 770 1400 830 1600 800 L1600 900 L0 900 Z" fill="#020b07" />
+          {[[260, 840], [740, 850], [1240, 842]].map(([x, y], i) => (
+            <g key={i} className="bgx-flicker" style={{ animationDelay: `${-i}s` }}>
+              <ellipse cx={x} cy={y} rx="26" ry="14" fill="#34d399" opacity="0.25" />
+              <path d={`M${x - 14} ${y} C${x - 14} ${y - 20} ${x + 14} ${y - 20} ${x + 14} ${y} Z`} fill="#6ee7b7" />
+              <rect x={x - 3} y={y} width="6" height="12" fill="#d1fae5" />
+            </g>
+          ))}
+        </Svg>
+      </Layer>
+      <Layer depth={20}>
+        {FIREFLIES.map((f, i) => (
+          <span key={i} className="bgx-dust" style={{ left: `${f.left}%`, top: `${f.top}%`, width: f.size, height: f.size, animationDuration: `${f.dur}s`, animationDelay: `${f.delay}s`, "--sway": `${f.sway}px` } as CSSProperties} />
+        ))}
+      </Layer>
+      <Vignette />
+    </>
+  );
+}
+
+function DesertScene() {
+  return (
+    <>
+      <div className="bgx-fill" style={{ background: "linear-gradient(180deg, #060a24 0%, #1d2457 50%, #6b3f6b 85%, #c2703d 100%)" }} />
+      <Layer depth={2}>
+        <Stars />
+      </Layer>
+      <Layer depth={5}>
+        <Svg sky>
+          <defs>
+            <radialGradient id="de-moon" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0.3" stopColor="#fef3c7" stopOpacity="0.5" />
+              <stop offset="1" stopColor="#fef3c7" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <circle cx="400" cy="190" r="170" fill="url(#de-moon)" className="bgx-pulse" />
+          <circle cx="400" cy="190" r="64" fill="#fef3c7" />
+          <circle cx="425" cy="176" r="58" fill="#1a2152" />
+          <g className="bgx-shoot">
+            <line x1="1000" y1="90" x2="930" y2="55" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" />
+          </g>
+        </Svg>
+      </Layer>
+      <Layer depth={8}>
+        <Svg>
+          <path d="M980 700 L1100 520 L1220 700 Z" fill="#3a2550" />
+          <path d="M1160 700 L1250 570 L1340 700 Z" fill="#33204a" />
+        </Svg>
+      </Layer>
+      <Layer depth={12}>
+        <Svg>
+          <path d="M0 720 C250 660 500 740 800 690 C1100 640 1350 730 1600 680 L1600 900 L0 900 Z" fill="#3b2447" />
+        </Svg>
+      </Layer>
+      <Layer depth={18}>
+        <Svg>
+          <path d="M0 810 C300 740 560 830 880 770 C1180 715 1400 810 1600 760 L1600 900 L0 900 Z" fill="#241433" />
+          <g transform="translate(250 650)" fill="#160c22">
+            <rect x="-9" y="0" width="18" height="150" rx="9" />
+            <rect x="-36" y="40" width="14" height="50" rx="7" />
+            <rect x="-36" y="76" width="30" height="14" rx="7" />
+            <rect x="22" y="20" width="14" height="50" rx="7" />
+            <rect x="6" y="56" width="30" height="14" rx="7" />
+          </g>
+          <g transform="translate(1320 690) scale(0.8)" fill="#160c22">
+            <rect x="-9" y="0" width="18" height="150" rx="9" />
+            <rect x="-36" y="40" width="14" height="50" rx="7" />
+            <rect x="-36" y="76" width="30" height="14" rx="7" />
+          </g>
+        </Svg>
+      </Layer>
+      <Vignette />
+    </>
+  );
+}
+
+function CityScene() {
+  const towers = Array.from({ length: 14 }, (_, i) => ({ x: i * 120 - 20, w: 90 + ((i * 37) % 50), h: 220 + ((i * 83) % 300) }));
+  return (
+    <>
+      <div className="bgx-fill" style={{ background: "linear-gradient(180deg, #08011a 0%, #1c0637 55%, #4a0a54 100%)" }} />
+      <Layer depth={2}>
+        <Stars />
+      </Layer>
+      <Layer depth={5}>
+        <Svg sky>
+          <defs>
+            <linearGradient id="ci-sun" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#fde047" />
+              <stop offset="1" stopColor="#ec4899" />
+            </linearGradient>
+          </defs>
+          <circle cx="800" cy="330" r="170" fill="url(#ci-sun)" opacity="0.9" className="bgx-pulse" />
+          {[250, 275, 300, 325, 350].map((y, i) => (
+            <rect key={y} x="610" y={y + 60} width="380" height={4 + i * 2} fill="#1c0637" />
+          ))}
+        </Svg>
+      </Layer>
+      <Layer depth={9}>
+        <Svg>
+          {towers.map((t, i) => (
+            <rect key={i} x={t.x} y={900 - t.h - 60} width={t.w} height={t.h + 60} fill="#12052a" />
+          ))}
+        </Svg>
+      </Layer>
+      <Layer depth={16}>
+        <Svg>
+          {towers.map((t, i) => {
+            const x = t.x + 50;
+            const w = t.w + 10;
+            const h = t.h * 0.8;
+            return (
+              <g key={i}>
+                <rect x={x} y={900 - h} width={w} height={h} fill="#0a0318" stroke={i % 2 ? "#22d3ee" : "#f472b6"} strokeWidth="2" opacity="0.95" />
+                {Array.from({ length: Math.floor(h / 36) }, (_, r) =>
+                  Array.from({ length: Math.floor(w / 22) }, (__, c) => ((i * 7 + r * 3 + c * 5) % 4 === 0 ? (
+                    <rect key={`${r}-${c}`} x={x + 8 + c * 22} y={900 - h + 14 + r * 36} width="10" height="14" fill={(r + c) % 3 ? "#fde047" : "#22d3ee"} className="bgx-blink" style={{ animationDuration: `${3 + ((r + c + i) % 5)}s`, animationDelay: `${-((r * c + i) % 6)}s` }} />
+                  ) : null)),
+                )}
+              </g>
+            );
+          })}
+        </Svg>
+      </Layer>
+      <Vignette />
+    </>
+  );
+}
+
+function AuroraScene() {
+  return (
+    <>
+      <div className="bgx-fill" style={{ background: "linear-gradient(180deg, #010412 0%, #07203a 55%, #0f3c4e 100%)" }} />
+      <Layer depth={2}>
+        <Stars />
+      </Layer>
+      <Layer depth={6}>
+        <Svg sky>
+          <defs>
+            <linearGradient id="au-a" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#34d399" stopOpacity="0" />
+              <stop offset="0.45" stopColor="#34d399" stopOpacity="0.7" />
+              <stop offset="1" stopColor="#22d3ee" stopOpacity="0" />
+            </linearGradient>
+            <linearGradient id="au-b" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#a855f7" stopOpacity="0" />
+              <stop offset="0.5" stopColor="#c084fc" stopOpacity="0.55" />
+              <stop offset="1" stopColor="#38bdf8" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path d="M-100 380 C200 60 500 420 800 160 C1100 -60 1300 300 1700 100 L1700 380 C1300 520 1100 240 800 400 C500 560 200 260 -100 480 Z" fill="url(#au-a)" className="bgx-aurora" />
+          <path d="M-100 460 C250 220 520 520 820 300 C1120 120 1350 400 1700 260 L1700 480 C1350 620 1120 380 820 520 C520 680 250 420 -100 560 Z" fill="url(#au-b)" className="bgx-aurora" style={{ animationDelay: "-7s" }} />
+        </Svg>
+      </Layer>
+      <Layer depth={12}>
+        <Svg>
+          <path d="M0 700 L220 480 L360 620 L560 400 L760 640 L960 470 L1180 660 L1400 500 L1600 640 L1600 900 L0 900 Z" fill="#0a1d33" />
+          <path d="M560 400 L620 470 L580 460 L560 490 L530 455 Z M220 480 L270 540 L235 530 L215 560 L190 525 Z M1400 500 L1450 560 L1415 550 L1395 580 L1370 545 Z" fill="#e0f2fe" opacity="0.85" />
+        </Svg>
+      </Layer>
+      <Layer depth={18}>
+        <Svg>
+          <path d="M0 800 L300 700 L560 790 L860 690 L1160 790 L1420 710 L1600 780 L1600 900 L0 900 Z" fill="#051121" />
+          <rect x="0" y="840" width="1600" height="60" fill="#0b3b4a" opacity="0.6" />
+        </Svg>
+      </Layer>
+      <Vignette />
+    </>
+  );
+}
+
 function Scene({ id }: { id: BackgroundId }) {
   switch (id) {
     case "halloween":
@@ -982,6 +1203,14 @@ function Scene({ id }: { id: BackgroundId }) {
       return <SunsetScene />;
     case "giappone":
       return <JapanScene />;
+    case "foresta":
+      return <ForestScene />;
+    case "deserto":
+      return <DesertScene />;
+    case "citta":
+      return <CityScene />;
+    case "aurora":
+      return <AuroraScene />;
     default:
       return null;
   }
