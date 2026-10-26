@@ -1,4 +1,4 @@
-export type BackgroundId = "none" | "halloween" | "natale" | "biblioteca" | "spazio" | "oceano" | "tramonto" | "giappone";
+export type BackgroundId = "none" | "halloween" | "natale" | "biblioteca" | "spazio" | "oceano" | "tramonto" | "giappone" | "foresta" | "deserto" | "citta" | "aurora";
 
 export const BACKGROUNDS: { id: BackgroundId; label: string; hint: string }[] = [
   { id: "none", label: "Classico", hint: "Nessuno sfondo" },
@@ -9,6 +9,10 @@ export const BACKGROUNDS: { id: BackgroundId; label: string; hint: string }[] = 
   { id: "oceano", label: "Fondale oceanico", hint: "Raggi di luce, pesci e bolle che salgono" },
   { id: "tramonto", label: "Tramonto sui monti", hint: "Sole che scende, montagne e uccelli in volo" },
   { id: "giappone", label: "Notte in Giappone", hint: "Torii, luna piena e petali di ciliegio" },
+  { id: "foresta", label: "Foresta incantata", hint: "Alberi scuri, lucciole e funghi luminosi" },
+  { id: "deserto", label: "Deserto di notte", hint: "Dune, cactus e luna crescente" },
+  { id: "citta", label: "Città al neon", hint: "Grattacieli, finestre accese e sole synthwave" },
+  { id: "aurora", label: "Aurora boreale", hint: "Bande luminose sopra montagne innevate" },
 ];
 
 export const isBackgroundId = (value: string | null | undefined): value is BackgroundId =>
