@@ -39,6 +39,8 @@ class MemberOut(BaseModel):
     role: Role = "member"
     participating: bool = False
     decoration: Optional[str] = None
+    background: Optional[str] = None
+    pet: Optional[str] = None
 
 
 class HomeworkCreate(BaseModel):
