@@ -5,7 +5,7 @@ import { errMsg } from "./format";
 import { queryClient } from "./queryClient";
 import type { PetsState, RollResult } from "./types";
 
-const KEYS = ["pets", "shop", "leaderboard", "me"];
+const KEYS = ["pets", "shop", "leaderboard", "me", "members"];
 
 const refresh = () => {
   KEYS.forEach((key) => void queryClient.invalidateQueries({ queryKey: [key] }));
