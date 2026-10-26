@@ -46,8 +46,8 @@ function Ghiaccio() {
         <path d={`M${xy(pt(31, 0))} A31 31 0 0 1 ${xy(pt(31, 50))}`} fill="none" stroke="#ffffff" strokeWidth="1.4" strokeLinecap="round" opacity="0.95" />
       </g>
       {[[-36, -30], [38, -26], [-40, 22], [34, 36]].map(([x, y], i) => (
-        <g key={i} transform={`translate(${x} ${y})`}>
-          <path className="dc-twinkle" style={{ animationDelay: `${-i * 0.5}s` }} d={STAR} fill="#ffffff" transform="scale(0.7)" />
+        <g key={i} transform={`translate(${x} ${y}) scale(0.7)`}>
+          <path className="dc-star" style={{ animationDelay: `${-i * 0.5}s` }} d={STAR} fill="#ffffff" />
         </g>
       ))}
     </g>
@@ -65,11 +65,11 @@ function Fulmine() {
   return (
     <g transform="translate(50 50)">
       <circle r="30" fill="none" stroke="#facc15" strokeWidth="3" opacity="0.18" className="dc-pulse-slow" />
-      <path d={jag(11, 31, 28, 2.4)} fill="none" stroke="#fde047" strokeWidth="1.1" strokeLinejoin="round" filter="url(#dc-soft-glow)" className="dc-crackle" />
+      <path d={jag(11, 31, 28, 2.4)} fill="none" stroke="#fde047" strokeWidth="1.1" strokeLinejoin="round" className="dc-crackle" />
       <path d={jag(29, 31, 28, 2.4)} fill="none" stroke="#67e8f9" strokeWidth="0.9" strokeLinejoin="round" className="dc-crackle" style={{ animationDelay: "-0.25s" }} />
       {BOLTS.map((b) => (
         <g key={b.a} transform={`rotate(${b.a})`}>
-          <path className="dc-flash" style={{ animationDelay: `${-b.d}s` }} d="M1 -32 L-3.5 -37 L2 -38.5 L-2.5 -44 L3.5 -48 L-0.5 -42 L3.5 -40.5 L-1 -35 Z" fill="#fef08a" stroke="#facc15" strokeWidth="0.5" strokeLinejoin="round" filter="url(#dc-neon-glow)" />
+          <path className="dc-flash" style={{ animationDelay: `${-b.d}s` }} d="M1 -32 L-3.5 -37 L2 -38.5 L-2.5 -44 L3.5 -48 L-0.5 -42 L3.5 -40.5 L-1 -35 Z" fill="#fef08a" stroke="#facc15" strokeWidth="0.5" strokeLinejoin="round" />
         </g>
       ))}
     </g>
@@ -143,8 +143,8 @@ function Arcobaleno() {
       {[-60, 0, 60].map((a, i) => {
         const [x, y] = pt(44, a);
         return (
-          <g key={a} transform={`translate(${f(x)} ${f(y)})`}>
-            <path className="dc-twinkle" style={{ animationDelay: `${-i * 0.6}s` }} d={STAR} fill="#fff7ae" transform="scale(0.6)" />
+          <g key={a} transform={`translate(${f(x)} ${f(y)}) scale(0.6)`}>
+            <path className="dc-star" style={{ animationDelay: `${-i * 0.6}s` }} d={STAR} fill="#fff7ae" />
           </g>
         );
       })}
@@ -286,18 +286,18 @@ function StelleNotte() {
       </g>
       <g transform="translate(30 -28)">
         <g className="dc-glow">
-          <path d="M0 -8 A8 8 0 1 0 0 8 A6 6 0 1 1 0 -8 Z" fill="#fde68a" filter="url(#dc-soft-glow)" transform="rotate(20)" />
+          <path d="M0 -8 A8 8 0 1 0 0 8 A6 6 0 1 1 0 -8 Z" fill="#fde68a" transform="rotate(20)" />
         </g>
       </g>
       {[[-34, -24, 0.9], [-40, 14, 0.6], [34, 32, 0.8], [-12, 42, 0.6], [6, -42, 0.7]].map(([x, y, s], i) => (
-        <g key={i} transform={`translate(${x} ${y})`}>
-          <path className="dc-twinkle" style={{ animationDelay: `${-i * 0.45}s` }} d={STAR} fill={i % 2 ? "#ffffff" : "#fef08a"} transform={`scale(${s})`} />
+        <g key={i} transform={`translate(${x} ${y}) scale(${s})`}>
+          <path className="dc-star" style={{ animationDelay: `${-i * 0.45}s` }} d={STAR} fill={i % 2 ? "#ffffff" : "#fef08a"} />
         </g>
       ))}
       <g transform="translate(-30 -36)">
         <g className="dc-shoot">
           <path d="M0 0 L-12 -7" stroke="#c7d2fe" strokeWidth="1.2" strokeLinecap="round" opacity="0.8" />
-          <circle r="1.6" fill="#ffffff" filter="url(#dc-soft-glow)" />
+          <circle r="1.6" fill="#ffffff" />
         </g>
       </g>
     </g>
@@ -331,8 +331,8 @@ function Neve() {
       {[-48, -12, 28, 62].map((a, i) => {
         const [x, y] = pt(31.5, a);
         return (
-          <g key={a} transform={`translate(${f(x)} ${f(y)})`}>
-            <path className="dc-twinkle" style={{ animationDelay: `${-i * 0.6}s` }} d={STAR} fill="#e0f2fe" transform="scale(0.5)" />
+          <g key={a} transform={`translate(${f(x)} ${f(y)}) scale(0.5)`}>
+            <path className="dc-star" style={{ animationDelay: `${-i * 0.6}s` }} d={STAR} fill="#e0f2fe" />
           </g>
         );
       })}
@@ -362,9 +362,9 @@ const EMBERS_LAVA = [
 function Lava() {
   return (
     <g transform="translate(50 50)">
-      <circle r="35" fill="#ea580c" opacity="0.18" filter="url(#dc-heavy-glow)" className="dc-pulse-slow" />
+      <circle r="34" fill="none" stroke="#ea580c" strokeWidth="7" opacity="0.18" className="dc-pulse-slow" />
       <circle r="31" fill="none" stroke="#2a0f08" strokeWidth="6.5" />
-      <circle r="31" fill="none" stroke="#f97316" strokeWidth="2" strokeDasharray="6 3 10 2 4 7 3 5" strokeLinecap="round" filter="url(#dc-soft-glow)" className="dc-lava" />
+      <circle r="31" fill="none" stroke="#f97316" strokeWidth="2" strokeDasharray="6 3 10 2 4 7 3 5" strokeLinecap="round" className="dc-lava" />
       <circle r="31" fill="none" stroke="#fde047" strokeWidth="0.7" strokeDasharray="2 9" className="dc-lava" style={{ animationDelay: "-0.8s" }} />
       {[20, 80, 140, 200, 260, 320].map((a) => (
         <g key={a} transform={`rotate(${a}) translate(0 -34.5)`}>
@@ -376,7 +376,7 @@ function Lava() {
         return (
           <g key={i} transform={`translate(${f(x)} ${f(y)})`}>
             <g className="dc-rise" style={vars({ "--dx": `${e.dx}px`, animationDelay: `${-e.d}s`, animationDuration: "2.6s" })}>
-              <circle r="1.2" fill={e.c} filter="url(#dc-soft-glow)" />
+              <circle r="1.2" fill={e.c} />
             </g>
           </g>
         );
@@ -427,7 +427,7 @@ const TENDRILS = Array.from({ length: 9 }, (_, i) => ({ a: 20 + i * 40, d: (i % 
 function Ombra() {
   return (
     <g transform="translate(50 50)">
-      <circle r="36" fill="#7c3aed" opacity="0.14" filter="url(#dc-heavy-glow)" className="dc-pulse-slow" />
+      <circle r="36" fill="none" stroke="#7c3aed" strokeWidth="8" opacity="0.16" className="dc-pulse-slow" />
       <circle r="30" fill="none" stroke="#2e1065" strokeWidth="3.4" />
       {TENDRILS.map((t) => (
         <g key={t.a} transform={`rotate(${t.a}) translate(0 -29)`}>
@@ -439,7 +439,7 @@ function Ombra() {
       ))}
       <g transform="translate(0 -39)">
         <g className="dc-eye">
-          <path d="M-9 0 Q0 -8 9 0 Q0 8 -9 0 Z" fill="#1e1033" stroke="#a855f7" strokeWidth="0.8" filter="url(#dc-soft-glow)" />
+          <path d="M-9 0 Q0 -8 9 0 Q0 8 -9 0 Z" fill="#1e1033" stroke="#a855f7" strokeWidth="0.8" />
           <circle r="3.6" fill="#c084fc" />
           <ellipse rx="0.9" ry="3" fill="#0f0720" />
           <circle cx="-1.2" cy="-1.2" r="0.7" fill="#ffffff" />
