@@ -234,6 +234,7 @@
   }
 }
 
+.dc-star { transform-box: fill-box; transform-origin: center; animation: dc-star 2s ease-in-out infinite; }
 .dc-grow { transform-box: fill-box; transform-origin: 50% 100%; animation: dc-grow 2.6s ease-in-out infinite alternate; }
 .dc-flash { animation: dc-flash 2.8s steps(1, end) infinite; opacity: 0; }
 .dc-crackle { animation: dc-crackle 0.5s steps(1, end) infinite; }
@@ -253,6 +254,7 @@
 .dc-lava { animation: dc-lava 1.8s ease-in-out infinite alternate; }
 .dc-dash { animation: dc-dash 3s linear infinite; }
 
+@keyframes dc-star { 0%, 100% { transform: scale(0.4); opacity: 0.3; } 50% { transform: scale(1.2); opacity: 1; } }
 @keyframes dc-grow { from { transform: scale(1, 0.55); opacity: 0.7; } to { transform: scale(1, 1.15); opacity: 1; } }
 @keyframes dc-flash { 0%, 100% { opacity: 0; } 4% { opacity: 1; } 8% { opacity: 0; } 12% { opacity: 0.9; } 16% { opacity: 0; } }
 @keyframes dc-crackle { 0% { opacity: 1; } 33% { opacity: 0.15; } 66% { opacity: 0.7; } }
