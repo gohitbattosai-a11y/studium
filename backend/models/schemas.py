@@ -171,6 +171,16 @@ class BuyRequest(BaseModel):
     item_id: str
 
 
+class GiftItemRequest(BaseModel):
+    member_id: str
+    item_id: str
+
+
+class GiftPetRequest(BaseModel):
+    member_id: str
+    pet_id: str
+
+
 class EquipRequest(BaseModel):
     kind: ItemKind
     item_id: Optional[str] = None
