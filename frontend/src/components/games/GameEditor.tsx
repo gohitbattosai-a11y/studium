@@ -9,13 +9,16 @@ import { blankBlock, cleanInput, defaultRules, emptyContent, templateOf, TEMPLAT
 import type { GameContent, GameInput, GameOut, GameTemplate, Me } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Field, NativeSelect, Panel } from "@/components/shop/ui";
+import { blankProject } from "@/lib/scratch/project";
 import BuilderEditor from "./BuilderEditor";
 import GameRunner from "./GameRunner";
+import ScratchEditor from "./scratch/ScratchEditor";
 
 const blankQuestion = () => ({ prompt: "", options: ["", ""], correct: 0 });
 
 const starter = (t: GameTemplate): GameContent => {
   const c = emptyContent();
+  if (t === "scratch") c.scratch = blankProject();
   if (t === "custom") c.custom = { scene: "car", rules: defaultRules(), blocks: [blankBlock("choice")] };
   if (t === "quiz") c.questions = [blankQuestion()];
   if (t === "sort") {
@@ -197,10 +200,10 @@ function StepsEditor({ content, onChange }: { content: GameContent; onChange: (c
 
 export default function GameEditor({ me, initial, onDone, onCancel }: { me: Me; initial?: GameOut; onDone: () => void; onCancel: () => void }) {
   const actions = useGameActions();
-  const [template, setTemplate] = useState<GameTemplate>(initial?.template ?? "custom");
+  const [template, setTemplate] = useState<GameTemplate>(initial?.template ?? "scratch");
   const [title, setTitle] = useState(initial?.title ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
-  const [content, setContent] = useState<GameContent>(() => (initial ? structuredClone(initial.content) : starter("custom")));
+  const [content, setContent] = useState<GameContent>(() => (initial ? structuredClone(initial.content) : starter("scratch")));
   const [previewing, setPreviewing] = useState(false);
 
   const isAdmin = me.role === "admin";
@@ -244,6 +247,7 @@ export default function GameEditor({ me, initial, onDone, onCancel }: { me: Me; 
     is_mine: true,
     my_best: null,
     my_claimed: null,
+    author_reward: null,
     content: input.content,
   };
 
@@ -282,9 +286,10 @@ export default function GameEditor({ me, initial, onDone, onCancel }: { me: Me; 
         </div>
       </Panel>
 
+      {template === "scratch" && content.scratch && <ScratchEditor project={content.scratch} onChange={(scratch) => setContent((c) => ({ ...c, scratch }))} />}
       {template === "custom" && content.custom && <BuilderEditor custom={content.custom} onChange={(custom) => setContent({ ...content, custom })} />}
 
-      <Panel title="Contenuto" className={template === "custom" ? "hidden" : undefined}>
+      <Panel title="Contenuto" className={template === "custom" || template === "scratch" ? "hidden" : undefined}>
         {template === "quiz" && <QuizEditor content={content} onChange={setContent} />}
         {template === "sort" && <SortEditor content={content} onChange={setContent} />}
         {(template === "abbina" || template === "memory" || template === "indovina") && <PairsEditor template={template} content={content} onChange={setContent} />}
