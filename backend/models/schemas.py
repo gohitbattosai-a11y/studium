@@ -1,4 +1,4 @@
-from typing import Annotated, List, Literal, Optional
+from typing import Annotated, Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field, StringConstraints
 
@@ -214,7 +214,7 @@ class RoleUpdate(BaseModel):
     role: Role
 
 
-GameTemplate = Literal["quiz", "sort", "abbina", "memory", "indovina", "ordina", "custom"]
+GameTemplate = Literal["quiz", "sort", "abbina", "memory", "indovina", "ordina", "custom", "scratch"]
 BlockKind = Literal["choice", "type", "number", "order", "match", "info"]
 SceneId = Literal["none", "car", "rocket", "climb", "boss", "plant"]
 GameStatus = Literal["draft", "pending", "published", "rejected"]
@@ -271,6 +271,7 @@ class GameContent(BaseModel):
     sort_items: List[SortItem] = Field(default_factory=list, max_length=30)
     steps: List[Text(1, 100)] = Field(default_factory=list, max_length=12)
     custom: Optional[CustomContent] = None
+    scratch: Optional[Dict[str, Any]] = None
 
 
 class GameInput(BaseModel):
@@ -295,6 +296,7 @@ class GameSummary(BaseModel):
     is_mine: bool
     my_best: Optional[int] = None
     my_claimed: Optional[int] = None
+    author_reward: Optional[int] = None
 
 
 class GameOut(GameSummary):
@@ -331,9 +333,15 @@ class TierRow(BaseModel):
     points: int
 
 
+class RewardRow(BaseModel):
+    template: str
+    points: int
+
+
 class PointsTable(BaseModel):
     grades: List[GradeRow]
     game_tiers: List[TierRow]
+    author_rewards: List[RewardRow] = Field(default_factory=list)
 
 
 Rarity = Literal["comune", "non_comune", "raro", "epico", "leggendario"]
