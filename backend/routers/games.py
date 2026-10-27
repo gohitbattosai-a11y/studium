@@ -1,9 +1,10 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pymongo.errors import DuplicateKeyError
 
-from lib.catalog import game_points, next_tier
+from lib.catalog import author_reward, game_points, next_tier
+from lib.scratch import ScratchError, clean_scratch, count_blocks
 from lib.db import db
 from lib.security import current_member, new_id, now_iso
 from models.schemas import (
@@ -81,6 +82,13 @@ def validate_content(data: GameInput) -> None:
         if c.custom is None:
             raise HTTPException(status_code=400, detail="Manca il contenuto del gioco")
         validate_custom(c.custom)
+    elif t == "scratch":
+        if c.scratch is None:
+            raise HTTPException(status_code=400, detail="Manca il contenuto del gioco")
+        try:
+            c.scratch = clean_scratch(c.scratch)
+        except ScratchError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
 
 
 def item_count(g: dict) -> int:
@@ -94,6 +102,8 @@ def item_count(g: dict) -> int:
         return len(c["steps"])
     if t == "custom":
         return len([b for b in (c.get("custom") or {}).get("blocks", []) if b["kind"] != "info"])
+    if t == "scratch":
+        return count_blocks(c.get("scratch") or {})
     return len(c["pairs"])
 
 
@@ -113,6 +123,7 @@ def summary_fields(g: dict, member: dict, plays: dict, claims: dict) -> dict:
         "is_mine": g["author_id"] == member["id"],
         "my_best": plays.get(g["id"]),
         "my_claimed": claims.get(g["id"]),
+        "author_reward": g.get("author_points"),
     }
 
 
@@ -227,6 +238,34 @@ async def submit_game(game_id: str, member: dict = Depends(current_member)):
     return GameSummary(**summary_fields(game, member, plays, claims))
 
 
+async def grant_author_reward(game: dict, reviewer: dict) -> Optional[int]:
+    if game.get("author_points") is not None:
+        return game["author_points"]
+    author = await db.members.find_one({"id": game["author_id"], "group_id": game["group_id"]}, {"_id": 0})
+    if not author or not author.get("participating"):
+        return None
+    points = author_reward(game["template"])
+    claimed = await db.games.update_one({"id": game["id"], "author_points": {"$exists": False}}, {"$set": {"author_points": points}})
+    if claimed.modified_count != 1:
+        return None
+    await db.point_events.insert_one(
+        {
+            "id": new_id(),
+            "group_id": game["group_id"],
+            "member_id": author["id"],
+            "nickname": author["nickname"],
+            "kind": "game",
+            "subject": game["title"],
+            "grade": None,
+            "points": points,
+            "reason": f"Gioco pubblicato: {game['title']}",
+            "created_by": reviewer["nickname"],
+            "created_at": now_iso(),
+        }
+    )
+    return points
+
+
 @router.post("/games/{game_id}/review", response_model=GameSummary)
 async def review_game(game_id: str, body: ReviewRequest, member: dict = Depends(current_member)):
     require_admin(member)
@@ -240,6 +279,10 @@ async def review_game(game_id: str, body: ReviewRequest, member: dict = Depends(
     fields["updated_at"] = now_iso()
     await db.games.update_one({"id": game_id}, {"$set": fields})
     game.update(fields)
+    if body.approve:
+        reward = await grant_author_reward(game, member)
+        if reward is not None:
+            game["author_points"] = reward
     plays, claims = await my_progress(member)
     return GameSummary(**summary_fields(game, member, plays, claims))
 
