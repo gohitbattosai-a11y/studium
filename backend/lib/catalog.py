@@ -22,6 +22,12 @@ GAME_TIERS: list[tuple[int, int]] = [
     (40, 2),
 ]
 
+AUTHOR_REWARDS: dict[str, int] = {
+    "scratch": 10,
+    "custom": 7,
+}
+AUTHOR_REWARD_DEFAULT = 5
+
 Window = Optional[tuple[str, str]]
 
 ITEMS: list[dict] = [
@@ -314,3 +320,7 @@ def next_tier(percent: int) -> Optional[tuple[int, int]]:
     if threshold > percent:
       return threshold, points
   return None
+
+
+def author_reward(template: str) -> int:
+  return AUTHOR_REWARDS.get(template, AUTHOR_REWARD_DEFAULT)
