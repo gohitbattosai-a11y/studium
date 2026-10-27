@@ -66,13 +66,13 @@ function ItemCard({ item, state, nickname, actions }: { item: ShopItem; state: S
   }
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-xl border border-[#30363D] bg-[#161B22]" data-testid={`item-${item.id}`}>
+    <article className="dc-host flex flex-col overflow-hidden rounded-xl border border-[#30363D] bg-[#161B22]" tabIndex={0} data-testid={`item-${item.id}`}>
       {item.kind === "decoration" ? (
         <div className="grid h-32 place-items-center bg-[#0D1117]">
           <DecorationPreview id={item.id} name={nickname} />
         </div>
       ) : (
-        <div className="relative h-32 overflow-hidden bg-[#0D1117]">{isBackgroundId(item.id) && <BackgroundPreview id={item.id} />}</div>
+        <div className="bgx-still relative h-32 overflow-hidden bg-[#0D1117]">{isBackgroundId(item.id) && <BackgroundPreview id={item.id} />}</div>
       )}
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div className="min-w-0 flex-1">
