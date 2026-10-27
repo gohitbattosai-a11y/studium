@@ -5,7 +5,7 @@ import { errMsg } from "./format";
 import { queryClient } from "./queryClient";
 import type { BonusCreate, GradeCreate, ItemKind, MemberOut, PointEvent, Role, ShopState } from "./types";
 
-const KEYS = ["shop", "leaderboard", "members", "me", "my-events", "group-events"];
+const KEYS = ["shop", "leaderboard", "members", "me", "my-events", "group-events", "pets"];
 
 const refresh = () => {
   KEYS.forEach((key) => void queryClient.invalidateQueries({ queryKey: [key] }));
@@ -57,6 +57,22 @@ export function useShopActions() {
     removeEvent: useMutation({
       mutationFn: (id: string) => apiDelete<{ ok: boolean }>(`/points/events/${id}`),
       onSuccess: refresh,
+      onError,
+    }),
+    giftItem: useMutation({
+      mutationFn: (v: { member_id: string; item_id: string }) => apiPost<{ ok: boolean }>("/shop/gift", v),
+      onSuccess: () => {
+        refresh();
+        toast.success("Regalo consegnato");
+      },
+      onError,
+    }),
+    giftPet: useMutation({
+      mutationFn: (v: { member_id: string; pet_id: string }) => apiPost<{ ok: boolean }>("/pets/gift", v),
+      onSuccess: () => {
+        refresh();
+        toast.success("Regalo consegnato");
+      },
       onError,
     }),
     setRole: useMutation({
