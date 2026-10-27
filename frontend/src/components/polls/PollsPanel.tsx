@@ -1,12 +1,12 @@
 import { useState, type FormEvent } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { BarChart3, EyeOff, Lock, Plus, Users, X } from "lucide-react";
+import { BarChart3, Check, EyeOff, Plus, Trash2, Users, X } from "lucide-react";
 import { toast } from "sonner";
-import { apiPost } from "@/lib/api";
+import { apiDelete, apiPost } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
 import { usePolls } from "@/lib/queries";
 import { errMsg, relTime } from "@/lib/format";
-import type { Poll, PollCreate } from "@/lib/types";
+import type { Me, Poll, PollCreate } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,14 +14,23 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, EmptyState, LoadError, SectionHeader, Segmented, SkeletonList } from "@/components/common";
 
-function PollCard({ poll }: { poll: Poll }) {
+function PollCard({ poll, isAdmin }: { poll: Poll; isAdmin: boolean }) {
   const [selected, setSelected] = useState<string | null>(null);
   const voted = poll.my_vote !== null;
   const vote = useMutation({
     mutationFn: (option_id: string) => apiPost<Poll>(`/polls/${poll.id}/vote`, { option_id }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["polls"] });
-      toast.success("Voto registrato");
+      toast.success(voted ? "Voto modificato" : "Voto registrato");
+      setSelected(null);
+    },
+    onError: (e) => toast.error(errMsg(e)),
+  });
+  const remove = useMutation({
+    mutationFn: () => apiDelete<{ ok: boolean }>(`/polls/${poll.id}`),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["polls"] });
+      toast.success("Sondaggio eliminato");
     },
     onError: (e) => toast.error(errMsg(e)),
   });
@@ -39,6 +48,20 @@ function PollCard({ poll }: { poll: Poll }) {
           </span>
         )}
         <span className="text-[#8B949E]">di <b className="font-medium text-[#C9D1D9]">{poll.author}</b> · {relTime(poll.created_at)}</span>
+        {isAdmin && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="ml-auto"
+            aria-label="Elimina sondaggio"
+            disabled={remove.isPending}
+            onClick={() => window.confirm("Eliminare questo sondaggio?") && remove.mutate()}
+            data-testid={`poll-delete-${poll.id}`}
+          >
+            <Trash2 className="size-4 text-[#8B949E]" />
+          </Button>
+        )}
       </div>
       <h3 className="mt-3 text-[17px] font-semibold leading-snug tracking-tight" data-testid={`poll-question-${poll.id}`}>{poll.question}</h3>
 
@@ -46,20 +69,20 @@ function PollCard({ poll }: { poll: Poll }) {
         {poll.options.map((o) => {
           const pct = poll.total_votes ? Math.round((o.votes / poll.total_votes) * 100) : 0;
           const mine = poll.my_vote === o.id;
-          const isSel = selected === o.id;
+          const isSel = (selected ?? poll.my_vote) === o.id;
           return (
             <div key={o.id}>
               <button
                 type="button"
                 role="radio"
-                aria-checked={voted ? mine : isSel}
-                disabled={voted}
+                aria-checked={isSel}
+                disabled={vote.isPending}
                 onClick={() => setSelected(o.id)}
                 data-testid={`poll-option-${o.id}`}
                 className={cn(
                   "relative w-full overflow-hidden rounded-md border px-3 py-2.5 text-left transition-colors duration-150",
-                  voted ? "cursor-default" : "hover:border-[#58A6FF]/50",
-                  mine ? "border-[#388BFD]/60" : isSel ? "border-[#58A6FF] bg-[#388BFD]/8" : "border-[#30363D]",
+                  "hover:border-[#58A6FF]/50",
+                  isSel ? "border-[#58A6FF] bg-[#388BFD]/8" : mine ? "border-[#388BFD]/60" : "border-[#30363D]",
                 )}
               >
                 <span
@@ -68,11 +91,9 @@ function PollCard({ poll }: { poll: Poll }) {
                   aria-hidden
                 />
                 <span className="relative flex items-center gap-3">
-                  {!voted && (
-                    <span className={cn("grid size-4 shrink-0 place-items-center rounded-full border", isSel ? "border-[#58A6FF]" : "border-[#484F58]")}>
-                      {isSel && <span className="size-2 rounded-full bg-[#58A6FF]" />}
-                    </span>
-                  )}
+                  <span className={cn("grid size-4 shrink-0 place-items-center rounded-full border", isSel ? "border-[#58A6FF]" : "border-[#484F58]")}>
+                    {isSel && <span className="size-2 rounded-full bg-[#58A6FF]" />}
+                  </span>
                   <span className="min-w-0 flex-1 text-sm">{o.text}{mine && <span className="ml-2 text-xs text-[#58A6FF]">il tuo voto</span>}</span>
                   <span className="shrink-0 font-mono text-xs text-[#C9D1D9]" data-testid={`poll-option-pct-${o.id}`}>{pct}%</span>
                   <span className="w-6 shrink-0 text-right font-mono text-xs text-[#8B949E]">{o.votes}</span>
@@ -94,22 +115,21 @@ function PollCard({ poll }: { poll: Poll }) {
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <span className="text-xs text-[#8B949E]" data-testid={`poll-total-${poll.id}`}>{poll.total_votes} {poll.total_votes === 1 ? "voto" : "voti"} totali</span>
-        {voted ? (
-          <span className="flex items-center gap-1.5 text-xs text-[#8B949E]" data-testid={`poll-locked-${poll.id}`}>
-            <Lock className="size-3.5" /> Hai votato · voto definitivo
-          </span>
-        ) : (
-          <Button size="sm" disabled={!selected || vote.isPending} onClick={() => selected && vote.mutate(selected)} data-testid={`poll-vote-button-${poll.id}`}>
-            {vote.isPending ? "Invio…" : "Conferma voto"}
+        {selected && selected !== poll.my_vote ? (
+          <Button size="sm" disabled={vote.isPending} onClick={() => vote.mutate(selected)} data-testid={`poll-vote-button-${poll.id}`}>
+            {vote.isPending ? "Invio…" : voted ? "Cambia voto" : "Conferma voto"}
           </Button>
-        )}
+        ) : voted ? (
+          <span className="flex items-center gap-1.5 text-xs text-[#8B949E]" data-testid={`poll-locked-${poll.id}`}>
+            <Check className="size-3.5" /> Hai votato · puoi cambiare voto
+          </span>
+        ) : null}
       </div>
-      {!voted && <p className="mt-2 text-[11.5px] text-[#8B949E]">Il voto è definitivo e non potrà essere modificato.</p>}
     </article>
   );
 }
 
-export default function PollsPanel() {
+export default function PollsPanel({ me }: { me: Me }) {
   const polls = usePolls();
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState("");
@@ -163,7 +183,7 @@ export default function PollsPanel() {
       ) : (
         <div className="grid gap-4 lg:grid-cols-2" data-testid="polls-list">
           {list.map((p) => (
-            <PollCard key={p.id} poll={p} />
+            <PollCard key={p.id} poll={p} isAdmin={me.role === "admin"} />
           ))}
         </div>
       )}
@@ -173,7 +193,7 @@ export default function PollsPanel() {
           <form onSubmit={submit}>
             <DialogHeader>
               <DialogTitle>Nuovo sondaggio</DialogTitle>
-              <DialogDescription>Una volta pubblicato non si può eliminare. I voti sono definitivi.</DialogDescription>
+              <DialogDescription>Solo gli admin possono eliminarlo. Puoi cambiare il tuo voto quando vuoi.</DialogDescription>
             </DialogHeader>
             <div className="my-5 space-y-4">
               <div className="space-y-1.5">
