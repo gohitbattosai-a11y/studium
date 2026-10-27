@@ -9,6 +9,7 @@ from pymongo.errors import DuplicateKeyError
 from lib.db import db
 from lib.security import current_member, new_id, now_iso
 from models.schemas import Folder, FolderCreate, Material, MaterialCreate
+from routers.shop import require_admin
 
 router = APIRouter()
 
@@ -134,3 +135,15 @@ async def get_file(id: str, member: dict = Depends(current_member)):
         media_type=doc["content_type"],
         headers={"Content-Disposition": f"inline; filename*=UTF-8''{quote(doc['name'])}"},
     )
+
+
+@router.delete("/materials/{id}")
+async def delete_material(id: str, member: dict = Depends(current_member)):
+    require_admin(member)
+    doc = await db.materials.find_one({"id": id, "group_id": member["group_id"]}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Materiale non trovato")
+    await db.materials.delete_one({"id": id})
+    if doc.get("file_id"):
+        await db.files.delete_one({"id": doc["file_id"]})
+    return {"ok": True}
