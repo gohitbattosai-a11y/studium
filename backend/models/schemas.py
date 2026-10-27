@@ -344,7 +344,7 @@ class PointsTable(BaseModel):
     author_rewards: List[RewardRow] = Field(default_factory=list)
 
 
-Rarity = Literal["comune", "non_comune", "raro", "epico", "leggendario"]
+Rarity = Literal["comune", "non_comune", "raro", "epico", "leggendario", "mitico"]
 
 
 class SiteStatus(BaseModel):
