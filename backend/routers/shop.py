@@ -3,7 +3,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from pymongo.errors import DuplicateKeyError
 
-from lib.catalog import GAME_TIERS, GRADE_POINTS, ITEMS, ITEMS_BY_ID, grade_to_points, in_window, window_label
+from lib.catalog import AUTHOR_REWARD_DEFAULT, AUTHOR_REWARDS, GAME_TIERS, GRADE_POINTS, ITEMS, ITEMS_BY_ID, grade_to_points, in_window, window_label
 from lib.dates import today_iso
 from lib.db import db
 from lib.security import TZ, current_member, new_id, now_iso
@@ -18,6 +18,7 @@ from models.schemas import (
     ParticipationRequest,
     PointEvent,
     PointsTable,
+    RewardRow,
     RoleUpdate,
     ShopItem,
     ShopState,
@@ -170,6 +171,7 @@ async def points_table(member: dict = Depends(current_member)):
     return PointsTable(
         grades=[GradeRow(grade=g, points=p) for g, p in sorted(GRADE_POINTS.items())],
         game_tiers=[TierRow(min_percent=m, points=p) for m, p in sorted(GAME_TIERS)],
+        author_rewards=[RewardRow(template="default", points=AUTHOR_REWARD_DEFAULT)] + [RewardRow(template=t, points=p) for t, p in sorted(AUTHOR_REWARDS.items())],
     )
 
 
