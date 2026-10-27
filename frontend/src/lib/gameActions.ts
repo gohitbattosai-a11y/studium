@@ -37,7 +37,7 @@ export function useGameActions() {
         apiPost<GameSummary>(`/games/${v.id}/review`, { approve: v.approve, note: v.note }),
       onSuccess: (g) => {
         refresh();
-        toast.success(g.status === "published" ? "Gioco pubblicato" : "Gioco rifiutato");
+        toast.success(g.status === "published" ? (g.author_reward ? `Gioco pubblicato · +${g.author_reward} punti a ${g.author}` : "Gioco pubblicato") : "Gioco rifiutato");
       },
       onError,
     }),
