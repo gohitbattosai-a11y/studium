@@ -278,3 +278,36 @@
     animation: none !important;
   }
 }
+
+.dc,
+.dc * {
+  animation-play-state: paused !important;
+}
+
+.dc-host:not(:hover):not(:active):not(:focus-within) .dc,
+.dc-host:not(:hover):not(:active):not(:focus-within) .dc * {
+  animation-delay: -1.2s !important;
+}
+
+.dc-host:hover .dc,
+.dc-host:hover .dc *,
+.dc-host:active .dc,
+.dc-host:active .dc *,
+.dc-host:focus-within .dc,
+.dc-host:focus-within .dc * {
+  animation-play-state: running !important;
+}
+
+.bgx-still * {
+  animation-play-state: paused !important;
+}
+
+.dc-host:hover .bgx-still *,
+.dc-host:active .bgx-still *,
+.dc-host:focus-within .bgx-still * {
+  animation-play-state: running !important;
+}
+
+article.dc-host:focus {
+  outline: none;
+}
