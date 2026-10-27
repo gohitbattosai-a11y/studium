@@ -6,6 +6,7 @@ export const RARITY: Record<Rarity, { label: string; color: string }> = {
   raro: { label: "Raro", color: "#38BDF8" },
   epico: { label: "Epico", color: "#C084FC" },
   leggendario: { label: "Leggendario", color: "#FBBF24" },
+  mitico: { label: "Mitico", color: "#F43F5E" },
 };
 
-export const PARTICLES: Record<Rarity, number> = { comune: 14, non_comune: 18, raro: 24, epico: 32, leggendario: 44 };
+export const PARTICLES: Record<Rarity, number> = { comune: 14, non_comune: 18, raro: 24, epico: 32, leggendario: 44, mitico: 60 };
