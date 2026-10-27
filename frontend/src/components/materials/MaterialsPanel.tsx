@@ -1,12 +1,12 @@
 import { useState, type FormEvent } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { ExternalLink, FileText, FolderOpen, FolderPlus, Image as ImageIcon, Link2, NotebookPen, Plus, Upload } from "lucide-react";
+import { ExternalLink, FileText, FolderOpen, FolderPlus, Image as ImageIcon, Link2, NotebookPen, Plus, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
-import { apiPost, apiUpload } from "@/lib/api";
+import { apiDelete, apiPost, apiUpload } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
 import { useFolders, useMaterials } from "@/lib/queries";
 import { errMsg, fileSize, relTime } from "@/lib/format";
-import type { Folder, FolderCreate, Material, MaterialCreate } from "@/lib/types";
+import type { Folder, FolderCreate, Material, MaterialCreate, Me } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,15 @@ function refreshMaterials() {
   void queryClient.invalidateQueries({ queryKey: ["folders"] });
 }
 
-function MaterialCard({ m, folderName }: { m: Material; folderName?: string }) {
+function MaterialCard({ m, folderName, isAdmin }: { m: Material; folderName?: string; isAdmin: boolean }) {
+  const remove = useMutation({
+    mutationFn: () => apiDelete<{ ok: boolean }>(`/materials/${m.id}`),
+    onSuccess: () => {
+      refreshMaterials();
+      toast.success("Materiale eliminato");
+    },
+    onError: (e) => toast.error(errMsg(e)),
+  });
   const fileUrl = m.file_id ? `/api/files/${m.file_id}` : null;
   const isImage = m.file_type?.startsWith("image/");
   const Icon = m.kind === "link" ? Link2 : m.kind === "note" ? NotebookPen : isImage ? ImageIcon : FileText;
@@ -43,6 +51,19 @@ function MaterialCard({ m, folderName }: { m: Material; folderName?: string }) {
             {m.kind === "link" ? "Link" : m.kind === "note" ? "Appunto" : `${m.file_type === "application/pdf" ? "PDF" : "Immagine"} · ${fileSize(m.file_size)}`}
           </p>
         </div>
+        {isAdmin && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Elimina materiale"
+            disabled={remove.isPending}
+            onClick={() => window.confirm("Eliminare questo materiale?") && remove.mutate()}
+            data-testid={`material-delete-${m.id}`}
+          >
+            <Trash2 className="size-4 text-[#8B949E]" />
+          </Button>
+        )}
       </div>
 
       {m.kind === "file" && isImage && fileUrl && (
@@ -76,7 +97,7 @@ function MaterialCard({ m, folderName }: { m: Material; folderName?: string }) {
   );
 }
 
-export default function MaterialsPanel() {
+export default function MaterialsPanel({ me }: { me: Me }) {
   const folders = useFolders();
   const materials = useMaterials();
   const [active, setActive] = useState<string>(ALL);
@@ -208,11 +229,11 @@ export default function MaterialsPanel() {
           ) : (
             <div className="grid gap-3 sm:grid-cols-2" data-testid="materials-list">
               {items.map((m) => (
-                <MaterialCard key={m.id} m={m} folderName={active === ALL ? folderById[m.folder_id] : undefined} />
+                <MaterialCard key={m.id} m={m} folderName={active === ALL ? folderById[m.folder_id] : undefined} isAdmin={me.role === "admin"} />
               ))}
             </div>
           )}
-          <p className="mt-6 text-xs text-[#8B949E]">Chiunque può aggiungere risorse; i contenuti pubblicati non si possono eliminare.</p>
+          <p className="mt-6 text-xs text-[#8B949E]">Chiunque può aggiungere risorse; solo gli admin possono eliminarle.</p>
         </section>
       </div>
 
