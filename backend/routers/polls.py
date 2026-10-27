@@ -6,6 +6,7 @@ from pymongo.errors import DuplicateKeyError
 from lib.db import db
 from lib.security import current_member, new_id, now_iso
 from models.schemas import Poll, PollCreate, PollOption, VoteRequest
+from routers.shop import require_admin
 
 router = APIRouter()
 
@@ -64,22 +65,25 @@ async def create_poll(body: PollCreate, member: dict = Depends(current_member)):
 
 @router.post("/polls/{id}/vote", response_model=Poll)
 async def vote(id: str, body: VoteRequest, member: dict = Depends(current_member)):
-    """Votes are final: the unique (poll_id, member_id) index rejects a second vote."""
     doc = await db.polls.find_one({"id": id, "group_id": member["group_id"]}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Sondaggio non trovato")
     if body.option_id not in {o["id"] for o in doc["options"]}:
         raise HTTPException(status_code=400, detail="Opzione non valida")
+    key = {"poll_id": id, "member_id": member["id"]}
+    fields = {"nickname": member["nickname"], "option_id": body.option_id, "created_at": now_iso()}
     try:
-        await db.poll_votes.insert_one(
-            {
-                "poll_id": id,
-                "member_id": member["id"],
-                "nickname": member["nickname"],
-                "option_id": body.option_id,
-                "created_at": now_iso(),
-            }
-        )
+        await db.poll_votes.update_one(key, {"$set": fields}, upsert=True)
     except DuplicateKeyError:
-        raise HTTPException(status_code=409, detail="Hai già votato: il voto è definitivo")
+        await db.poll_votes.update_one(key, {"$set": fields})
     return (await build_polls([doc], member["id"]))[0]
+
+
+@router.delete("/polls/{id}")
+async def delete_poll(id: str, member: dict = Depends(current_member)):
+    require_admin(member)
+    res = await db.polls.delete_one({"id": id, "group_id": member["group_id"]})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Sondaggio non trovato")
+    await db.poll_votes.delete_many({"poll_id": id})
+    return {"ok": True}
