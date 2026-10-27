@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
-import { Award, ClipboardCheck, Trash2, Users } from "lucide-react";
-import { useGroupEvents, useMembers, usePointsTable } from "@/lib/queries";
+import { Award, ClipboardCheck, Gift, Trash2, Users } from "lucide-react";
+import { useGroupEvents, useMembers, usePets, usePointsTable, useShop } from "@/lib/queries";
 import { useShopActions } from "@/lib/shopActions";
 import { relTime } from "@/lib/format";
 import type { Me } from "@/lib/types";
@@ -15,6 +15,8 @@ export default function AdminView({ me }: { me: Me }) {
   const events = useGroupEvents(true);
   const actions = useShopActions();
   const table = usePointsTable();
+  const shop = useShop();
+  const pets = usePets(true);
 
   const [gradeMember, setGradeMember] = useState("");
   const [subject, setSubject] = useState("");
@@ -22,6 +24,9 @@ export default function AdminView({ me }: { me: Me }) {
   const [bonusMember, setBonusMember] = useState("");
   const [bonusPoints, setBonusPoints] = useState("");
   const [bonusReason, setBonusReason] = useState("");
+  const [giftMember, setGiftMember] = useState("");
+  const [giftKind, setGiftKind] = useState<"background" | "decoration" | "pet">("background");
+  const [giftItem, setGiftItem] = useState("");
 
   const all = members.data ?? [];
   const participants = all.filter((m) => m.participating);
@@ -31,6 +36,19 @@ export default function AdminView({ me }: { me: Me }) {
   const gradeValid = grade.trim() !== "" && Number.isFinite(g) && g >= 1 && g <= 10;
   const bonusValue = Number(bonusPoints);
   const bonusValid = Number.isInteger(bonusValue) && bonusValue !== 0 && Math.abs(bonusValue) <= 50;
+
+  const giftOptions =
+    giftKind === "pet"
+      ? (pets.data?.pets ?? []).map((p) => ({ id: p.id, label: `${p.name} · ${p.rarity.replace("_", " ")}` }))
+      : (shop.data?.items ?? []).filter((i) => i.kind === giftKind).map((i) => ({ id: i.id, label: i.window_label ? `${i.name} (${i.window_label})` : i.name }));
+  const giftPending = actions.giftItem.isPending || actions.giftPet.isPending;
+
+  const submitGift = (e: FormEvent) => {
+    e.preventDefault();
+    const onSuccess = () => setGiftItem("");
+    if (giftKind === "pet") actions.giftPet.mutate({ member_id: giftMember, pet_id: giftItem }, { onSuccess });
+    else actions.giftItem.mutate({ member_id: giftMember, item_id: giftItem }, { onSuccess });
+  };
 
   const submitGrade = (e: FormEvent) => {
     e.preventDefault();
@@ -132,6 +150,52 @@ export default function AdminView({ me }: { me: Me }) {
           <div className="flex justify-end">
             <Button type="submit" className="h-9" disabled={!bonusMember || !bonusReason.trim() || !bonusValid || actions.bonus.isPending} data-testid="bonus-submit">
               <Award className="size-4" /> Registra
+            </Button>
+          </div>
+        </form>
+      </Panel>
+
+      <Panel title="Regala" hint="Consegna sfondi, immagini profilo e pet, anche quelli a tempo limitato." testId="admin-gift-panel" action={<Gift className="size-4 text-[#8B949E]" />}>
+        <form onSubmit={submitGift} className="space-y-3">
+          <Field label="Compagno">
+            <NativeSelect value={giftMember} onChange={(e) => setGiftMember(e.target.value)} data-testid="gift-member">
+              <option value="">Scegli…</option>
+              {all.map((m) => (
+                <option key={m.member_id} value={m.member_id}>
+                  {m.nickname}
+                </option>
+              ))}
+            </NativeSelect>
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Tipo">
+              <NativeSelect
+                value={giftKind}
+                onChange={(e) => {
+                  setGiftKind(e.target.value as "background" | "decoration" | "pet");
+                  setGiftItem("");
+                }}
+                data-testid="gift-kind"
+              >
+                <option value="background">Sfondo</option>
+                <option value="decoration">Immagine profilo</option>
+                <option value="pet">Pet</option>
+              </NativeSelect>
+            </Field>
+            <Field label="Oggetto">
+              <NativeSelect value={giftItem} onChange={(e) => setGiftItem(e.target.value)} data-testid="gift-item">
+                <option value="">Scegli…</option>
+                {giftOptions.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.label}
+                  </option>
+                ))}
+              </NativeSelect>
+            </Field>
+          </div>
+          <div className="flex justify-end">
+            <Button type="submit" className="h-9" disabled={!giftMember || !giftItem || giftPending} data-testid="gift-submit">
+              <Gift className="size-4" /> Regala
             </Button>
           </div>
         </form>
