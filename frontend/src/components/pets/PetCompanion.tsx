@@ -256,7 +256,7 @@ export default function PetCompanion({ petId, me }: { petId: string; me: Me }) {
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const speed = petId === "tartaruga" ? 40 : petId === "drago" ? 72 : 62;
+    const speed = petId === "tartaruga" ? 40 : petId === "drago" ? 72 : petId === "dinosauro" ? 66 : petId === "panda" ? 48 : 62;
     let raf = 0;
     let last = performance.now();
 
