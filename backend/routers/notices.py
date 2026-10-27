@@ -1,10 +1,11 @@
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from lib.db import db
 from lib.security import current_member, new_id, now_iso
 from models.schemas import Notice, NoticeCreate
+from routers.shop import require_admin
 
 router = APIRouter()
 
@@ -26,3 +27,12 @@ async def create_notice(body: NoticeCreate, member: dict = Depends(current_membe
     }
     await db.notices.insert_one(dict(doc))
     return Notice(**doc)
+
+
+@router.delete("/notices/{id}")
+async def delete_notice(id: str, member: dict = Depends(current_member)):
+    require_admin(member)
+    res = await db.notices.delete_one({"id": id, "group_id": member["group_id"]})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Avviso non trovato")
+    return {"ok": True}
