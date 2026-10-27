@@ -11,6 +11,7 @@ from models.schemas import (
     BonusCreate,
     BuyRequest,
     EquipRequest,
+    GiftItemRequest,
     GradeCreate,
     GradeRow,
     LeaderboardEntry,
@@ -142,6 +143,32 @@ async def equip(body: EquipRequest, member: dict = Depends(current_member)):
             raise HTTPException(status_code=403, detail="Non possiedi questo oggetto")
     await db.members.update_one({"id": member["id"]}, {"$set": {field: body.item_id}})
     return await build_state(await fresh_member(member["id"]))
+
+
+@router.post("/shop/gift")
+async def gift_item(body: GiftItemRequest, member: dict = Depends(current_member)):
+    require_admin(member)
+    item = ITEMS_BY_ID.get(body.item_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Oggetto non trovato")
+    target = await db.members.find_one({"id": body.member_id, "group_id": member["group_id"]}, {"_id": 0})
+    if not target:
+        raise HTTPException(status_code=404, detail="Compagno non trovato")
+    try:
+        await db.purchases.insert_one(
+            {
+                "id": new_id(),
+                "group_id": member["group_id"],
+                "member_id": target["id"],
+                "item_id": item["id"],
+                "price": 0,
+                "gifted_by": member["nickname"],
+                "created_at": now_iso(),
+            }
+        )
+    except DuplicateKeyError:
+        raise HTTPException(status_code=409, detail=f"{target['nickname']} possiede già questo oggetto")
+    return {"ok": True}
 
 
 @router.get("/leaderboard", response_model=List[LeaderboardEntry])
