@@ -11,6 +11,7 @@ import MatchPlayer from "./MatchPlayer";
 import MemoryPlayer from "./MemoryPlayer";
 import OrderPlayer from "./OrderPlayer";
 import QuizPlayer from "./QuizPlayer";
+import ScratchPlayer from "./scratch/ScratchPlayer";
 
 type PlayerProps = { game: GameOut; onFinish: (percent: number) => void };
 
@@ -22,6 +23,7 @@ const PLAYERS: Record<GameTemplate, ComponentType<PlayerProps>> = {
   indovina: GuessPlayer,
   ordina: OrderPlayer,
   custom: EnginePlayer,
+  scratch: ScratchPlayer,
 };
 
 function Outcome({ result, game, onClaim, claiming, onReplay, onExit }: { result: FinishResult; game: GameOut; onClaim: () => void; claiming: boolean; onReplay: () => void; onExit: () => void }) {
