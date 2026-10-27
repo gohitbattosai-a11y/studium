@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from lib.db import db
 from lib.security import current_member, new_id, now_iso
 from models.schemas import Homework, HomeworkCreate
+from routers.shop import require_admin
 
 router = APIRouter()
 
@@ -34,7 +35,6 @@ async def create_homework(body: HomeworkCreate, member: dict = Depends(current_m
 
 @router.post("/homework/{id}/toggle", response_model=Homework)
 async def toggle_homework(id: str, member: dict = Depends(current_member)):
-    """Anyone in the class can mark a task done (or undo it) for everyone. No deletion exists."""
     doc = await db.homework.find_one({"id": id, "group_id": member["group_id"]}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Compito non trovato")
@@ -46,3 +46,12 @@ async def toggle_homework(id: str, member: dict = Depends(current_member)):
     }
     await db.homework.update_one({"id": id}, {"$set": update})
     return Homework(**{**doc, **update})
+
+
+@router.delete("/homework/{id}")
+async def delete_homework(id: str, member: dict = Depends(current_member)):
+    require_admin(member)
+    res = await db.homework.delete_one({"id": id, "group_id": member["group_id"]})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Compito non trovato")
+    return {"ok": True}
