@@ -57,7 +57,7 @@ function PetCard({ pet, onActivate, busy }: { pet: PetInfo; onActivate: (id: str
       data-testid={`pet-${pet.id}`}
     >
       <div className="relative grid h-36 place-items-center" style={{ background: `radial-gradient(circle at 50% 70%, ${meta.color}33, #0D1117 72%)` }}>
-        <div className="w-32" style={pet.owned ? { filter: pet.rarity === "epico" || pet.rarity === "leggendario" ? `drop-shadow(0 0 8px ${meta.color}aa)` : undefined } : { filter: "brightness(0) opacity(0.45)" }}>
+        <div className="w-32" style={pet.owned ? { filter: pet.rarity === "epico" || pet.rarity === "leggendario" || pet.rarity === "mitico" ? `drop-shadow(0 0 8px ${meta.color}aa)` : undefined } : { filter: "brightness(0) opacity(0.45)" }}>
           <PetSprite id={pet.id} state={hover && pet.owned ? "walk" : "idle"} />
         </div>
         {!pet.owned && <Lock className="absolute right-3 top-3 size-4 text-[#8B949E]" />}
