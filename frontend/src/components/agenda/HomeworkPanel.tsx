@@ -1,8 +1,8 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { BookOpen, Check, Plus, ShieldCheck } from "lucide-react";
+import { BookOpen, Check, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { apiPost } from "@/lib/api";
+import { apiDelete, apiPost } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
 import { useHomework } from "@/lib/queries";
 import { addDays, dueInfo, errMsg, formatDay, relTime } from "@/lib/format";
@@ -18,12 +18,20 @@ import { Avatar, EmptyState, LoadError, PRIORITY_STYLE, SectionHeader, Segmented
 type Filter = "tutti" | "da-fare" | "completati";
 const SUBJECTS = ["Matematica", "Italiano", "Storia", "Inglese", "Fisica", "Latino", "Scienze", "Filosofia", "Arte"];
 
-function HomeworkCard({ h, today }: { h: Homework; today: string }) {
+function HomeworkCard({ h, today, isAdmin }: { h: Homework; today: string; isAdmin: boolean }) {
   const toggle = useMutation({
     mutationFn: () => apiPost<Homework>(`/homework/${h.id}/toggle`),
     onSuccess: (res) => {
       void queryClient.invalidateQueries({ queryKey: ["homework"] });
       toast.success(res.completed ? "Segnato come completato per tutta la classe" : "Compito riaperto");
+    },
+    onError: (e) => toast.error(errMsg(e)),
+  });
+  const remove = useMutation({
+    mutationFn: () => apiDelete<{ ok: boolean }>(`/homework/${h.id}`),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["homework"] });
+      toast.success("Compito eliminato");
     },
     onError: (e) => toast.error(errMsg(e)),
   });
@@ -66,6 +74,19 @@ function HomeworkCard({ h, today }: { h: Homework; today: string }) {
           >
             {due.label}
           </span>
+          {isAdmin && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Elimina compito"
+              disabled={remove.isPending}
+              onClick={() => window.confirm("Eliminare questo compito?") && remove.mutate()}
+              data-testid={`homework-delete-${h.id}`}
+            >
+              <Trash2 className="size-4 text-[#8B949E]" />
+            </Button>
+          )}
         </div>
         <p className={cn("mt-2 text-[15px] leading-relaxed whitespace-pre-wrap", h.completed && "text-[#8B949E] line-through decoration-[#484F58]")} data-testid={`homework-description-${h.id}`}>
           {h.description}
@@ -151,13 +172,13 @@ export default function HomeworkPanel({ me }: { me: Me }) {
       ) : (
         <div className="grid gap-3 lg:grid-cols-2" data-testid="homework-list">
           {visible.map((h) => (
-            <HomeworkCard key={h.id} h={h} today={me.today} />
+            <HomeworkCard key={h.id} h={h} today={me.today} isAdmin={me.role === "admin"} />
           ))}
         </div>
       )}
 
       <p className="mt-6 flex items-center gap-2 text-xs text-[#8B949E]">
-        <ShieldCheck className="size-3.5" /> I compiti pubblicati non si possono eliminare: l'autore resta sempre visibile.
+        <ShieldCheck className="size-3.5" /> Solo gli admin possono eliminare i compiti: l'autore resta sempre visibile.
       </p>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -165,7 +186,7 @@ export default function HomeworkPanel({ me }: { me: Me }) {
           <form onSubmit={submit}>
             <DialogHeader>
               <DialogTitle>Nuovo compito</DialogTitle>
-              <DialogDescription>Pubblicato come <b className="text-[#C9D1D9]">{me.nickname}</b>. Una volta pubblicato non si può eliminare.</DialogDescription>
+              <DialogDescription>Pubblicato come <b className="text-[#C9D1D9]">{me.nickname}</b>. Solo gli admin possono eliminarlo.</DialogDescription>
             </DialogHeader>
             <div className="my-5 space-y-4">
               <div className="grid grid-cols-2 gap-3">
