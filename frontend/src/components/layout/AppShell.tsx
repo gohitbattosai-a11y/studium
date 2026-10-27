@@ -151,13 +151,13 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
             <HomeworkPanel me={me} />
           </div>
           <div className={panel("sondaggi")} data-testid="panel-sondaggi">
-            <PollsPanel />
+            <PollsPanel me={me} />
           </div>
           <div className={panel("materiali")} data-testid="panel-materiali">
-            <MaterialsPanel />
+            <MaterialsPanel me={me} />
           </div>
           <div className={panel("bacheca")} data-testid="panel-bacheca">
-            <NoticesPanel />
+            <NoticesPanel me={me} />
           </div>
           <div className={panel("giochi")} data-testid="panel-giochi">
             <GamesPanel me={me} />
