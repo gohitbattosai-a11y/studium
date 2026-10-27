@@ -1,4 +1,4 @@
-import type { ComponentType } from "react";
+import type { ComponentType, CSSProperties } from "react";
 import "./decorations.css";
 import { SPEC_ART } from "./decorationSpecs";
 
@@ -213,61 +213,114 @@ function NebulosaCosmica() {
   );
 }
 
-function RealisticTRex() {
-  return (
-    <g filter="url(#dc-neon-glow)">
-      <path d="M-22 8 C-20 -2 -14 -12 -4 -16 C6 -18 16 -14 22 -6 C26 0 24 8 18 11 C12 14 4 12 -2 10 C-10 12 -18 10 -22 8 Z" fill="url(#dc-dino-green)" stroke="#052e16" strokeWidth="1.2" />
-      <path d="M-14 -10 C-10 -16 -4 -16 2 -12 C8 -16 14 -14 18 -8" fill="none" stroke="#86efac" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M2 2 C8 1 15 4 19 9 C15 12 8 11 3 8 Z" fill="#064e3b" />
-      <path d="M4 4 L6 8 L8 4 L10 8 L12 4 L14 8 L16 4 L18 7" fill="#f8fafc" stroke="#0f172a" strokeWidth="0.5" />
-      <path d="M2 2 C7 3 13 6 16 10" stroke="#052e16" strokeWidth="1" fill="none" />
-      <circle cx="12" cy="-5" r="3" fill="#facc15" />
-      <circle cx="12.5" cy="-5" r="1.2" fill="#000000" />
-      <circle cx="11.5" cy="-5.5" r="0.5" fill="#ffffff" />
-      <path d="M16 -2 C17 -4 19 -3 18 -1 Z" fill="#15803d" />
-    </g>
-  );
-}
-
-function RealisticSpinosaurus() {
-  return (
-    <g filter="url(#dc-neon-glow)">
-      <path d="M-8 -12 C-2 -26 8 -26 14 -14 C17 -8 12 -2 6 -4 C0 -6 -4 -6 -8 -12 Z" fill="#ea580c" stroke="#7c2d12" strokeWidth="1.2" />
-      <path d="M-4 -14 L-2 -22 M2 -15 L5 -24 M8 -13 L11 -20" fill="none" stroke="#fde047" strokeWidth="1.4" strokeLinecap="round" />
-      <path d="M-22 8 C-18 -2 -10 -10 0 -12 C10 -14 20 -8 26 0 C30 6 26 12 18 11 C10 10 2 10 -6 11 C-14 12 -20 10 -22 8 Z" fill="url(#dc-dino-orange)" stroke="#7c2d12" strokeWidth="1.2" />
-      <path d="M-16 2 C-10 1 -4 4 0 9 C-6 12 -12 11 -16 8 Z" fill="#7c2d12" />
-      <path d="M-14 4 L-12 8 L-10 4 L-8 8 L-6 4 L-4 8 L-2 4 L0 7" fill="#f8fafc" stroke="#0f172a" strokeWidth="0.5" />
-      <path d="M-16 2 C-11 3 -6 6 -2 9" stroke="#7c2d12" strokeWidth="1" fill="none" />
-      <circle cx="-10" cy="-4" r="3" fill="#38bdf8" />
-      <circle cx="-10.5" cy="-4" r="1.2" fill="#000000" />
-      <circle cx="-11.5" cy="-4.5" r="0.5" fill="#ffffff" />
-      <path d="M-14 -1 C-15 -3 -17 -2 -16 0 Z" fill="#c2410c" />
-    </g>
-  );
-}
-
 function Dinosauri() {
-  const [x1, y1] = pt(36, 225);
-  const [x2, y2] = pt(36, 135);
-
+  const fern = Array.from({ length: 8 }, (_, i) => ({ y: -3 - i * 3.1, l: 5.4 - i * 0.45 }));
   return (
     <g transform="translate(50 50)">
-      <circle r="36" fill="none" stroke="url(#dc-dino-ring)" strokeWidth="2.5" strokeDasharray="6 6 18 6" className="dc-spin" />
-
-      <g transform={`translate(${x1.toFixed(1)} ${y1.toFixed(1)}) rotate(-35)`}>
-        <RealisticTRex />
+      <circle r="31.5" fill="none" stroke="#1c1917" strokeWidth="6" />
+      <circle r="34.6" fill="none" stroke="#57534e" strokeWidth="0.7" strokeDasharray="7 3 2 4" />
+      <g className="dc-lava">
+        <circle r="31.5" fill="none" stroke="url(#dc-magma)" strokeWidth="1.5" strokeDasharray="5 2.5 1.5 3 8 2" strokeLinecap="round" />
+        <circle r="28.5" fill="none" stroke="#f97316" strokeWidth="0.7" opacity="0.8" />
       </g>
-
-      <g transform={`translate(${x2.toFixed(1)} ${y2.toFixed(1)}) rotate(20)`}>
-        <RealisticSpinosaurus />
+      <g transform="translate(0 -33)">
+        <circle cx="-2" cy="-17" r="3.6" fill="#57534e" opacity="0.6" className="dc-rise" style={{ "--dx": "-3px" } as CSSProperties} />
+        <circle cx="3" cy="-17" r="3" fill="#78716c" opacity="0.55" className="dc-rise" style={{ "--dx": "4px", animationDelay: "-1.4s" } as CSSProperties} />
+        <path d="M-11 4 L-3.4 -9 L3.4 -9 L11 4 Z" fill="url(#dc-basalt)" />
+        <path d="M-1.4 -9 L-3.2 -2 L-1 2 L0.4 -4 L1.8 -9 Z" fill="url(#dc-magma)" />
+        <path d="M4 -7 L6 -1 L4.6 2" fill="none" stroke="#f97316" strokeWidth="0.8" strokeLinecap="round" />
+        <ellipse cx="0" cy="-9.2" rx="3.6" ry="1.3" fill="#fde047" />
+        <circle cx="-1" cy="-11" r="0.9" fill="#fdba74" className="dc-rise" style={{ "--dx": "-4px" } as CSSProperties} />
+        <circle cx="1.5" cy="-11" r="0.8" fill="#fde047" className="dc-rise" style={{ "--dx": "3px", animationDelay: "-1s" } as CSSProperties} />
+        <circle cx="0" cy="-11" r="0.7" fill="#fb923c" className="dc-rise" style={{ "--dx": "7px", animationDelay: "-2.1s" } as CSSProperties} />
       </g>
-
-      <g className="dc-spin-fast" style={{ animationDuration: "10s" }}>
-        {Array.from({ length: 4 }).map((_, i) => {
-          const a = i * 90 + 45;
-          const [x, y] = pt(40, a);
-          return <circle key={i} cx={x} cy={y} r="1.8" fill="#fde047" className="dc-twinkle" style={{ animationDelay: `${i * 0.3}s` }} />;
-        })}
+      <g transform="rotate(80) translate(0 -33)">
+        <g className="dc-lava">
+          {[-3.4, 0, 3.4].map((dx, i) => (
+            <path key={dx} d={`M${dx - 1.4} -6.5 C${dx - 0.4} -2.5 ${dx + 0.4} 2 ${dx + 1} 6.5`} fill="none" stroke="url(#dc-magma)" strokeWidth={i === 1 ? 1.7 : 1.3} strokeLinecap="round" />
+          ))}
+        </g>
+        <path d="M-6.4 -7 C-5 -2 -4 2 -3.4 7 M-3 -7 C-1.6 -2 -0.6 2 0 7 M0.4 -7 C1.8 -2 2.8 2 3.4 7" fill="none" stroke="#7c2d12" strokeWidth="0.5" opacity="0.7" />
+      </g>
+      <g transform={`translate(${(Math.sin((138 * Math.PI) / 180) * 35.5).toFixed(1)} ${(-Math.cos((138 * Math.PI) / 180) * 35.5).toFixed(1)}) rotate(30) scale(0.95)`}>
+        <path d="M-12.6 2.2 L-2 3.6 L6 6.5 L-11 8 Z" fill="#3b0a0a" />
+        <path d="M6 6.5 C2 9 -4 12 -10 13 C-13 13.4 -14 12 -13.2 10.6 L-11 8 L2 5.6 Z" fill="#bbf7d0" stroke="#052e16" strokeWidth="0.6" strokeLinejoin="round" />
+        <path d="M-14 -1.5 C-14 -4.5 -10 -6 -5 -6.4 C-3 -6.4 -2 -7.6 -1 -9.4 C1 -11.4 5 -11.4 8 -9 C12 -6.4 14 -1 12.4 4 C11.5 7 9 8.4 6 7.4 L-2 3.6 L-12.6 2.2 C-14 2 -14.4 0.4 -14 -1.5 Z" fill="url(#dc-rex)" stroke="#052e16" strokeWidth="0.7" strokeLinejoin="round" />
+        <g fill="#fffbeb" stroke="#78350f" strokeWidth="0.25">
+          {[-11.5, -8.6, -5.7, -2.8].map((x) => (
+            <path key={x} d={`M${x} ${2.3 + (x + 12.6) * 0.132} L${x + 1.6} ${2.4 + (x + 12.6) * 0.132} L${x + 0.8} ${5.4 + (x + 12.6) * 0.132} Z`} />
+          ))}
+          {[-9.5, -6.4, -3.3, -0.2].map((x) => (
+            <path key={x} d={`M${x} ${7.9 - (x + 11) * 0.185} L${x + 1.4} ${7.8 - (x + 11) * 0.185} L${x + 0.7} ${5.3 - (x + 11) * 0.185} Z`} />
+          ))}
+        </g>
+        <g fill="none" stroke="#052e16" strokeLinecap="round" opacity="0.5" strokeWidth="1">
+          <path d="M3 -8 C4 -5 4.4 -2 3.4 1" />
+          <path d="M6.4 -6.4 C7.4 -3.6 7.6 -0.6 6.6 2.4" />
+          <path d="M9.6 -3.6 C10.4 -1.4 10.4 1 9.6 3" />
+        </g>
+        <path d="M-1.4 -8.4 C0.6 -7.4 3.6 -7.6 5 -8.6" fill="none" stroke="#052e16" strokeWidth="1.1" strokeLinecap="round" />
+        <circle cx="2" cy="-5.2" r="1.8" fill="#facc15" stroke="#052e16" strokeWidth="0.4" />
+        <ellipse cx="2" cy="-5.2" rx="0.5" ry="1.3" fill="#0b0b0b" />
+        <ellipse cx="-10.6" cy="-3.4" rx="0.9" ry="0.55" fill="#052e16" />
+      </g>
+      <g transform="translate(-1.5 33) rotate(188) translate(0 0)">
+        {[
+          [-7.5, 1.5, 0],
+          [0, 0.2, 1],
+          [7.4, 1.6, 2],
+        ].map(([dx, dy, i]) => (
+          <g key={i} transform={`translate(${dx} ${dy}) rotate(${(i - 1) * 10})`}>
+            <ellipse cx="0" cy="-4" rx="3.5" ry="4.5" fill="#fef3c7" stroke="#a16207" strokeWidth="0.5" />
+            <g fill="#a16207" opacity="0.65">
+              <circle cx="-1.2" cy="-5.2" r="0.55" />
+              <circle cx="1.1" cy="-3" r="0.6" />
+              <circle cx="-0.4" cy="-2.2" r="0.4" />
+            </g>
+          </g>
+        ))}
+        <path d="M6.6 -6 L8 -4.6 L7 -3.2 L8.2 -2" fill="none" stroke="#7c2d12" strokeWidth="0.5" />
+      </g>
+      <g transform="rotate(252) translate(0 -31.5)">
+        <g className="dc-sway">
+          <path d="M0 0 C1 -8 -1 -16 2 -26" fill="none" stroke="#166534" strokeWidth="1" strokeLinecap="round" />
+          {fern.map((f, i) => (
+            <g key={i}>
+              <ellipse cx={-2.6} cy={f.y} rx="0.9" ry={f.l} fill="url(#dc-fern)" transform={`rotate(-62 0 ${f.y})`} />
+              <ellipse cx={2.6} cy={f.y} rx="0.9" ry={f.l} fill="url(#dc-fern)" transform={`rotate(62 0 ${f.y})`} />
+            </g>
+          ))}
+        </g>
+      </g>
+      <g transform="rotate(300) translate(0 -32.5)">
+        <circle r="5.6" fill="url(#dc-bone)" stroke="#8a6a3b" strokeWidth="0.5" />
+        <path d="M0.6 0 C0.6 -1.4 -1.2 -1.6 -1.8 -0.4 C-2.6 1.4 -0.8 3.2 1.2 3 C3.6 2.8 4.4 0 3.6 -2 C2.6 -4.4 -0.8 -5 -3 -3.8" fill="none" stroke="#8a6a3b" strokeWidth="0.7" strokeLinecap="round" />
+        <path d="M-3 -3.8 C-4.6 -2.6 -5 0 -4.4 1.6" fill="none" stroke="#8a6a3b" strokeWidth="0.5" strokeDasharray="0.7 0.9" />
+      </g>
+      <g transform="rotate(334) translate(0 -31)">
+        <g className="dc-sway" style={{ animationDelay: "-2s" }}>
+          <path d="M0 0 C-1 -6 1 -12 -1 -18" fill="none" stroke="#166534" strokeWidth="0.9" strokeLinecap="round" />
+          {fern.slice(0, 6).map((f, i) => (
+            <g key={i}>
+              <ellipse cx={-2.2} cy={f.y * 0.7} rx="0.8" ry={f.l * 0.8} fill="url(#dc-fern)" transform={`rotate(-62 0 ${f.y * 0.7})`} />
+              <ellipse cx={2.2} cy={f.y * 0.7} rx="0.8" ry={f.l * 0.8} fill="url(#dc-fern)" transform={`rotate(62 0 ${f.y * 0.7})`} />
+            </g>
+          ))}
+        </g>
+      </g>
+      <g className="dc-spin" style={{ animationDuration: "14s" }}>
+        <g transform="translate(0 -43.5) rotate(90) scale(0.9)">
+          <g className="dc-flap">
+            <path d="M0 -0.8 C-1 -5 -4 -9 -10 -11.4 C-6 -7 -4.6 -4 -3.4 -0.6 Z" fill="#312e81" stroke="#c7d2fe" strokeWidth="0.3" />
+          </g>
+          <g className="dc-flap">
+            <path d="M0 0.8 C-1 5 -4 9 -10 11.4 C-6 7 -4.6 4 -3.4 0.6 Z" fill="#312e81" stroke="#c7d2fe" strokeWidth="0.3" />
+          </g>
+          <ellipse cx="0" cy="0" rx="3.2" ry="1.2" fill="#3730a3" />
+          <path d="M2.8 -0.5 L10 -0.4 L10 0.4 L2.8 0.7 Z" fill="#4338ca" />
+          <path d="M1.2 -0.8 L-2.8 -2.4 L-0.4 0 Z" fill="#4338ca" />
+          <path d="M-3 0 L-8 0.2" stroke="#3730a3" strokeWidth="0.5" />
+        </g>
       </g>
     </g>
   );
@@ -338,6 +391,28 @@ export function DecorationDefs() {
           <stop offset="30%" stopColor="#38bdf8" stopOpacity="0.8" />
           <stop offset="100%" stopColor="#a855f7" stopOpacity="0" />
         </linearGradient>
+        <linearGradient id="dc-magma" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0" stopColor="#b91c1c" />
+          <stop offset="0.5" stopColor="#f97316" />
+          <stop offset="1" stopColor="#fde047" />
+        </linearGradient>
+        <linearGradient id="dc-basalt" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#57534e" />
+          <stop offset="1" stopColor="#1c1917" />
+        </linearGradient>
+        <linearGradient id="dc-rex" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#14532d" />
+          <stop offset="0.6" stopColor="#16a34a" />
+          <stop offset="1" stopColor="#86efac" />
+        </linearGradient>
+        <linearGradient id="dc-fern" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#86efac" />
+          <stop offset="1" stopColor="#15803d" />
+        </linearGradient>
+        <radialGradient id="dc-bone" cx="0.35" cy="0.3" r="0.8">
+          <stop offset="0" stopColor="#fef3c7" />
+          <stop offset="1" stopColor="#c9a86a" />
+        </radialGradient>
         <linearGradient id="dc-dino-ring" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#22c55e" />
           <stop offset="50%" stopColor="#f59e0b" />
