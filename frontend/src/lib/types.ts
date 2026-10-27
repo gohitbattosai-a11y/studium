@@ -1,4 +1,6 @@
 
+import type { ScratchProject } from "./scratch/types";
+
 export type Priority = "bassa" | "media" | "alta";
 export type NoticeTag = "avviso" | "urgente" | "info";
 export type Role = "admin" | "member";
@@ -30,8 +32,6 @@ export interface MemberOut {
   role: Role;
   participating: boolean;
   decoration: string | null;
-  background: string | null;
-  pet: string | null;
 }
 
 export interface HomeworkCreate {
@@ -188,7 +188,7 @@ export interface BonusCreate {
   reason: string;
 }
 
-export type GameTemplate = "quiz" | "sort" | "abbina" | "memory" | "indovina" | "ordina" | "custom";
+export type GameTemplate = "quiz" | "sort" | "abbina" | "memory" | "indovina" | "ordina" | "custom" | "scratch";
 export type BlockKind = "choice" | "type" | "number" | "order" | "match" | "info";
 export type SceneId = "none" | "car" | "rocket" | "climb" | "boss" | "plant";
 export type GameStatus = "draft" | "pending" | "published" | "rejected";
@@ -244,6 +244,7 @@ export interface GameContent {
   sort_items: SortItem[];
   steps: string[];
   custom: CustomContent | null;
+  scratch: ScratchProject | null;
 }
 
 export interface GameInput {
@@ -268,6 +269,7 @@ export interface GameSummary {
   is_mine: boolean;
   my_best: number | null;
   my_claimed: number | null;
+  author_reward: number | null;
 }
 
 export interface GameOut extends GameSummary {
@@ -288,6 +290,7 @@ export interface FinishResult {
 export interface PointsTable {
   grades: { grade: number; points: number }[];
   game_tiers: { min_percent: number; points: number }[];
+  author_rewards: { template: string; points: number }[];
 }
 
 export type Rarity = "comune" | "non_comune" | "raro" | "epico" | "leggendario";
