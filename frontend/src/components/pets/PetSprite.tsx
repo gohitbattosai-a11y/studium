@@ -306,6 +306,101 @@ function Volpe() {
   );
 }
 
+function Dinosauro() {
+  return (
+    <g>
+      <Shadow rx={30} />
+      <Leg x={42} w={9} h={15} color="#15803d" foot="#14532d" group="b" />
+      <Leg x={56} w={9} h={15} color="#16a34a" foot="#14532d" group="a" />
+      <g className="pt-body">
+        <g className="pt-tail" style={{ transformOrigin: "28px 52px" }}>
+          <path d="M30 42 C16 44 6 52 0 62 C10 59 19 60 31 59 Z" fill="#16a34a" />
+          <path d="M20 50 L16 44 L24 47 Z M11 56 L8 50 L16 53 Z" fill="#f97316" />
+        </g>
+        <ellipse cx="46" cy="50" rx="22" ry="17" fill="#22c55e" />
+        <ellipse cx="50" cy="58" rx="14" ry="7.5" fill="#bbf7d0" />
+        <g stroke="#86efac" strokeWidth="0.8" opacity="0.8" fill="none">
+          <path d="M42 57 q8 2.4 16 0" />
+          <path d="M44 61 q6 2 12 0" />
+        </g>
+        <path d="M29 38 L33 27 L38 36 Z M38 34 L43 23 L48 33 Z M48 33 L53 24 L58 35 Z" fill="#f97316" />
+        <g fill="#15803d" opacity="0.6">
+          <circle cx="36" cy="48" r="2" />
+          <circle cx="44" cy="44" r="2.4" />
+          <circle cx="52" cy="46" r="1.8" />
+        </g>
+        <path d="M60 51 L67 55 L64.5 58" fill="none" stroke="#15803d" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M61 25 L63 16 L67 25 Z M69 22 L73 13 L75 24 Z" fill="#f97316" />
+        <circle cx="68" cy="37" r="13" fill="#22c55e" />
+        <ellipse cx="79" cy="41" rx="11.5" ry="7" fill="#4ade80" />
+        <path d="M68 46 Q80 53 91 45 L89 43.5 L71 44 Z" fill="#16a34a" />
+        <path d="M73 45 L75 48.6 L77 45 Z M79 45.4 L81 49 L83 45.4 Z M85 45 L86.6 48 L88.2 44.6 Z" fill="#fffbeb" />
+        <circle cx="87" cy="38.5" r="1.1" fill="#14532d" />
+        <path d="M65 31 Q71 29 77 33" fill="none" stroke="#14532d" strokeWidth="1.6" strokeLinecap="round" />
+        <path d="M60 36 q3 3 1 7 M64 33 q3 3 1 8" fill="none" stroke="#15803d" strokeWidth="1" strokeLinecap="round" opacity="0.7" />
+        <g className="pt-eye">
+          <ellipse cx="73" cy="35" rx="3.2" ry="2.8" fill="#fde047" />
+          <rect x="72.4" y="32.7" width="1.3" height="4.6" rx="0.6" fill="#1f2937" />
+        </g>
+      </g>
+    </g>
+  );
+}
+
+function Panda() {
+  return (
+    <g>
+      <Shadow rx={28} />
+      <circle className="pt-glow" cx="50" cy="42" r="37" fill="#fb7185" fillOpacity="0.1" stroke="#fb7185" strokeWidth="1.2" />
+      <g className="pt-glow" fill="#fde68a" style={{ animationDelay: "-1s" }}>
+        <path d="M14 20 L15.2 23.2 L18.4 24.4 L15.2 25.6 L14 28.8 L12.8 25.6 L9.6 24.4 L12.8 23.2 Z" />
+        <path d="M89 16 L90 18.6 L92.6 19.6 L90 20.6 L89 23.2 L88 20.6 L85.4 19.6 L88 18.6 Z" />
+        <path d="M90 62 L91 64.4 L93.4 65.4 L91 66.4 L90 68.8 L89 66.4 L86.6 65.4 L89 64.4 Z" />
+      </g>
+      <Leg x={31} w={9} color="#1f2937" foot="#111827" group="b" />
+      <Leg x={58} w={9} color="#1f2937" foot="#111827" group="a" />
+      <g className="pt-body">
+        <circle className="pt-tail" cx="22" cy="49" r="4.6" fill="#ffffff" style={{ transformOrigin: "27px 50px" }} />
+        <ellipse cx="46" cy="51" rx="24" ry="17" fill="#f8fafc" />
+        <ellipse cx="30" cy="58" rx="9" ry="9.5" fill="#1f2937" />
+        <ellipse cx="62" cy="54" rx="8" ry="15" fill="#1f2937" />
+        <path d="M44 40 q4 -3 8 0" fill="none" stroke="#e2e8f0" strokeWidth="1.2" strokeLinecap="round" />
+        <g className="pt-ear" style={{ transformOrigin: "58px 26px" }}>
+          <circle cx="58" cy="24" r="5.4" fill="#1f2937" />
+          <circle cx="58" cy="24.6" r="2.4" fill="#475569" />
+        </g>
+        <g className="pt-ear" style={{ transformOrigin: "79px 26px", animationDelay: "-1.3s" }}>
+          <circle cx="79" cy="24" r="5.4" fill="#1f2937" />
+          <circle cx="79" cy="24.6" r="2.4" fill="#475569" />
+        </g>
+        <circle cx="68.5" cy="36" r="14.6" fill="#ffffff" />
+        <ellipse cx="63" cy="36.4" rx="4.2" ry="5.8" fill="#1f2937" transform="rotate(20 63 36.4)" />
+        <ellipse cx="75" cy="36.4" rx="4.2" ry="5.8" fill="#1f2937" transform="rotate(-20 75 36.4)" />
+        <g className="pt-eye">
+          <circle cx="63.4" cy="36" r="2.2" fill="#ffffff" />
+          <circle cx="63.9" cy="36.2" r="1.2" fill="#111827" />
+          <circle cx="74.6" cy="36" r="2.2" fill="#ffffff" />
+          <circle cx="75.1" cy="36.2" r="1.2" fill="#111827" />
+        </g>
+        <circle cx="58.6" cy="43" r="2.6" fill="#fda4af" opacity="0.55" />
+        <circle cx="79.4" cy="43" r="2.6" fill="#fda4af" opacity="0.55" />
+        <ellipse cx="69" cy="42.4" rx="3.2" ry="2.2" fill="#111827" />
+        <path d="M69 44.4 Q69 47.6 65.8 48 M69 44.4 Q69 47.6 72.2 48" fill="none" stroke="#475569" strokeWidth="1" strokeLinecap="round" />
+        <path d="M68.6 21.6 L71 26.2 L68.6 30.8 L66.2 26.2 Z" fill="#f43f5e" stroke="#fbbf24" strokeWidth="0.8" strokeLinejoin="round" />
+        <circle cx="68.6" cy="26.2" r="0.9" fill="#fef3c7" />
+      </g>
+      <g transform="rotate(12 82 64)">
+        <rect x="79.6" y="48" width="4.6" height="26" rx="2.2" fill="#86efac" stroke="#16a34a" strokeWidth="0.7" />
+        <path d="M79.6 56 H84.2 M79.6 64 H84.2" stroke="#16a34a" strokeWidth="0.8" />
+        <path d="M84 50 C91 45 96 47 98 51 C92 53 88 53 84 51 Z" fill="#4ade80" />
+        <path d="M80 58 C74 54 70 55 68 58 C73 60 77 60 80 59 Z" fill="#4ade80" />
+      </g>
+      <Leg x={42} w={9} color="#111827" foot="#1f2937" group="a" />
+      <Leg x={69} w={9} color="#111827" foot="#1f2937" group="b" />
+    </g>
+  );
+}
+
 const ART: Record<string, ComponentType> = {
   coniglio: Coniglio,
   gatto: Gatto,
@@ -315,6 +410,8 @@ const ART: Record<string, ComponentType> = {
   lupo: Lupo,
   volpe: Volpe,
   drago: Drago,
+  dinosauro: Dinosauro,
+  panda: Panda,
 };
 
 export function PetSprite({ id, state = "idle", facing = 1, className }: { id: string; state?: PetState; facing?: 1 | -1; className?: string }) {
