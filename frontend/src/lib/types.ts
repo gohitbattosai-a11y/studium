@@ -295,7 +295,7 @@ export interface PointsTable {
   author_rewards: { template: string; points: number }[];
 }
 
-export type Rarity = "comune" | "non_comune" | "raro" | "epico" | "leggendario";
+export type Rarity = "comune" | "non_comune" | "raro" | "epico" | "leggendario" | "mitico";
 
 export interface SiteStatus {
   updating: boolean;
