@@ -47,6 +47,18 @@ export const PET_LINES: Record<string, string[]> = {
     "Vola alto, studia meglio.",
     "Un drago non ha paura delle verifiche. Quasi.",
   ],
+  dinosauro: [
+    "RAAWR! Questo era il mio modo di dire 'buongiorno'.",
+    "Ho visto estinguersi tante cose, ma mai la voglia di studiare.",
+    "Le mie braccia sono piccole, ma i miei voti saranno enormi.",
+    "Sono vissuto milioni di anni fa e so già come finisce la verifica: bene!",
+  ],
+  panda: [
+    "Mastico bambù e ripasso: il multitasking dei saggi.",
+    "Un panda mangia 12 ore al giorno. Tu studia almeno un po'.",
+    "Il mio segreto? Pause lunghe e tanta calma.",
+    "Anche la leggenda più rara comincia con un piccolo passo. Tipo aprire il quaderno.",
+  ],
 };
 
 export const GENERIC_LINES = [
