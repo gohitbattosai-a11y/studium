@@ -1,9 +1,9 @@
 import random
 
-RARITIES = ["comune", "non_comune", "raro", "epico", "leggendario"]
+RARITIES = ["comune", "non_comune", "raro", "epico", "leggendario", "mitico"]
 
 PITY_LIMIT = 10
-PITY_RARITIES = ["raro", "epico", "leggendario"]
+PITY_RARITIES = ["raro", "epico", "leggendario", "mitico"]
 
 PETS: list[dict] = [
     {"id": "coniglio", "name": "Coniglio", "rarity": "comune"},
@@ -14,6 +14,8 @@ PETS: list[dict] = [
     {"id": "lupo", "name": "Lupo", "rarity": "epico"},
     {"id": "volpe", "name": "Volpe", "rarity": "epico"},
     {"id": "drago", "name": "Drago", "rarity": "leggendario"},
+    {"id": "dinosauro", "name": "Dinosauro", "rarity": "leggendario"},
+    {"id": "panda", "name": "Panda", "rarity": "mitico"},
 ]
 
 PETS_BY_ID: dict[str, dict] = {p["id"]: p for p in PETS}
@@ -24,20 +26,20 @@ BOXES: list[dict] = [
         "name": "Box Cucciolo",
         "description": "Una cassa di legno: dentro c'è sempre un nuovo amico.",
         "price": 30,
-        "odds": {"comune": 55, "non_comune": 27, "raro": 12, "epico": 5, "leggendario": 1},
+        "odds": {"comune": 54.5, "non_comune": 27, "raro": 12, "epico": 5, "leggendario": 1, "mitico": 0.5},
     },
     {
         "id": "rara",
         "name": "Box Preziosa",
         "description": "Uno scrigno dorato con più possibilità di pet rari.",
         "price": 90,
-        "odds": {"comune": 15, "non_comune": 30, "raro": 30, "epico": 18, "leggendario": 7},
+        "odds": {"comune": 13, "non_comune": 30, "raro": 30, "epico": 18, "leggendario": 7, "mitico": 2},
     },
 ]
 
 BOXES_BY_ID: dict[str, dict] = {b["id"]: b for b in BOXES}
 
-DUPLICATE_REFUND: dict[str, int] = {"comune": 6, "non_comune": 12, "raro": 25, "epico": 45, "leggendario": 80}
+DUPLICATE_REFUND: dict[str, int] = {"comune": 6, "non_comune": 12, "raro": 25, "epico": 45, "leggendario": 80, "mitico": 150}
 
 _rng = random.SystemRandom()
 
