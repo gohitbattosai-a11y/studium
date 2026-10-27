@@ -5,8 +5,8 @@ from lib.gate import feature_gate
 from lib.pets import BOXES, BOXES_BY_ID, DUPLICATE_REFUND, PETS, PETS_BY_ID, PITY_RARITIES, pick_pet, pick_rarity, pity_left, RARITIES
 from lib.db import db
 from lib.security import new_id, now_iso
-from models.schemas import ActivePetRequest, BoxInfo, BoxOdd, PetInfo, PetsState, RollRequest, RollResult
-from routers.shop import totals
+from models.schemas import ActivePetRequest, BoxInfo, BoxOdd, GiftPetRequest, PetInfo, PetsState, RollRequest, RollResult
+from routers.shop import require_admin, totals
 
 router = APIRouter()
 
@@ -121,3 +121,22 @@ async def set_active(body: ActivePetRequest, member: dict = Depends(pets_member)
             raise HTTPException(status_code=403, detail="Non possiedi questo pet")
     await db.members.update_one({"id": member["id"]}, {"$set": {"active_pet": body.pet_id}})
     return await build_state(await fresh(member["id"]))
+
+
+@router.post("/pets/gift")
+async def gift_pet(body: GiftPetRequest, member: dict = Depends(pets_member)):
+    require_admin(member)
+    if body.pet_id not in PETS_BY_ID:
+        raise HTTPException(status_code=404, detail="Pet non trovato")
+    target = await db.members.find_one({"id": body.member_id, "group_id": member["group_id"]}, {"_id": 0})
+    if not target:
+        raise HTTPException(status_code=404, detail="Compagno non trovato")
+    try:
+        await db.member_pets.insert_one(
+            {"id": new_id(), "group_id": member["group_id"], "member_id": target["id"], "pet_id": body.pet_id, "copies": 1, "obtained_at": now_iso()}
+        )
+    except DuplicateKeyError:
+        raise HTTPException(status_code=409, detail=f"{target['nickname']} possiede già questo pet")
+    if not target.get("active_pet"):
+        await db.members.update_one({"id": target["id"]}, {"$set": {"active_pet": body.pet_id}})
+    return {"ok": True}
