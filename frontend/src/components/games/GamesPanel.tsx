@@ -61,6 +61,7 @@ function MineRow({ game, onPlay, onEdit }: { game: GameSummary; onPlay: () => vo
           <div className="flex flex-wrap items-center gap-2">
             <p className="font-medium">{game.title}</p>
             <span className={cn("rounded border px-1.5 py-0.5 text-[11px]", status.tone)}>{status.label}</span>
+            {game.author_reward ? <span className="rounded border border-[#3FB950]/30 bg-[#3FB950]/10 px-1.5 py-0.5 text-[11px] text-[#56D364]">+{game.author_reward} punti ottenuti</span> : null}
           </div>
           <p className="mt-0.5 text-xs text-[#8B949E]">
             {meta.label} · {game.item_count} elementi · {game.plays} partite
@@ -183,6 +184,13 @@ export default function GamesPanel({ me }: { me: Me }) {
       {table.data && (
         <p className="mb-3 text-xs text-[#8B949E]" data-testid="games-tiers">
           A fine round, dal {table.data.game_tiers[0]?.min_percent}% in su puoi riscuotere punti: {table.data.game_tiers.map((t) => `${t.min_percent}% → ${t.points}`).join(" · ")}. Una volta sola per gioco.
+        
+          {table.data.author_rewards.length > 0 && (
+            <>
+              {" "}
+              Se un tuo gioco viene approvato guadagni punti: {table.data.author_rewards.find((r) => r.template === "scratch")?.points ?? 0} per un gioco a blocchi, {table.data.author_rewards.find((r) => r.template === "custom")?.points ?? 0} per un costruttore, {table.data.author_rewards.find((r) => r.template === "default")?.points ?? 0} per gli altri.
+            </>
+          )}
         </p>
       )}
       <div className="no-scrollbar -mx-4 mb-4 overflow-x-auto px-4">
