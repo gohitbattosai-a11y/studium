@@ -1,5 +1,5 @@
 .gc-stage { position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; overflow: hidden; background: radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--gc-color) 22%, #05070b) 0%, #05070b 70%); }
-.gc-stage[data-phase="burst"], .gc-stage[data-phase="reveal"][data-rarity="leggendario"] { animation: gc-quake 0.5s ease-out; }
+.gc-stage[data-phase="burst"], .gc-stage[data-phase="reveal"][data-rarity="leggendario"], .gc-stage[data-phase="reveal"][data-rarity="mitico"] { animation: gc-quake 0.5s ease-out; }
 .gc-aura { position: absolute; width: 380px; height: 380px; border-radius: 9999px; background: radial-gradient(circle, color-mix(in srgb, var(--gc-color) 55%, transparent), transparent 68%); opacity: 0.35; animation: gc-aura 1.2s ease-in-out infinite alternate; }
 .gc-stage[data-phase="shake"] .gc-aura { animation: gc-aura-grow 1.9s ease-in forwards; }
 .gc-rays { position: absolute; width: 150vmax; height: 150vmax; opacity: 0; background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--gc-color) 55%, transparent) 0deg 5deg, transparent 5deg 18deg); -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 62%); mask-image: radial-gradient(circle, #000 0%, transparent 62%); }
