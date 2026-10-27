@@ -22,7 +22,7 @@ export function Avatar({ name, size = "md", decoration }: { name: string; size?:
   return (
     <span
       className={cn(
-        "relative mx-1 inline-grid shrink-0 place-items-center rounded-full font-semibold",
+        "dc-host relative mx-1 inline-grid shrink-0 place-items-center rounded-full font-semibold",
         size === "sm" ? "size-6 text-[10px]" : "size-8 text-xs",
         avatarTone(name),
       )}
