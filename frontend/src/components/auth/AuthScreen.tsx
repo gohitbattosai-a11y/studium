@@ -13,7 +13,7 @@ import { BrandMark, Segmented } from "@/components/common";
 
 const FEATURES = [
   { icon: BookOpen, title: "Compiti condivisi", text: "Una spunta vale per tutta la classe." },
-  { icon: BarChart3, title: "Sondaggi", text: "Voto palese o anonimo, sempre definitivo." },
+  { icon: BarChart3, title: "Sondaggi", text: "Voto palese o anonimo, modificabile quando vuoi." },
   { icon: FolderOpen, title: "Materiali", text: "Cartelle per materia: link, appunti, PDF." },
   { icon: Megaphone, title: "Bacheca", text: "Avvisi trasparenti, visibili a tutti." },
 ];
