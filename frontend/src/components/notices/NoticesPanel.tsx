@@ -1,12 +1,12 @@
 import { useState, type FormEvent } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Megaphone, Plus } from "lucide-react";
+import { Megaphone, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { apiPost } from "@/lib/api";
+import { apiDelete, apiPost } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
 import { useNotices } from "@/lib/queries";
 import { errMsg, relTime } from "@/lib/format";
-import type { Notice, NoticeCreate, NoticeTag } from "@/lib/types";
+import type { Me, Notice, NoticeCreate, NoticeTag } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, EmptyState, LoadError, NOTICE_TAG_STYLE, SectionHeader, Segmented, SkeletonList } from "@/components/common";
 
-export default function NoticesPanel() {
+export default function NoticesPanel({ me }: { me: Me }) {
   const notices = useNotices();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -31,6 +31,15 @@ export default function NoticesPanel() {
       setBody("");
       setTag("avviso");
       setOpen(false);
+    },
+    onError: (e) => toast.error(errMsg(e)),
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => apiDelete<{ ok: boolean }>(`/notices/${id}`),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["notices"] });
+      toast.success("Avviso eliminato");
     },
     onError: (e) => toast.error(errMsg(e)),
   });
@@ -74,6 +83,19 @@ export default function NoticesPanel() {
                     <p className="text-xs text-[#8B949E]">{relTime(n.created_at)}</p>
                   </div>
                   <span className={cn("rounded border px-1.5 py-0.5 text-xs", NOTICE_TAG_STYLE[n.tag].cls)}>{NOTICE_TAG_STYLE[n.tag].label}</span>
+                  {me.role === "admin" && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label="Elimina avviso"
+                      disabled={remove.isPending}
+                      onClick={() => window.confirm("Eliminare questo avviso?") && remove.mutate(n.id)}
+                      data-testid={`notice-delete-${n.id}`}
+                    >
+                      <Trash2 className="size-4 text-[#8B949E]" />
+                    </Button>
+                  )}
                 </div>
                 <h3 className="mt-3 text-[16px] font-semibold tracking-tight" data-testid={`notice-title-${n.id}`}>{n.title}</h3>
                 <p className="mt-1.5 text-[15px] leading-relaxed whitespace-pre-wrap text-[#C9D1D9]">{n.body}</p>
