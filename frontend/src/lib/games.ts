@@ -1,7 +1,9 @@
-import { ArrowDownUp, Blocks, Brain, FileText, FolderTree, Hash, Keyboard, Link2, ListChecks, type LucideIcon } from "lucide-react";
+import { ArrowDownUp, Blocks, Brain, FileText, FolderTree, Hash, Keyboard, Link2, ListChecks, Puzzle, type LucideIcon } from "lucide-react";
+import { cleanScratch, validateScratch } from "./scratch/project";
 import type { Block, BlockKind, CustomContent, GameContent, GameInput, GameOut, GameTemplate, QuizQuestion, Rules, SceneId } from "./types";
 
 export const TEMPLATES: { id: GameTemplate; label: string; tagline: string; icon: LucideIcon }[] = [
+  { id: "scratch", label: "Blocchi Scratch", tagline: "Programma un vero gioco trascinando i blocchi: sprite, clone, variabili e altro", icon: Puzzle },
   { id: "custom", label: "Costruttore", tagline: "Componi il gioco a blocchi, con scene e regole tue", icon: Blocks },
   { id: "quiz", label: "Quiz", tagline: "Domande a risposta multipla, anche vero o falso", icon: ListChecks },
   { id: "sort", label: "Categorie", tagline: "Smista gli elementi nel gruppo giusto", icon: FolderTree },
@@ -48,7 +50,7 @@ export const blankBlock = (kind: BlockKind): Block => ({
   pairs: kind === "match" ? [{ left: "", right: "" }, { left: "", right: "" }] : [],
 });
 
-export const emptyContent = (): GameContent => ({ questions: [], pairs: [], categories: [], sort_items: [], steps: [], custom: null });
+export const emptyContent = (): GameContent => ({ questions: [], pairs: [], categories: [], sort_items: [], steps: [], custom: null, scratch: null });
 
 export const sampleCustom = (): CustomContent => ({
   scene: "car",
@@ -97,6 +99,7 @@ export const countItems = (template: GameTemplate, c: GameContent) => {
   if (template === "sort") return c.sort_items.length;
   if (template === "ordina") return c.steps.length;
   if (template === "custom") return (c.custom?.blocks ?? []).filter((b) => b.kind !== "info").length;
+  if (template === "scratch") return (c.scratch?.sprites ?? []).reduce((n, sp) => n + sp.scripts.length, 0);
   return c.pairs.length;
 };
 
@@ -122,6 +125,7 @@ const clean = (c: GameContent): GameContent => {
     sort_items: c.sort_items.map((i) => ({ ...i, text: t(i.text) })).filter((i) => i.text),
     steps: c.steps.map(t).filter(Boolean),
     custom: c.custom ? { ...c.custom, blocks: c.custom.blocks.map(sanitizeBlock) } : null,
+    scratch: c.scratch ? cleanScratch(c.scratch) : null,
   };
 };
 
@@ -163,6 +167,7 @@ export function validateInput(input: GameInput): string | null {
   const { template, content: c } = input;
   if (input.title.length < 2) return "Dai un titolo al gioco";
   if (template === "custom") return validateCustom(c.custom);
+  if (template === "scratch") return validateScratch(c.scratch);
   if (template === "quiz") {
     if (c.questions.length < 1) return "Aggiungi almeno una domanda";
     for (const q of c.questions) {
