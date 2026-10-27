@@ -356,7 +356,7 @@ class SiteStatus(BaseModel):
 
 class BoxOdd(BaseModel):
     rarity: Rarity
-    percent: int
+    percent: float
 
 
 class BoxInfo(BaseModel):
