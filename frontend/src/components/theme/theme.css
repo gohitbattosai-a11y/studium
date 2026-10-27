@@ -44,6 +44,8 @@
 .bgx-smoke { animation: bgx-smoke 5s ease-out infinite; transform-box: fill-box; transform-origin: center; }
 .bgx-aurora { animation: bgx-aurora 16s ease-in-out infinite; }
 .bgx-shoot { animation: bgx-shoot 11s linear infinite; }
+.bgx-sway { animation: bgx-sway 7s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 50% 100%; }
+.bgx-paddle { animation: bgx-paddle 2.6s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 20% 10%; }
 
 .bgx-ember {
   position: absolute;
@@ -125,6 +127,8 @@
   }
 }
 
+@keyframes bgx-sway { from { transform: rotate(-3.5deg); } to { transform: rotate(3.5deg); } }
+@keyframes bgx-paddle { from { transform: rotate(-12deg); } to { transform: rotate(14deg); } }
 @keyframes bgx-twinkle { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
 @keyframes bgx-drift { from { transform: translateX(-140px); } to { transform: translateX(140px); } }
 @keyframes bgx-fly {
