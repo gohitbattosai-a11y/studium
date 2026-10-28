@@ -1,5 +1,7 @@
 import random
 
+from lib.custom_catalog import load_pets
+
 RARITIES = ["comune", "non_comune", "raro", "epico", "leggendario", "mitico"]
 
 PITY_LIMIT = 10
@@ -17,6 +19,8 @@ PETS: list[dict] = [
     {"id": "dinosauro", "name": "Dinosauro", "rarity": "leggendario"},
     {"id": "panda", "name": "Panda", "rarity": "mitico"},
 ]
+
+PETS.extend(load_pets({p["id"] for p in PETS}))
 
 PETS_BY_ID: dict[str, dict] = {p["id"]: p for p in PETS}
 
