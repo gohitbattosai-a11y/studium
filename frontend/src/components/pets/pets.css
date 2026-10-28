@@ -12,6 +12,10 @@
 .pet .pt-flame { animation: pt-flame 0.4s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 0 50%; }
 .pet .pt-tongue { animation: pt-tongue 0.8s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 50% 0; }
 .pet .pt-glow { animation: pt-glow 2.4s ease-in-out infinite alternate; }
+.pet .pt-glow-b { animation: pt-glow 2.4s ease-in-out infinite alternate; animation-delay: -1s; }
+.pet .pt-spark, .pet .pt-spark-b, .pet .pt-spark-c { transform-box: fill-box; transform-origin: center; animation: pt-twinkle 1.8s ease-in-out infinite; }
+.pet .pt-spark-b { animation-delay: -0.6s; }
+.pet .pt-spark-c { animation-delay: -1.2s; }
 
 .pet[data-state="idle"] .pt-body { animation: pt-breathe calc(2.8s * var(--pt-slow, 1)) ease-in-out infinite; }
 .pet[data-state="walk"] .pt-body { animation: pt-bob calc(0.44s * var(--pt-slow, 1)) ease-in-out infinite; }
@@ -32,6 +36,7 @@
 @keyframes pt-flap { from { transform: rotate(-9deg) scaleY(1); } to { transform: rotate(7deg) scaleY(0.82); } }
 @keyframes pt-flame { from { transform: scale(0.75); opacity: 0.55; } to { transform: scale(1.15); opacity: 1; } }
 @keyframes pt-tongue { from { transform: scaleY(0.8); } to { transform: scaleY(1.15); } }
+@keyframes pt-twinkle { 0%, 100% { opacity: 0.25; transform: scale(0.7); } 50% { opacity: 1; transform: scale(1.2); } }
 @keyframes pt-glow { from { opacity: 0.25; } to { opacity: 0.6; } }
 @keyframes pt-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
 @keyframes pt-hop { 0% { transform: translateY(0); } 35% { transform: translateY(-14px); } 70% { transform: translateY(0); } 85% { transform: translateY(-3px); } 100% { transform: translateY(0); } }
