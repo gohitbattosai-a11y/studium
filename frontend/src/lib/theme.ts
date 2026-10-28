@@ -1,6 +1,12 @@
-export type BackgroundId = "none" | "halloween" | "natale" | "biblioteca" | "spazio" | "oceano" | "tramonto" | "giappone" | "foresta" | "deserto" | "citta" | "aurora";
+import { hasArt } from "./svgAssets";
 
-export const BACKGROUNDS: { id: BackgroundId; label: string; hint: string }[] = [
+export type BuiltinBackgroundId = "none" | "halloween" | "natale" | "biblioteca" | "spazio" | "oceano" | "tramonto" | "giappone" | "foresta" | "deserto" | "citta" | "aurora";
+
+export type BackgroundId = BuiltinBackgroundId | (string & {});
+
+export type BackgroundOption = { id: BackgroundId; label: string; hint: string };
+
+export const BACKGROUNDS: BackgroundOption[] = [
   { id: "none", label: "Classico", hint: "Nessuno sfondo" },
   { id: "halloween", label: "Halloween", hint: "Zucche, pipistrelli e luna piena" },
   { id: "natale", label: "Natale", hint: "Neve, albero e baita illuminata" },
@@ -16,4 +22,4 @@ export const BACKGROUNDS: { id: BackgroundId; label: string; hint: string }[] = 
 ];
 
 export const isBackgroundId = (value: string | null | undefined): value is BackgroundId =>
-  !!value && BACKGROUNDS.some((b) => b.id === value);
+  !!value && (BACKGROUNDS.some((b) => b.id === value) || hasArt("backgrounds", value));
