@@ -5,7 +5,7 @@ import { endSession } from "@/lib/session";
 import { useMembers, usePets, useShop } from "@/lib/queries";
 import { featureOpen } from "@/lib/release";
 import { useShopActions } from "@/lib/shopActions";
-import { isBackgroundId, type BackgroundId } from "@/lib/theme";
+import { BACKGROUNDS, isBackgroundId, type BackgroundId, type BackgroundOption } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { Avatar, BrandMark, Eyebrow } from "@/components/common";
 import MemberRow from "@/components/layout/MemberRow";
@@ -47,6 +47,9 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
   const equipped = shop.data?.equipped_background;
   const background: BackgroundId = isBackgroundId(equipped) ? equipped : "none";
   const ownedBackgrounds = (shop.data?.items ?? []).filter((i) => i.kind === "background" && i.owned).map((i) => i.id);
+  const customBackgrounds: BackgroundOption[] = (shop.data?.items ?? [])
+    .filter((i) => i.kind === "background" && !BACKGROUNDS.some((b) => b.id === i.id))
+    .map((i) => ({ id: i.id, label: i.name, hint: i.description }));
   const setBackground = (id: BackgroundId) => equip.mutate({ kind: "background", item_id: id === "none" ? null : id });
   const logout = () => void endSession("/");
 
@@ -108,6 +111,7 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
           <ThemePicker
             value={background}
             owned={ownedBackgrounds}
+            extra={customBackgrounds}
             onChange={setBackground}
             onShop={() => go("shop")}
             testId="sidebar-background-button"
@@ -129,6 +133,7 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
           <ThemePicker
             value={background}
             owned={ownedBackgrounds}
+            extra={customBackgrounds}
             onChange={setBackground}
             onShop={() => go("shop")}
             testId="header-background-button"
