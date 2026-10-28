@@ -2,6 +2,9 @@
 .pet .pt-body { transform-box: fill-box; transform-origin: 50% 100%; }
 .pet .pt-leg { transform-box: fill-box; transform-origin: 50% 0; }
 .pet .pt-tail, .pet .pt-ear, .pet .pt-wing { transform-box: view-box; }
+.pet-art .pt-leg-a, .pet-art .pt-leg-b { transform-box: fill-box; transform-origin: 50% 0; }
+.pet-art .pt-tail { transform-box: fill-box; transform-origin: 100% 50%; }
+.pet-art .pt-ear, .pet-art .pt-wing { transform-box: fill-box; transform-origin: 50% 100%; }
 .pet .pt-eye { transform-box: fill-box; transform-origin: center; animation: pt-blink 4.6s ease-in-out infinite; }
 .pet .pt-tail { animation: pt-wag calc(1.5s * var(--pt-slow, 1)) ease-in-out infinite alternate; }
 .pet .pt-ear { animation: pt-ear 3.4s ease-in-out infinite alternate; }
