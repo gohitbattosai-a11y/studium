@@ -1,5 +1,7 @@
 import { useEffect, useId, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import type { BackgroundId } from "@/lib/theme";
+import { hasArt } from "@/lib/svgAssets";
+import { SvgArt } from "@/components/art/SvgArt";
 import "./theme.css";
 
 const PORTRAIT = "(max-aspect-ratio: 1/1)";
@@ -1821,6 +1823,7 @@ function AuroraScene() {
 }
 
 function Scene({ id }: { id: BackgroundId }) {
+  if (hasArt("backgrounds", id)) return <SvgArt kind="backgrounds" id={id} className="absolute inset-0 size-full" />;
   switch (id) {
     case "halloween":
       return <HalloweenScene />;
