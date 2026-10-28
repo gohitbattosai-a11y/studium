@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { Check, Lock, Palette } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { BACKGROUNDS, type BackgroundId } from "@/lib/theme";
+import { BACKGROUNDS, type BackgroundId, type BackgroundOption } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { BackgroundPreview } from "./ThemeBackground";
 
 export default function ThemePicker({
   value,
   owned,
+  extra,
   onChange,
   onShop,
   className,
@@ -15,6 +16,7 @@ export default function ThemePicker({
 }: {
   value: BackgroundId;
   owned: string[];
+  extra: BackgroundOption[];
   onChange: (id: BackgroundId) => void;
   onShop: () => void;
   className?: string;
@@ -34,7 +36,7 @@ export default function ThemePicker({
             <DialogDescription>Gli sfondi a tema si sbloccano nello shop con i punti.</DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-3">
-            {BACKGROUNDS.map((b) => {
+            {[...BACKGROUNDS, ...extra].map((b) => {
               const active = b.id === value;
               const locked = b.id !== "none" && !owned.includes(b.id);
               return (
