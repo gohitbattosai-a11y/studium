@@ -1,6 +1,7 @@
 export type ArtFit = "meet" | "slice";
 
 const SHARED = /^(dc|pt|bgx)-/;
+const ENGINE_ID = /^((?:dc|pt|bgx)-[\w-]+?)(?:_\d+)?$/;
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const scopeCss = (css: string, prefix: string, classes: Set<string>, ids: Set<string>) => {
@@ -28,6 +29,14 @@ export function scopeSvg(markup: string, key: string, fit: ArtFit): string | nul
     .replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*')/gi, "")
     .trim();
   if (!/^<svg\b/i.test(out)) return null;
+
+  out = out.replace(/<([a-zA-Z][\w:-]*)\b([^<>]*?)(\/?)>/g, (tag, name: string, attrs: string, close: string) => {
+    const idMatch = /\sid="([^"]+)"/.exec(attrs);
+    const engine = idMatch ? ENGINE_ID.exec(idMatch[1]) : null;
+    if (!engine) return tag;
+    if (/\sclass="/.test(attrs)) return `<${name}${attrs.replace(/\sclass="([^"]*)"/, (_, l: string) => ` class="${l} ${engine[1]}"`)}${close}>`;
+    return `<${name}${attrs} class="${engine[1]}"${close}>`;
+  });
 
   const ids = new Set([...out.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]));
   for (const id of ids) {
