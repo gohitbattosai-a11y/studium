@@ -1,6 +1,8 @@
 import type { ComponentType, CSSProperties } from "react";
 import "./decorations.css";
 import { SPEC_ART } from "./decorationSpecs";
+import { SvgArt } from "@/components/art/SvgArt";
+import { hasArt } from "@/lib/svgAssets";
 
 const pt = (r: number, deg: number): [number, number] => {
   const a = (deg * Math.PI) / 180;
@@ -339,6 +341,13 @@ const ART: Record<string, ComponentType> = {
 };
 
 export function AvatarDecoration({ id }: { id: string | null | undefined }) {
+  if (id && hasArt("decorations", id)) {
+    return (
+      <span className="dc pointer-events-none absolute -inset-[50%] z-10" aria-hidden>
+        <SvgArt kind="decorations" id={id} className="size-full" />
+      </span>
+    );
+  }
   const Art = id ? ART[id] : undefined;
   if (!Art) return null;
   return (
