@@ -1,6 +1,8 @@
 import math
 from typing import Optional
 
+from lib.custom_catalog import load_items
+
 GRADE_POINTS: dict[int, int] = {
     1: 3,
     2: 4,
@@ -280,6 +282,8 @@ ITEMS: list[dict] = [
         "window": None,
     },
 ]
+
+ITEMS.extend(load_items({i["id"] for i in ITEMS}))
 
 ITEMS.sort(key=lambda i: i["price"])
 
