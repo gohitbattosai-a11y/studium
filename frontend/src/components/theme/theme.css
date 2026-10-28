@@ -15,24 +15,6 @@
   overflow: hidden;
 }
 
-.bgx-layer {
-  position: absolute;
-  inset: -40px;
-  translate: calc(var(--px, 0) * var(--depth, 0) * 1px) calc(var(--py, 0) * var(--depth, 0) * 0.5px);
-  transition: translate 0.35s ease-out;
-}
-
-.bgx-layer > svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.bgx-box {
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
 .bgx-twinkle { animation: bgx-twinkle ease-in-out infinite; }
 .bgx-drift { animation: bgx-drift ease-in-out infinite alternate; }
 .bgx-fly { animation: bgx-fly linear infinite; }
@@ -46,24 +28,6 @@
 .bgx-shoot { animation: bgx-shoot 11s linear infinite; }
 .bgx-sway { animation: bgx-sway 7s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 50% 100%; }
 .bgx-paddle { animation: bgx-paddle 2.6s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 20% 10%; }
-
-.bgx-ember {
-  position: absolute;
-  bottom: -12px;
-  border-radius: 9999px;
-  background: #ffb347;
-  box-shadow: 0 0 8px 2px rgba(255, 140, 40, 0.7);
-  opacity: 0;
-  animation: bgx-rise linear infinite;
-}
-
-.bgx-flake {
-  position: absolute;
-  top: 0;
-  border-radius: 9999px;
-  background: #ffffff;
-  animation: bgx-snow linear infinite;
-}
 
 .bgx-mini {
   position: absolute;
@@ -81,50 +45,8 @@
   animation-play-state: running !important;
 }
 
-.bgx-mini .bgx-ember,
-.bgx-mini .bgx-flake,
-.bgx-mini .bgx-dust,
-.bgx-mini .bgx-bubble,
-.bgx-mini .bgx-petal {
+.bgx-mini [class*="-pk-"] {
   display: none;
-}
-
-.bgx-bubble {
-  position: absolute;
-  bottom: -20px;
-  border-radius: 9999px;
-  border: 1px solid rgb(186 230 253 / 0.7);
-  background: rgb(186 230 253 / 0.12);
-  opacity: 0;
-  animation: bgx-rise linear infinite;
-}
-
-.bgx-petal {
-  position: absolute;
-  top: 0;
-  border-radius: 80% 0 80% 0;
-  background: #f9a8d4;
-  animation: bgx-snow linear infinite;
-}
-
-.bgx-dust {
-  position: absolute;
-  border-radius: 9999px;
-  background: #ffda73;
-  box-shadow: 0 0 6px 1px rgba(255, 218, 115, 0.4);
-  opacity: 0;
-  animation: bgx-float ease-in-out infinite;
-}
-
-@keyframes bgx-float {
-  0%, 100% {
-    transform: translate(0, 0) scale(0.8);
-    opacity: 0;
-  }
-  50% {
-    transform: translate(var(--sway, 20px), -35px) scale(1.2);
-    opacity: 0.75;
-  }
 }
 
 @keyframes bgx-sway { from { transform: rotate(-3.5deg); } to { transform: rotate(3.5deg); } }
@@ -164,15 +86,6 @@
   10% { transform: translate(420px, 200px); opacity: 0; }
   100% { transform: translate(420px, 200px); opacity: 0; }
 }
-@keyframes bgx-rise {
-  0% { transform: translate3d(0, 0, 0); opacity: 0; }
-  10% { opacity: 0.9; }
-  100% { transform: translate3d(var(--sway, 20px), -105vh, 0); opacity: 0; }
-}
-@keyframes bgx-snow {
-  from { transform: translate3d(0, -5vh, 0); }
-  to { transform: translate3d(var(--sway, 30px), 105vh, 0); }
-}
 
 [data-background]:not([data-background="none"]) .bg-\[\#161B22\] {
   background-color: rgb(22 27 34 / 0.88);
@@ -191,13 +104,7 @@
 }
 
 @media (max-width: 767px) {
-  .bgx-flake:nth-child(n + 17) {
-    display: none;
-  }
-
-  .bgx-ember:nth-child(n + 11),
-  .bgx-bubble:nth-child(n + 11),
-  .bgx-petal:nth-child(n + 13) {
+  .bgx [class*="-pk-"]:nth-child(n + 13) {
     display: none;
   }
 }
@@ -206,11 +113,5 @@
   .bgx *,
   .bgx-fill * {
     animation: none !important;
-  }
-  .bgx-ember,
-  .bgx-flake,
-  .bgx-bubble,
-  .bgx-petal {
-    display: none;
   }
 }
