@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80">
+<ellipse cx="50" cy="73" rx="26" ry="3.6" fill="#000000" opacity="0.22"/>
+<g transform="translate(31 58)"><g class="pt-leg pt-leg-b"><rect x="-3" y="0" width="6" height="13" rx="3" fill="#d97706"/><ellipse cx="1" cy="13" rx="4.6" ry="2.5" fill="#fde68a"/></g></g>
+<g transform="translate(59 58)"><g class="pt-leg pt-leg-a"><rect x="-3" y="0" width="6" height="13" rx="3" fill="#d97706"/><ellipse cx="1" cy="13" rx="4.6" ry="2.5" fill="#fde68a"/></g></g>
+<g class="pt-body">
+  <path class="pt-tail" d="M26 52 C10 54 6 36 14 26" fill="none" stroke="#f59e0b" stroke-width="6.5" stroke-linecap="round" style="transform-origin:27px 52px" />
+  <ellipse cx="46" cy="51" rx="23" ry="16" fill="#f59e0b" />
+  <ellipse cx="52" cy="59" rx="14" ry="6.5" fill="#fde68a" opacity="0.85" />
+  <g fill="none" stroke="#b45309" stroke-width="2.4" stroke-linecap="round">
+    <path d="M34 38 q2 6 0 12" />
+    <path d="M42 36 q2 7 0 14" />
+    <path d="M50 36 q2 6 0 12" />
+  </g>
+  <path d="M57 32 L58 13 L70 26 Z" fill="#f59e0b" />
+  <path d="M59 28 L60 19 L66 26 Z" fill="#fda4af" />
+  <path d="M69 26 L80 13 L81 33 Z" fill="#d97706" />
+  <path d="M72 28 L78 20 L78 30 Z" fill="#fda4af" />
+  <circle cx="69" cy="39" r="13" fill="#f59e0b" />
+  <g fill="none" stroke="#b45309" stroke-width="1.8" stroke-linecap="round">
+    <path d="M66 28 v5" />
+    <path d="M70 27 v6" />
+  </g>
+  <ellipse cx="75" cy="45" rx="6" ry="4.4" fill="#fde68a" />
+  <g class="pt-eye">
+    <ellipse cx="73" cy="37" rx="2.7" ry="3.2" fill="#4ade80" />
+    <ellipse cx="73.4" cy="37" rx="0.9" ry="2.6" fill="#14532d" />
+  </g>
+  <path d="M78 41 L82 41 L80 44 Z" fill="#fb7185" />
+  <path d="M80 44 Q78 47 75 46 M80 44 Q82 47 85 46" fill="none" stroke="#92400e" stroke-width="0.9" stroke-linecap="round" />
+  <g stroke="#ffffff" stroke-width="0.9" stroke-linecap="round" opacity="0.9">
+    <path d="M80 43 L91 40" />
+    <path d="M80 45 L91 46" />
+  </g>
+</g>
+<g transform="translate(41 58)"><g class="pt-leg pt-leg-a"><rect x="-3" y="0" width="6" height="13" rx="3" fill="#f59e0b"/><ellipse cx="1" cy="13" rx="4.6" ry="2.5" fill="#ffffff"/></g></g>
+<g transform="translate(68 58)"><g class="pt-leg pt-leg-b"><rect x="-3" y="0" width="6" height="13" rx="3" fill="#f59e0b"/><ellipse cx="1" cy="13" rx="4.6" ry="2.5" fill="#ffffff"/></g></g>
+</svg>
