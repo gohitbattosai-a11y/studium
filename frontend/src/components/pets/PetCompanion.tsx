@@ -17,7 +17,7 @@ const RECENT_MS = 3 * 24 * 3600 * 1000;
 const SLEEP_AFTER_MS = 60_000;
 const SCALE = { piccolo: 0.8, normale: 1, grande: 1.35 };
 
-const baseSize = (width: number) => (width >= 1024 ? 144 : width >= 768 ? 120 : 100);
+const baseSize = (width: number) => (width >= 1024 ? 144 : width >= 768 ? 120 : 68);
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 const pick = <T,>(list: T[]) => list[Math.floor(Math.random() * list.length)];
 
@@ -66,6 +66,7 @@ export default function PetCompanion({ petId, me }: { petId: string; me: Me }) {
   const modeRef = useRef<Mode>("idle");
   const facingRef = useRef<1 | -1>(1);
   const sizeRef = useRef(size);
+  const navRef = useRef(0);
   const areaRef = useRef(settings.area);
   const queue = useRef<Announcement[]>([]);
   const seen = useRef<string[]>(loadSeen(me.member_id));
@@ -114,9 +115,9 @@ export default function PetCompanion({ petId, me }: { petId: string; me: Me }) {
     const h = window.innerHeight;
     const mobile = w < 768;
     const sz = sizeRef.current;
-    const top = (mobile ? 60 : 4) + 72;
-    const maxY = Math.max(top, h - sz * 0.8 - (mobile ? 72 : 6));
-    return { minX: 0, maxX: Math.max(0, w - sz), minY: areaRef.current === "basso" ? maxY : top, maxY };
+    const top = mobile ? 0 : 76;
+    const maxY = Math.max(top, h - sz * 0.8 - (mobile ? navRef.current + 2 : 6));
+    return { minX: 0, maxX: Math.max(0, w - sz), minY: mobile || areaRef.current === "basso" ? maxY : top, maxY };
   };
 
   const setModeIf = (next: Mode) => {
@@ -181,14 +182,22 @@ export default function PetCompanion({ petId, me }: { petId: string; me: Me }) {
     return line;
   };
 
+  const measureNav = () => {
+    navRef.current = window.innerWidth < 768 ? document.querySelector<HTMLElement>('[data-testid="bottom-nav"]')?.offsetHeight ?? 64 : 0;
+  };
+
   useLayoutEffect(() => {
+    measureNav();
     const b = bounds();
     pos.current = { x: b.minX + Math.random() * (b.maxX - b.minX), y: b.maxY };
     if (wrap.current) wrap.current.style.transform = `translate3d(${pos.current.x}px, ${pos.current.y}px, 0)`;
   }, []);
 
   useEffect(() => {
-    const onResize = () => setVw(window.innerWidth);
+    const onResize = () => {
+      setVw(window.innerWidth);
+      measureNav();
+    };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
