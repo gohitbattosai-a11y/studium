@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { LoadError, SkeletonList } from "@/components/common";
 import { Field, NativeSelect, Panel } from "@/components/shop/ui";
+import { RAIL, RAIL_ITEM } from "@/components/layout/rail";
 import { BoxArt } from "./BoxArt";
 import GachaOpening from "./GachaOpening";
 import { PetSprite } from "./PetSprite";
@@ -154,18 +155,22 @@ function Body({ state }: { state: PetsState }) {
 
       <div>
         <h2 className="mb-3 text-sm font-medium">Box</h2>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className={cn(RAIL, "md:grid-cols-2")}>
           {state.boxes.map((b) => (
-            <BoxCard key={b.id} box={b} balance={state.balance} onOpen={() => open(b)} />
+            <div key={b.id} className={cn(RAIL_ITEM, "flex [&>article]:w-full")}>
+              <BoxCard box={b} balance={state.balance} onOpen={() => open(b)} />
+            </div>
           ))}
         </div>
       </div>
 
       <div>
         <h2 className="mb-3 text-sm font-medium">Collezione</h2>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className={cn(RAIL, "sm:grid-cols-2 xl:grid-cols-3")}>
           {state.pets.map((p) => (
-            <PetCard key={p.id} pet={p} busy={actions.setActive.isPending} onActivate={(id) => actions.setActive.mutate(id)} />
+            <div key={p.id} className={cn(RAIL_ITEM, "flex [&>article]:w-full")}>
+              <PetCard pet={p} busy={actions.setActive.isPending} onActivate={(id) => actions.setActive.mutate(id)} />
+            </div>
           ))}
         </div>
       </div>
