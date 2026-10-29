@@ -23,7 +23,7 @@ function Tile({
   testId: string;
 }) {
   return (
-    <section className={cn("rounded-xl border border-[#30363D] bg-[#161B22] p-5", className)} data-testid={testId}>
+    <section className={cn("rounded-xl border border-[#30363D] bg-[#161B22] p-4 md:p-5", className)} data-testid={testId}>
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm font-medium">
           <span className="text-[#8B949E]">{icon}</span>
@@ -39,6 +39,8 @@ function Tile({
 }
 
 const muted = "text-sm text-[#8B949E]";
+
+const RAIL_TILE = "w-[84%] max-w-[340px] shrink-0 snap-start md:col-span-12 md:w-auto md:max-w-none md:shrink";
 
 export default function Overview({ me, onNavigate }: { me: Me; onNavigate: (t: Tab) => void }) {
   const homework = useHomework();
@@ -63,25 +65,25 @@ export default function Overview({ me, onNavigate }: { me: Me; onNavigate: (t: T
 
   return (
     <div>
-      <div className="mb-6">
+      <div className="mb-5 md:mb-6">
         <Eyebrow>{formatLongDay(me.today)}</Eyebrow>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight md:text-[28px]" data-testid="overview-greeting">
+        <h1 className="mt-1 text-xl font-semibold tracking-tight md:text-[28px]" data-testid="overview-greeting">
           Ciao {me.nickname}, ecco la {me.group_name}.
         </h1>
-        <div className="mt-4 flex flex-wrap gap-2 text-sm" data-testid="overview-stats">
-          <span className="rounded-md border border-[#30363D] bg-[#161B22] px-2.5 py-1 text-[#C9D1D9]">
+        <div className="no-scrollbar -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 text-sm md:mx-0 md:mt-4 md:flex-wrap md:px-0" data-testid="overview-stats">
+          <span className="shrink-0 rounded-md border border-[#30363D] bg-[#161B22] px-2.5 py-1 text-[#C9D1D9]">
             <b className="font-semibold text-[#F0F6FC]">{todo.length}</b> compiti da fare
           </span>
-          <span className="rounded-md border border-[#30363D] bg-[#161B22] px-2.5 py-1 text-[#C9D1D9]">
+          <span className="shrink-0 rounded-md border border-[#30363D] bg-[#161B22] px-2.5 py-1 text-[#C9D1D9]">
             <b className="font-semibold text-[#F0F6FC]">{openPolls.length}</b> sondaggi da votare
           </span>
-          <span className="rounded-md border border-[#30363D] bg-[#161B22] px-2.5 py-1 text-[#C9D1D9]">
+          <span className="shrink-0 rounded-md border border-[#30363D] bg-[#161B22] px-2.5 py-1 text-[#C9D1D9]">
             <b className="font-semibold text-[#F0F6FC]">{me.member_count}</b> compagni
           </span>
         </div>
       </div>
 
-      <div className="grid grid-cols-12 gap-4 md:gap-5">
+      <div className="grid grid-cols-12 gap-3 md:gap-5">
         <Tile title="Prossimi compiti" icon={<BookOpen className="size-4" />} onMore={() => onNavigate("compiti")} className="col-span-12 lg:col-span-7" testId="overview-homework">
           {todo.length === 0 ? (
             <p className={muted}>Nessun compito in sospeso. 🎉</p>
@@ -103,69 +105,71 @@ export default function Overview({ me, onNavigate }: { me: Me; onNavigate: (t: T
           )}
         </Tile>
 
-        <Tile title="Bacheca" icon={<Megaphone className="size-4" />} onMore={() => onNavigate("bacheca")} className="col-span-12 lg:col-span-5" testId="overview-notices">
-          {latestNotices.length === 0 ? (
-            <p className={muted}>Nessun avviso per ora.</p>
-          ) : (
-            <ul className="space-y-3">
-              {latestNotices.map((n) => (
-                <li key={n.id} className="flex items-center gap-3">
-                  <Avatar name={n.author} size="sm" />
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{n.title}</p>
-                    <p className="text-xs text-[#8B949E]">
-                      <span className={cn("mr-1.5 rounded border px-1 py-px text-[10px]", NOTICE_TAG_STYLE[n.tag].cls)}>{NOTICE_TAG_STYLE[n.tag].label}</span>
-                      {n.author} · {relTime(n.created_at)}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Tile>
-
-        <Tile title={openPolls.length ? "Sondaggio da votare" : "Ultimo sondaggio"} icon={<BarChart3 className="size-4" />} onMore={() => onNavigate("sondaggi")} className="col-span-12 md:col-span-6" testId="overview-poll">
-          {!firstPoll ? (
-            <p className={muted}>Ancora nessun sondaggio.</p>
-          ) : (
-            <div>
-              <p className="text-sm font-medium">{firstPoll.question}</p>
-              <div className="mt-3 space-y-2">
-                {firstPoll.options.map((o) => {
-                  const pct = firstPoll.total_votes ? Math.round((o.votes / firstPoll.total_votes) * 100) : 0;
-                  return (
-                    <div key={o.id}>
-                      <div className="mb-1 flex justify-between text-xs text-[#8B949E]">
-                        <span className="truncate">{o.text}</span>
-                        <span className="font-mono">{pct}%</span>
-                      </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-[#21262D]">
-                        <div className="h-full rounded-full bg-[#388BFD] animate-bar-grow" style={{ width: `${pct}%` }} />
-                      </div>
+        <div className="no-scrollbar col-span-12 -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-1 md:contents" data-testid="overview-rail">
+          <Tile title="Bacheca" icon={<Megaphone className="size-4" />} onMore={() => onNavigate("bacheca")} className={cn(RAIL_TILE, "lg:col-span-5")} testId="overview-notices">
+            {latestNotices.length === 0 ? (
+              <p className={muted}>Nessun avviso per ora.</p>
+            ) : (
+              <ul className="space-y-3">
+                {latestNotices.map((n) => (
+                  <li key={n.id} className="flex items-center gap-3">
+                    <Avatar name={n.author} size="sm" />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{n.title}</p>
+                      <p className="text-xs text-[#8B949E]">
+                        <span className={cn("mr-1.5 rounded border px-1 py-px text-[10px]", NOTICE_TAG_STYLE[n.tag].cls)}>{NOTICE_TAG_STYLE[n.tag].label}</span>
+                        {n.author} · {relTime(n.created_at)}
+                      </p>
                     </div>
-                  );
-                })}
-              </div>
-              <p className="mt-3 text-xs text-[#8B949E]">{firstPoll.total_votes} voti · {firstPoll.anonymous ? "anonimo" : "voto palese"}</p>
-            </div>
-          )}
-        </Tile>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Tile>
 
-        <Tile title="Materiali" icon={<FolderOpen className="size-4" />} onMore={() => onNavigate("materiali")} className="col-span-12 md:col-span-6" testId="overview-materials">
-          {folderList.length === 0 ? (
-            <p className={muted}>Nessuna cartella ancora.</p>
-          ) : (
-            <div className="grid grid-cols-2 gap-2">
-              {folderList.slice(0, 6).map((f) => (
-                <button key={f.id} type="button" onClick={() => onNavigate("materiali")} className="flex items-center gap-2 rounded-md border border-[#30363D] bg-[#0D1117] px-3 py-2.5 text-left transition-colors duration-150 hover:border-[#58A6FF]/40">
-                  <FolderOpen className="size-4 shrink-0 text-[#BC8CFF]" />
-                  <span className="min-w-0 flex-1 truncate text-sm">{f.name}</span>
-                  <span className="text-xs text-[#8B949E]">{f.item_count}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </Tile>
+          <Tile title={openPolls.length ? "Sondaggio da votare" : "Ultimo sondaggio"} icon={<BarChart3 className="size-4" />} onMore={() => onNavigate("sondaggi")} className={cn(RAIL_TILE, "md:col-span-6")} testId="overview-poll">
+            {!firstPoll ? (
+              <p className={muted}>Ancora nessun sondaggio.</p>
+            ) : (
+              <div>
+                <p className="text-sm font-medium">{firstPoll.question}</p>
+                <div className="mt-3 space-y-2">
+                  {firstPoll.options.map((o) => {
+                    const pct = firstPoll.total_votes ? Math.round((o.votes / firstPoll.total_votes) * 100) : 0;
+                    return (
+                      <div key={o.id}>
+                        <div className="mb-1 flex justify-between text-xs text-[#8B949E]">
+                          <span className="truncate">{o.text}</span>
+                          <span className="font-mono">{pct}%</span>
+                        </div>
+                        <div className="h-1.5 overflow-hidden rounded-full bg-[#21262D]">
+                          <div className="h-full rounded-full bg-[#388BFD] animate-bar-grow" style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="mt-3 text-xs text-[#8B949E]">{firstPoll.total_votes} voti · {firstPoll.anonymous ? "anonimo" : "voto palese"}</p>
+              </div>
+            )}
+          </Tile>
+
+          <Tile title="Materiali" icon={<FolderOpen className="size-4" />} onMore={() => onNavigate("materiali")} className={cn(RAIL_TILE, "md:col-span-6")} testId="overview-materials">
+            {folderList.length === 0 ? (
+              <p className={muted}>Nessuna cartella ancora.</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {folderList.slice(0, 6).map((f) => (
+                  <button key={f.id} type="button" onClick={() => onNavigate("materiali")} className="flex items-center gap-2 rounded-md border border-[#30363D] bg-[#0D1117] px-3 py-2.5 text-left transition-colors duration-150 hover:border-[#58A6FF]/40">
+                    <FolderOpen className="size-4 shrink-0 text-[#BC8CFF]" />
+                    <span className="min-w-0 flex-1 truncate text-sm">{f.name}</span>
+                    <span className="text-xs text-[#8B949E]">{f.item_count}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </Tile>
+        </div>
       </div>
     </div>
   );
