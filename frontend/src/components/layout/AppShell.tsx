@@ -13,6 +13,7 @@ import MobileMembers from "@/components/layout/MobileMembers";
 import MobileNav from "@/components/layout/MobileNav";
 import ThemeBackground from "@/components/theme/ThemeBackground";
 import ThemePicker from "@/components/theme/ThemePicker";
+import { DecorationDefs } from "@/components/shop/decorations";
 import ShopPanel from "@/components/shop/ShopPanel";
 import StatusBanner from "@/components/release/StatusBanner";
 import PetCompanion from "@/components/pets/PetCompanion";
@@ -62,6 +63,38 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
 
   return (
     <div className="relative isolate min-h-screen md:flex" data-background={background}>
+      <DecorationDefs />
+      {petsOpen && petSettings.visible && pets.data?.active_pet && <PetCompanion key={pets.data.active_pet} petId={pets.data.active_pet} me={me} />}
+      <ThemeBackground id={background} />
+      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-[#30363D] bg-[#0D1117] md:flex" data-testid="sidebar">
+        <div className="flex h-14 items-center gap-2.5 px-5">
+          <BrandMark className="size-7" />
+          <span className="font-semibold tracking-tight">Studium</span>
+        </div>
+        <div className="mx-3 rounded-lg border border-[#30363D] bg-[#161B22] p-3">
+          <Eyebrow>Gruppo</Eyebrow>
+          <p className="mt-1 truncate font-medium" data-testid="sidebar-group-name">{me.group_name}</p>
+          <p className="mt-0.5 flex items-center gap-1.5 text-xs text-[#8B949E]">
+            <Users className="size-3.5" /> {members.data?.length ?? me.member_count} membri
+          </p>
+        </div>
+        <nav className="mt-4 space-y-0.5 px-3">
+          {NAV.map((n) => (
+            <button
+              key={n.id}
+              type="button"
+              onClick={() => go(n.id)}
+              data-testid={`sidebar-tab-${n.id}`}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors duration-150",
+                tab === n.id ? "bg-[#161B22] text-[#F0F6FC] shadow-[inset_2px_0_0_#388BFD]" : "text-[#8B949E] hover:bg-[#161B22]/60 hover:text-[#F0F6FC]",
+              )}
+            >
+              <n.icon className={cn("size-4", tab === n.id && "text-[#58A6FF]")} />
+              {n.label}
+            </button>
+          ))}
+        </nav>
         <div className="mt-6 min-h-0 flex-1 overflow-y-auto px-5">
           <Eyebrow className="mb-2">Compagni</Eyebrow>
           <ul className="space-y-1.5" data-testid="sidebar-members">
