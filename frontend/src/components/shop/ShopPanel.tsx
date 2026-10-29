@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { LoadError, SectionHeader, Segmented, SkeletonList } from "@/components/common";
 import { BackgroundPreview } from "@/components/theme/ThemeBackground";
+import { RAIL, RAIL_ITEM } from "@/components/layout/rail";
 import { AvatarDecoration } from "./decorations";
 import AdminView from "./AdminView";
 import LeaderboardView from "./LeaderboardView";
@@ -28,7 +29,7 @@ function DecorationPreview({ id, name }: { id: string; name: string }) {
   );
 }
 
-function ItemCard({ item, state, nickname, actions }: { item: ShopItem; state: ShopState; nickname: string; actions: Actions }) {
+function ItemCard({ item, state, nickname, actions, className }: { item: ShopItem; state: ShopState; nickname: string; actions: Actions; className?: string }) {
   const missing = item.price - state.balance;
   const busy = actions.buy.isPending || actions.equip.isPending;
 
@@ -66,7 +67,7 @@ function ItemCard({ item, state, nickname, actions }: { item: ShopItem; state: S
   }
 
   return (
-    <article className="dc-host flex flex-col overflow-hidden rounded-xl border border-[#30363D] bg-[#161B22]" tabIndex={0} data-testid={`item-${item.id}`}>
+    <article className={cn("dc-host flex flex-col overflow-hidden rounded-xl border border-[#30363D] bg-[#161B22]", className)} tabIndex={0} data-testid={`item-${item.id}`}>
       {item.kind === "decoration" ? (
         <div className="grid h-32 place-items-center bg-[#0D1117]">
           <DecorationPreview id={item.id} name={nickname} />
@@ -93,10 +94,10 @@ function ItemCard({ item, state, nickname, actions }: { item: ShopItem; state: S
   );
 }
 
-function ClassicBackgroundCard({ state, actions }: { state: ShopState; actions: Actions }) {
+function ClassicBackgroundCard({ state, actions, className }: { state: ShopState; actions: Actions; className?: string }) {
   const active = state.equipped_background === null;
   return (
-    <article className="flex flex-col overflow-hidden rounded-xl border border-[#30363D] bg-[#161B22]" data-testid="item-classico">
+    <article className={cn("flex flex-col overflow-hidden rounded-xl border border-[#30363D] bg-[#161B22]", className)} data-testid="item-classico">
       <div className="grid h-32 place-items-center bg-[#0D1117] text-sm text-[#8B949E]">Nessuno sfondo</div>
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div className="flex-1">
@@ -123,8 +124,8 @@ function ShopView({ state, nickname, actions }: { state: ShopState; nickname: st
   const backgrounds = state.items.filter((i) => i.kind === "background");
 
   return (
-    <div className="space-y-6" data-testid="shop-view">
-      <section className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#30363D] bg-[#161B22] p-5" data-testid="shop-balance">
+    <div className="space-y-6 md:space-y-6" data-testid="shop-view">
+      <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#30363D] bg-[#161B22] p-4 md:gap-4 md:p-5" data-testid="shop-balance">
         <div>
           <p className="text-xs font-medium uppercase tracking-wider text-[#8B949E]">Il tuo saldo</p>
           <p className="mt-1 text-3xl font-semibold tabular-nums">
@@ -140,20 +141,26 @@ function ShopView({ state, nickname, actions }: { state: ShopState; nickname: st
       </section>
 
       <div>
-        <h2 className="mb-3 text-sm font-medium">Icone profilo animate</h2>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <h2 className="mb-3 flex items-baseline justify-between text-sm font-medium">
+          Icone profilo animate
+          <span className="text-xs font-normal text-[#8B949E] sm:hidden">{decorations.length}</span>
+        </h2>
+        <div className={cn(RAIL, "sm:grid-cols-2 xl:grid-cols-3")}>
           {decorations.map((i) => (
-            <ItemCard key={i.id} item={i} state={state} nickname={nickname} actions={actions} />
+            <ItemCard key={i.id} item={i} state={state} nickname={nickname} actions={actions} className={RAIL_ITEM} />
           ))}
         </div>
       </div>
 
       <div>
-        <h2 className="mb-3 text-sm font-medium">Sfondi</h2>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <ClassicBackgroundCard state={state} actions={actions} />
+        <h2 className="mb-3 flex items-baseline justify-between text-sm font-medium">
+          Sfondi
+          <span className="text-xs font-normal text-[#8B949E] sm:hidden">{backgrounds.length + 1}</span>
+        </h2>
+        <div className={cn(RAIL, "sm:grid-cols-2 xl:grid-cols-3")}>
+          <ClassicBackgroundCard state={state} actions={actions} className={RAIL_ITEM} />
           {backgrounds.map((i) => (
-            <ItemCard key={i.id} item={i} state={state} nickname={nickname} actions={actions} />
+            <ItemCard key={i.id} item={i} state={state} nickname={nickname} actions={actions} className={RAIL_ITEM} />
           ))}
         </div>
       </div>
