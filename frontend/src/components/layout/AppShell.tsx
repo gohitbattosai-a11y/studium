@@ -10,8 +10,10 @@ import { cn } from "@/lib/utils";
 import { Avatar, BrandMark, Eyebrow } from "@/components/common";
 import MemberRow from "@/components/layout/MemberRow";
 import MobileMembers from "@/components/layout/MobileMembers";
+import MobileNav from "@/components/layout/MobileNav";
 import ThemeBackground from "@/components/theme/ThemeBackground";
 import ThemePicker from "@/components/theme/ThemePicker";
+import { DecorationDefs } from "@/components/shop/decorations";
 import ShopPanel from "@/components/shop/ShopPanel";
 import StatusBanner from "@/components/release/StatusBanner";
 import PetCompanion from "@/components/pets/PetCompanion";
@@ -61,6 +63,7 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
 
   return (
     <div className="relative isolate min-h-screen md:flex" data-background={background}>
+      <DecorationDefs />
       {petsOpen && petSettings.visible && pets.data?.active_pet && <PetCompanion key={pets.data.active_pet} petId={pets.data.active_pet} me={me} />}
       <ThemeBackground id={background} />
       <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-[#30363D] bg-[#0D1117] md:flex" data-testid="sidebar">
@@ -142,7 +145,7 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
           </button>
         </header>
 
-        <main className="mx-auto max-w-6xl px-4 pt-5 pb-28 md:px-8 md:pt-8 md:pb-12">
+        <main className="mx-auto max-w-6xl px-4 pt-4 pb-24 md:px-8 md:pt-8 md:pb-12">
           <div className="mb-4 empty:hidden">
             <StatusBanner status={status} />
           </div>
@@ -171,28 +174,7 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
         </main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[#30363D] bg-[#161B22]/95 pb-[env(safe-area-inset-bottom)] md:hidden" data-testid="bottom-nav">
-        <div className="grid h-16 grid-cols-7">
-          {NAV.map((n) => {
-            const active = tab === n.id;
-            return (
-              <button
-                key={n.id}
-                type="button"
-                onClick={() => go(n.id)}
-                data-testid={`nav-tab-${n.id}`}
-                aria-current={active ? "page" : undefined}
-                className="flex flex-col items-center justify-center gap-1 transition-transform duration-100 active:scale-95"
-              >
-                <span className={cn("grid h-7 w-12 place-items-center rounded-full transition-colors duration-150", active ? "bg-[#388BFD]/15 text-[#58A6FF]" : "text-[#8B949E]")}>
-                  <n.icon className="size-[18px]" />
-                </span>
-                <span className={cn("text-[10px] leading-none", active ? "text-[#F0F6FC]" : "text-[#8B949E]")}>{n.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
+      <MobileNav items={NAV} tab={tab} onGo={go} />
     </div>
   );
 }
