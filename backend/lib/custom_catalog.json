@@ -1,4 +1,6 @@
 {
   "items": [],
-  "pets": []
+  "pets": [
+    {"id": "pesce", "name": "Pesce", "rarity": "mitico"}
+  ]
 }
