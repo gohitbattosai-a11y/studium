@@ -117,9 +117,10 @@ export const audioParts = () => {
   return { ctx: c, bus: ambientBus, noise: noiseBuf };
 };
 
-const tone = (freq: number, at: number, dur: number, type: OscillatorType = "sine", gain = 0.1, slideTo?: number) => {
+const tone = (freq: number, at: number, dur: number, type: OscillatorType = "sine", gain = 0.1, slideTo?: number, dest?: AudioNode) => {
   const c = live();
-  if (!c || !sfxBus || !settings.sfx) return;
+  const bus = dest ?? sfxBus;
+  if (!c || !bus || !settings.sfx) return;
   const t = c.currentTime + at;
   const o = c.createOscillator();
   const g = c.createGain();
@@ -130,14 +131,15 @@ const tone = (freq: number, at: number, dur: number, type: OscillatorType = "sin
   g.gain.exponentialRampToValueAtTime(gain, t + 0.006);
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   o.connect(g);
-  g.connect(sfxBus);
+  g.connect(bus);
   o.start(t);
   o.stop(t + dur + 0.03);
 };
 
-const hiss = (at: number, dur: number, freq: number, gain = 0.05, type: BiquadFilterType = "highpass", slideTo?: number) => {
+const hiss = (at: number, dur: number, freq: number, gain = 0.05, type: BiquadFilterType = "highpass", slideTo?: number, dest?: AudioNode) => {
   const c = live();
-  if (!c || !sfxBus || !noiseBuf || !settings.sfx) return;
+  const bus = dest ?? sfxBus;
+  if (!c || !bus || !noiseBuf || !settings.sfx) return;
   const t = c.currentTime + at;
   const src = c.createBufferSource();
   const f = c.createBiquadFilter();
@@ -151,7 +153,7 @@ const hiss = (at: number, dur: number, freq: number, gain = 0.05, type: BiquadFi
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   src.connect(f);
   f.connect(g);
-  g.connect(sfxBus);
+  g.connect(bus);
   src.start(t, Math.random() * 1.5);
   src.stop(t + dur + 0.03);
 };
@@ -174,10 +176,7 @@ export type SfxName =
   | "match"
   | "flip"
   | "win"
-  | "swoosh"
-  | "gachaShake"
-  | "gachaCrack"
-  | "gachaBurst";
+  | "swoosh";
 
 export const sfx = (name: SfxName) => {
   switch (name) {
@@ -240,35 +239,129 @@ export const sfx = (name: SfxName) => {
     case "swoosh":
       hiss(0, 0.28, 400, 0.07, "bandpass", 3200);
       break;
-    case "gachaShake":
-      for (let i = 0; i < 6; i++) {
-        tone(110 + (i % 2) * 14, i * 0.12, 0.1, "square", 0.045);
-        hiss(i * 0.12, 0.06, 500, 0.03, "lowpass");
-      }
-      break;
-    case "gachaCrack":
-      hiss(0, 0.14, 1800, 0.09, "highpass");
-      tone(180, 0, 0.18, "sawtooth", 0.06, 80);
-      hiss(0.1, 0.12, 2600, 0.07, "highpass");
-      break;
-    case "gachaBurst":
-      hiss(0, 0.5, 300, 0.12, "bandpass", 5200);
-      tone(140, 0, 0.45, "sine", 0.14, 40);
-      break;
   }
 };
 
-export const sfxReveal = (tier: number) => {
-  const count = Math.min(NOTES.length, 2 + tier);
-  for (let i = 0; i < count; i++) tone(NOTES[i], i * 0.09, 0.3 + tier * 0.05, "triangle", 0.09);
-  if (tier >= 3) {
-    tone(NOTES[count - 1] * 2, count * 0.09, 0.6, "sine", 0.07);
-    hiss(0, 0.7, 4000, 0.04, "highpass");
-  }
-  if (tier >= 5) {
-    [1046.5, 1318.5, 1568, 2093].forEach((f, i) => tone(f, 0.5 + i * 0.08, 0.7, "sine", 0.06));
-  }
+type Voice = { c: AudioContext; out: GainNode };
+
+const voice = (): Voice | null => {
+  const c = live();
+  if (!c || !sfxBus || !settings.sfx) return null;
+  const out = c.createGain();
+  out.connect(sfxBus);
+  return { c, out };
 };
+
+const fadeOut = (v: Voice) => {
+  const t = v.c.currentTime;
+  v.out.gain.cancelScheduledValues(t);
+  v.out.gain.setValueAtTime(v.out.gain.value, t);
+  v.out.gain.linearRampToValueAtTime(0, t + 0.06);
+  window.setTimeout(() => v.out.disconnect(), 150);
+};
+
+const sequence = (build: (v: Voice) => Array<() => void>) => {
+  let v: Voice | null = null;
+  let stops: Array<() => void> = [];
+  const timer = window.setTimeout(() => {
+    v = voice();
+    if (v) stops = build(v);
+  }, 0);
+  return () => {
+    window.clearTimeout(timer);
+    if (!v) return;
+    fadeOut(v);
+    const pending = stops;
+    stops = [];
+    window.setTimeout(() => {
+      pending.forEach((stop) => {
+        try {
+          stop();
+        } catch {
+          return;
+        }
+      });
+    }, 120);
+  };
+};
+
+const SHAKE_SECONDS = 1.9;
+const SHAKE_STEP_MS = 95;
+
+export const sfxGachaShake = () =>
+  sequence(({ c, out }) => {
+    if (!noiseBuf) return [];
+    const t0 = c.currentTime;
+    const started = performance.now();
+    const osc = c.createOscillator();
+    const lp = c.createBiquadFilter();
+    const og = c.createGain();
+    osc.type = "sawtooth";
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(220, t0);
+    lp.frequency.exponentialRampToValueAtTime(1400, t0 + SHAKE_SECONDS);
+    osc.frequency.setValueAtTime(55, t0);
+    osc.frequency.exponentialRampToValueAtTime(220, t0 + SHAKE_SECONDS);
+    og.gain.setValueAtTime(0.0001, t0);
+    og.gain.exponentialRampToValueAtTime(0.06, t0 + SHAKE_SECONDS);
+    osc.connect(lp);
+    lp.connect(og);
+    og.connect(out);
+    osc.start(t0);
+    const src = c.createBufferSource();
+    const bp = c.createBiquadFilter();
+    const ng = c.createGain();
+    src.buffer = noiseBuf;
+    src.loop = true;
+    bp.type = "bandpass";
+    bp.frequency.setValueAtTime(250, t0);
+    bp.frequency.exponentialRampToValueAtTime(2600, t0 + SHAKE_SECONDS);
+    ng.gain.setValueAtTime(0.0001, t0);
+    ng.gain.exponentialRampToValueAtTime(0.05, t0 + SHAKE_SECONDS);
+    src.connect(bp);
+    bp.connect(ng);
+    ng.connect(out);
+    src.start(t0);
+    let n = 0;
+    const timer = window.setInterval(() => {
+      const k = Math.min(1, (performance.now() - started) / (SHAKE_SECONDS * 1000));
+      tone(85 + (n++ % 2) * 16 + k * 60, 0, 0.09, "square", 0.018 + 0.05 * k, undefined, out);
+      hiss(0, 0.05, 600 + k * 900, 0.012 + 0.03 * k, "lowpass", undefined, out);
+    }, SHAKE_STEP_MS);
+    return [() => window.clearInterval(timer), () => osc.stop(), () => src.stop()];
+  });
+
+export const sfxGachaCrack = () =>
+  sequence(({ out }) => {
+    hiss(0, 0.14, 1800, 0.1, "highpass", undefined, out);
+    tone(170, 0, 0.2, "sawtooth", 0.06, 70, out);
+    tone(220, 0, 0.65, "sawtooth", 0.035, 1200, out);
+    hiss(0, 0.65, 400, 0.05, "bandpass", 5000, out);
+    for (let i = 0; i < 6; i++) tone(1700 + (i % 3) * 300, 0.14 + i * 0.08, 0.03, "square", 0.012, undefined, out);
+    return [];
+  });
+
+export const sfxGachaBurst = (tier: number) =>
+  sequence(({ out }) => {
+    hiss(0, 0.07, 1400, 0.1, "bandpass", 2600, out);
+    tone(320, 0, 0.12, "triangle", 0.07, 120, out);
+    tone(130 - tier * 10, 0.1, 0.7 + tier * 0.08, "sine", 0.2, 36, out);
+    hiss(0.1, 0.6 + tier * 0.1, 260, 0.12, "bandpass", 5200, out);
+    [1568, 2093, 2637].forEach((f, i) => tone(f, 0.17 + i * 0.05, 0.5, "sine", 0.035, undefined, out));
+    if (tier >= 3) hiss(0.14, 0.9, 5000, 0.05, "highpass", undefined, out);
+    return [];
+  });
+
+export const sfxGachaReveal = (tier: number) =>
+  sequence(({ out }) => {
+    tone(260, 0, 0.3, "sine", 0.08, 720, out);
+    hiss(0, 0.3, 700, 0.04, "bandpass", 3200, out);
+    for (let i = 0; i <= tier; i++) tone(NOTES[i], 0.35 + i * 0.09, 0.28 + i * 0.03, "triangle", 0.085, undefined, out);
+    hiss(1.1, 0.5, 3800, 0.04, "highpass", undefined, out);
+    tone(1318.5, 1.16, 0.55, "sine", 0.06, undefined, out);
+    if (tier >= 3) [NOTES[tier - 2], NOTES[tier], NOTES[tier] * 1.5].forEach((f) => tone(f, 1.16, 1, "sine", 0.05, undefined, out));
+    return [];
+  });
 
 const INTERACTIVE = "button, a[href], [role=button], [role=tab], [role=menuitem], [role=option], [role=switch], summary, select, input[type=checkbox], input[type=radio], label[for]";
 
