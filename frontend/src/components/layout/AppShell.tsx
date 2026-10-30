@@ -5,6 +5,7 @@ import { endSession } from "@/lib/session";
 import { useMembers, usePets, useShop } from "@/lib/queries";
 import { featureOpen } from "@/lib/release";
 import { useShopActions } from "@/lib/shopActions";
+import { useAmbient } from "@/lib/ambient";
 import { BACKGROUNDS, isBackgroundId, type BackgroundId, type BackgroundOption } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { Avatar, BrandMark, Eyebrow } from "@/components/common";
@@ -13,6 +14,7 @@ import MobileMembers from "@/components/layout/MobileMembers";
 import MobileNav from "@/components/layout/MobileNav";
 import ThemeBackground from "@/components/theme/ThemeBackground";
 import ThemePicker from "@/components/theme/ThemePicker";
+import SoundSettings from "@/components/sound/SoundSettings";
 import ShopPanel from "@/components/shop/ShopPanel";
 import StatusBanner from "@/components/release/StatusBanner";
 import PetCompanion from "@/components/pets/PetCompanion";
@@ -51,6 +53,7 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
     .filter((i) => i.kind === "background" && !BACKGROUNDS.some((b) => b.id === i.id))
     .map((i) => ({ id: i.id, label: i.name, hint: i.description }));
   const setBackground = (id: BackgroundId) => equip.mutate({ kind: "background", item_id: id === "none" ? null : id });
+  useAmbient(background);
   const logout = () => void endSession("/");
 
   const go = (t: Tab) => {
@@ -116,6 +119,7 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
             testId="sidebar-background-button"
             className="grid size-9 place-items-center rounded-md text-[#8B949E] transition-colors duration-150 hover:bg-[#161B22] hover:text-[#F0F6FC]"
           />
+          <SoundSettings testId="sidebar-sound-button" className="grid size-9 place-items-center rounded-md text-[#8B949E] transition-colors duration-150 hover:bg-[#161B22] hover:text-[#F0F6FC]" />
           <button type="button" onClick={logout} className="grid size-9 place-items-center rounded-md text-[#8B949E] transition-colors duration-150 hover:bg-[#161B22] hover:text-[#F0F6FC]" aria-label="Esci" data-testid="sidebar-logout-button">
             <LogOut className="size-4" />
           </button>
@@ -138,6 +142,7 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
             testId="header-background-button"
             className="grid size-10 place-items-center rounded-md text-[#8B949E] active:scale-95"
           />
+          <SoundSettings testId="header-sound-button" className="grid size-10 place-items-center rounded-md text-[#8B949E] active:scale-95" />
           <button type="button" onClick={logout} className="grid size-10 place-items-center rounded-md text-[#8B949E] active:scale-95" aria-label="Esci" data-testid="header-logout-button">
             <LogOut className="size-4" />
           </button>
