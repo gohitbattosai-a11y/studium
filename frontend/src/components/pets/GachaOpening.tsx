@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Coins, Sparkles, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { BoxInfo, RollResult } from "@/lib/types";
 import { BoxArt } from "./BoxArt";
 import { PetSprite } from "./PetSprite";
 import { PARTICLES, RARITY, TIER } from "./rarity";
-import { sfx, sfxReveal } from "@/lib/sfx";
+import { sfxGachaBurst, sfxGachaCrack, sfxGachaReveal, sfxGachaShake } from "@/lib/sfx";
 import "./gacha.css";
 
 type Phase = "shake" | "crack" | "burst" | "reveal";
@@ -118,12 +118,17 @@ export default function GachaOpening({ box, result, canAgain, onAgain, onClose }
     return () => window.clearTimeout(timer);
   }, [phase, tier]);
 
+  const tierRef = useRef(tier);
   useEffect(() => {
-    if (phase === "shake") sfx("gachaShake");
-    if (phase === "crack") sfx("gachaCrack");
-    if (phase === "burst") sfx("gachaBurst");
-    if (phase === "reveal") sfxReveal(tier);
-  }, [phase, tier]);
+    tierRef.current = tier;
+  });
+
+  useEffect(() => {
+    if (phase === "shake") return sfxGachaShake();
+    if (phase === "crack") return sfxGachaCrack();
+    if (phase === "burst") return sfxGachaBurst(tierRef.current);
+    return sfxGachaReveal(tierRef.current);
+  }, [phase]);
 
   const particles = useMemo(() => particleSet(PARTICLES[rarity], tier), [rarity, tier]);
   const confetti = useMemo(() => confettiSet(CONFETTI_COUNT[tier]), [tier]);
