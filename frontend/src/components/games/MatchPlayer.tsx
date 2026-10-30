@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { shuffle } from "@/lib/games";
 import type { GameOut } from "@/lib/types";
+import { sfx } from "@/lib/sfx";
 import { choiceClass, Progress } from "./ui";
 
 export default function MatchPlayer({ game, onFinish }: { game: GameOut; onFinish: (percent: number) => void }) {
@@ -18,12 +19,14 @@ export default function MatchPlayer({ game, onFinish }: { game: GameOut; onFinis
   const pickRight = (r: number) => {
     if (selected === null || done.includes(r) || wrong) return;
     if (selected === r) {
+      sfx("match");
       const next = [...done, r];
       setDone(next);
       setSelected(null);
       if (next.length === pairs.length) onFinish(Math.round((pairs.length / (pairs.length + mistakes)) * 100));
       return;
     }
+    sfx("wrong");
     setMistakes((m) => m + 1);
     setWrong([selected, r]);
     timer.current = window.setTimeout(() => {
