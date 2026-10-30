@@ -10,3 +10,5 @@ export const RARITY: Record<Rarity, { label: string; color: string }> = {
 };
 
 export const PARTICLES: Record<Rarity, number> = { comune: 14, non_comune: 18, raro: 24, epico: 32, leggendario: 44, mitico: 60 };
+
+export const TIER: Record<Rarity, number> = { comune: 0, non_comune: 1, raro: 2, epico: 3, leggendario: 4, mitico: 5 };
