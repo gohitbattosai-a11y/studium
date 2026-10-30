@@ -59,6 +59,12 @@ export const PET_LINES: Record<string, string[]> = {
     "Il mio segreto? Pause lunghe e tanta calma.",
     "Anche la leggenda più rara comincia con un piccolo passo. Tipo aprire il quaderno.",
   ],
+  squalo: [
+    "Ho annusato un compito difficile a tre chilometri di distanza.",
+    "Se smetto di nuotare mi fermo. Tu non smettere di studiare!",
+    "Ho 300 denti, ma nessuno per le verifiche a sorpresa.",
+    "Sott'acqua si studia benissimo: zero distrazioni, solo bolle.",
+  ],
 };
 
 export const GENERIC_LINES = [
