@@ -5,6 +5,9 @@ import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
 import { queryClient } from './lib/queryClient'
+import { installGlobalSfx } from './lib/sfx'
+
+installGlobalSfx()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
