@@ -1,15 +1,15 @@
 import { scopeSvg, type ArtFit } from "./svgScope";
 
-export type ArtKind = "decorations" | "backgrounds" | "pets";
+export type ArtKind = "decorations" | "backgrounds" | "pets" | "boxes";
 
-const FIT: Record<ArtKind, ArtFit> = { decorations: "meet", backgrounds: "slice", pets: "meet" };
+const FIT: Record<ArtKind, ArtFit> = { decorations: "meet", backgrounds: "slice", pets: "meet", boxes: "meet" };
 
 const files = import.meta.glob("../assets/art/**/*.svg", { query: "?raw", import: "default", eager: true }) as Record<string, string>;
 
-const store: Record<ArtKind, Map<string, string>> = { decorations: new Map(), backgrounds: new Map(), pets: new Map() };
+const store: Record<ArtKind, Map<string, string>> = { decorations: new Map(), backgrounds: new Map(), pets: new Map(), boxes: new Map() };
 
 for (const [path, raw] of Object.entries(files)) {
-  const m = /\/art\/(decorations|backgrounds|pets)\/([^/]+)\.svg$/.exec(path);
+  const m = /\/art\/(decorations|backgrounds|pets|boxes)\/([^/]+)\.svg$/.exec(path);
   if (!m) continue;
   const kind = m[1] as ArtKind;
   const scoped = scopeSvg(raw, `${kind}-${m[2]}`, FIT[kind]);
