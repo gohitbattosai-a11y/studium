@@ -1,7 +1,7 @@
 export type ArtFit = "meet" | "slice";
 
-const SHARED = /^(dc|pt|bgx)-/;
-const ENGINE_ID = /^((?:dc|pt|bgx)-[\w-]+?)(?:_\d+)?$/;
+const SHARED = /^(dc|pt|bgx|gc)-/;
+const ENGINE_ID = /^((?:dc|pt|bgx|gc)-[\w-]+?)(?:_\d+)?$/;
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const scopeCss = (css: string, prefix: string, classes: Set<string>, ids: Set<string>) => {
