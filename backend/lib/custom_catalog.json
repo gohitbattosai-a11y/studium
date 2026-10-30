@@ -1,6 +1,6 @@
 {
   "items": [],
   "pets": [
-    
+    {"id": "squalo", "name": "Squalo", "rarity": "epico"}
   ]
 }
