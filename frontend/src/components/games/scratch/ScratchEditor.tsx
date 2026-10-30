@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Copy, Eraser, LayoutGrid, Play, Redo2, Sparkles, Square, Trash2, Undo2 } from "lucide-react";
+import { createPortal } from "react-dom";
+import { ArrowLeft, Copy, Eraser, LayoutGrid, Play, Redo2, Sparkles, Square, Trash2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { addScript, canDropOnSlot, canInsert, detach, dropOnSlot, duplicateFrom, initialView, insertAt, sampleApples, sampleQuiz, setArg, stackAt, tidy, type StackRef } from "@/lib/scratch/project";
@@ -41,7 +42,7 @@ const withScripts = (p: ScratchProject, spriteId: string, scripts: Script[]): Sc
 const scriptsOf = (p: ScratchProject, spriteId: string) => p.sprites.find((s) => s.id === spriteId)?.scripts ?? [];
 const keyOf = (t: Target | null) => (t && (t.kind === "stack" || t.kind === "slot") ? t.key : null);
 
-export default function ScratchEditor({ project, onChange }: { project: ScratchProject; onChange: (p: ScratchProject) => void }) {
+export default function ScratchEditor({ project, onChange, open, onClose }: { project: ScratchProject; onChange: (p: ScratchProject) => void; open: boolean; onClose: () => void }) {
   const [spriteId, setSpriteId] = useState(project.sprites[0].id);
   const [cat, setCat] = useState<CategoryId>("events");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -370,11 +371,20 @@ export default function ScratchEditor({ project, onChange }: { project: ScratchP
   const empty = projectBlockCount(project) === 0;
   const hist = history.current;
 
+  const close = () => {
+    setRunning(false);
+    onClose();
+  };
+
   return (
     <EditorContext.Provider value={ctx}>
-      <div className="space-y-4" data-testid="editor-scratch">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2">
+      {createPortal(
+        <div className={cn("fixed inset-0 z-[60] flex-col bg-[#0D1117] text-[#E6EDF3]", open ? "flex" : "hidden")} data-testid="editor-scratch">
+          <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-[#30363D] bg-[#161B22] px-3 py-2">
+            <Button variant="outline" size="sm" onClick={close} data-testid="scratch-back">
+              <ArrowLeft className="size-3.5" /> Indietro
+            </Button>
+            <div className="mx-1 hidden h-5 w-px bg-[#30363D] sm:block" />
             <Button variant="outline" size="sm" disabled={hist.past.length === 0} onClick={undo} data-testid="scratch-undo">
               <Undo2 className="size-3.5" /> Annulla
             </Button>
@@ -394,25 +404,25 @@ export default function ScratchEditor({ project, onChange }: { project: ScratchP
                 </Button>
               </>
             )}
-          </div>
-          <Segmented
-            value={tab}
-            onChange={setTab}
-            testId="scratch-tab"
-            className="lg:hidden"
-            options={[
-              { value: "code", label: "Codice" },
-              { value: "stage", label: "Palco e sprite" },
-            ]}
-          />
-        </div>
+            <Segmented
+              value={tab}
+              onChange={setTab}
+              testId="scratch-tab"
+              className="ml-auto lg:hidden"
+              options={[
+                { value: "code", label: "Codice" },
+                { value: "stage", label: "Palco e sprite" },
+              ]}
+            />
+          </header>
 
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_400px]">
-          <div className={cn("min-w-0 space-y-4", tab === "code" ? "block" : "hidden", "lg:block")}>
-            <div className="grid gap-4 xl:grid-cols-[250px_minmax(0,1fr)]">
-              <Palette project={project} sprite={sprite} cat={cat} onCat={setCat} onProject={(p) => commit(p)} onCreateProc={createProc} paletteRef={palRef} />
-              <section className="min-w-0 rounded-xl border border-[#30363D] bg-[#161B22]">
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#30363D] px-3 py-2">
+          <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,1fr)_380px]">
+            <div className={cn("min-h-0 min-w-0 flex-col gap-3 p-3 xl:flex-row", tab === "code" ? "flex" : "hidden", "lg:flex")}>
+              <div className="h-[38%] shrink-0 xl:h-full xl:w-[250px]">
+                <Palette project={project} sprite={sprite} cat={cat} onCat={setCat} onProject={(p) => commit(p)} onCreateProc={createProc} paletteRef={palRef} />
+              </div>
+              <section className="flex min-h-0 min-w-0 flex-1 flex-col rounded-xl border border-[#30363D] bg-[#161B22]">
+                <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[#30363D] px-3 py-2">
                   <p className="text-sm font-medium">
                     Codice di <span className="text-[#58A6FF]">{sprite.name}</span>
                   </p>
@@ -433,7 +443,7 @@ export default function ScratchEditor({ project, onChange }: { project: ScratchP
                 <div
                   ref={wsRef}
                   tabIndex={0}
-                  className="relative h-[520px] overflow-auto rounded-b-xl bg-[#0D1117] outline-none [background-image:radial-gradient(#21262D_1px,transparent_1px)] [background-size:20px_20px]"
+                  className="relative min-h-0 flex-1 overflow-auto rounded-b-xl bg-[#0D1117] outline-none [background-image:radial-gradient(#21262D_1px,transparent_1px)] [background-size:20px_20px]"
                   data-testid="scratch-workspace"
                   onPointerDown={() => setSelectedId(null)}
                   onKeyDown={(e) => {
@@ -463,71 +473,72 @@ export default function ScratchEditor({ project, onChange }: { project: ScratchP
                 </div>
               </section>
             </div>
-          </div>
 
-          <div className={cn("min-w-0 space-y-4", tab === "stage" ? "block" : "hidden", "lg:block")}>
-            <Panel
-              title="Palco"
-              hint={running ? "Il gioco è in esecuzione." : "Trascina gli sprite per scegliere dove iniziano."}
-              action={
-                running ? (
-                  <Button variant="outline" size="sm" onClick={() => setRunning(false)} data-testid="scratch-stop">
-                    <Square className="size-3.5" /> Ferma
-                  </Button>
-                ) : (
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      setRunKey((k) => k + 1);
-                      setRunning(true);
+            <div className={cn("min-h-0 min-w-0 space-y-4 overflow-y-auto border-[#30363D] p-3 lg:border-l", tab === "stage" ? "block" : "hidden", "lg:block")}>
+              <Panel
+                title="Palco"
+                hint={running ? "Il gioco è in esecuzione." : "Trascina gli sprite per scegliere dove iniziano."}
+                action={
+                  running ? (
+                    <Button variant="outline" size="sm" onClick={() => setRunning(false)} data-testid="scratch-stop">
+                      <Square className="size-3.5" /> Ferma
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setRunKey((k) => k + 1);
+                        setRunning(true);
+                      }}
+                      data-testid="scratch-run"
+                    >
+                      <Play className="size-3.5" /> Prova
+                    </Button>
+                  )
+                }
+              >
+                {running ? (
+                  <ScratchRun
+                    key={runKey}
+                    project={project}
+                    autoStart
+                    onStop={() => setRunning(false)}
+                    onFinish={(p) => {
+                      setRunning(false);
+                      toast.message(`Partita finita: ${p}%`);
                     }}
-                    data-testid="scratch-run"
-                  >
-                    <Play className="size-3.5" /> Prova
-                  </Button>
-                )
-              }
-            >
-              {running ? (
-                <ScratchRun
-                  key={runKey}
-                  project={project}
-                  autoStart
-                  onStop={() => setRunning(false)}
-                  onFinish={(p) => {
-                    setRunning(false);
-                    toast.message(`Partita finita: ${p}%`);
-                  }}
-                />
-              ) : (
-                <StageView
-                  view={initialView(project)}
-                  backdrops={project.backdrops}
-                  selectedId={sprite.id}
-                  onSpriteDrag={(id, x, y) => {
-                    setSpriteId(id);
-                    const cur = projectRef.current;
-                    edit({ ...cur, sprites: cur.sprites.map((s) => (s.id === id ? { ...s, x, y } : s)) }, `drag:${id}`);
-                  }}
-                />
-              )}
-            </Panel>
-            <SpritePanel
-              project={project}
-              sprite={sprite}
-              onSelect={(id) => {
-                setSpriteId(id);
-                setSelectedId(null);
-              }}
-              onProject={(p, select) => {
-                commit(p);
-                if (select) setSpriteId(select);
-              }}
-              onEdit={edit}
-            />
+                  />
+                ) : (
+                  <StageView
+                    view={initialView(project)}
+                    backdrops={project.backdrops}
+                    selectedId={sprite.id}
+                    onSpriteDrag={(id, x, y) => {
+                      setSpriteId(id);
+                      const cur = projectRef.current;
+                      edit({ ...cur, sprites: cur.sprites.map((s) => (s.id === id ? { ...s, x, y } : s)) }, `drag:${id}`);
+                    }}
+                  />
+                )}
+              </Panel>
+              <SpritePanel
+                project={project}
+                sprite={sprite}
+                onSelect={(id) => {
+                  setSpriteId(id);
+                  setSelectedId(null);
+                }}
+                onProject={(p, select) => {
+                  commit(p);
+                  if (select) setSpriteId(select);
+                }}
+                onEdit={edit}
+              />
+            </div>
           </div>
-        </div>
-      </div>
+        </div>,
+        document.body,
+      )}
 
       {ghost && (
         <div ref={ghostRef} className="pointer-events-none fixed left-0 top-0 z-[100] w-max opacity-90" style={{ transform: `translate(${pointer.current.x - (drag.current?.offX ?? 0)}px, ${pointer.current.y - (drag.current?.offY ?? 0)}px)` }}>
