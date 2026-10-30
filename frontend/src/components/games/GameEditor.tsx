@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowDown, ArrowUp, Eye, Plus, Save, Send, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Eye, Plus, Puzzle, Save, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -10,6 +10,7 @@ import type { GameContent, GameInput, GameOut, GameTemplate, Me } from "@/lib/ty
 import { cn } from "@/lib/utils";
 import { Field, NativeSelect, Panel } from "@/components/shop/ui";
 import { blankProject } from "@/lib/scratch/project";
+import { projectBlockCount } from "@/lib/scratch/spec";
 import BuilderEditor from "./BuilderEditor";
 import GameRunner from "./GameRunner";
 import ScratchEditor from "./scratch/ScratchEditor";
@@ -205,6 +206,7 @@ export default function GameEditor({ me, initial, onDone, onCancel }: { me: Me; 
   const [description, setDescription] = useState(initial?.description ?? "");
   const [content, setContent] = useState<GameContent>(() => (initial ? structuredClone(initial.content) : starter("scratch")));
   const [previewing, setPreviewing] = useState(false);
+  const [blocksOpen, setBlocksOpen] = useState(false);
 
   const isAdmin = me.role === "admin";
   const input = cleanInput({ title, description, template, content });
@@ -286,7 +288,21 @@ export default function GameEditor({ me, initial, onDone, onCancel }: { me: Me; 
         </div>
       </Panel>
 
-      {template === "scratch" && content.scratch && <ScratchEditor project={content.scratch} onChange={(scratch) => setContent((c) => ({ ...c, scratch }))} />}
+      {template === "scratch" && content.scratch && (
+        <>
+          <Panel title="Editor a blocchi" hint="Si apre a schermo intero, con più spazio per il codice.">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm text-[#8B949E]">
+                {projectBlockCount(content.scratch)} blocchi · {content.scratch.sprites.length} sprite
+              </p>
+              <Button className="h-9" onClick={() => setBlocksOpen(true)} data-testid="scratch-open">
+                <Puzzle className="size-4" /> Apri editor
+              </Button>
+            </div>
+          </Panel>
+          <ScratchEditor project={content.scratch} onChange={(scratch) => setContent((c) => ({ ...c, scratch }))} open={blocksOpen} onClose={() => setBlocksOpen(false)} />
+        </>
+      )}
       {template === "custom" && content.custom && <BuilderEditor custom={content.custom} onChange={(custom) => setContent({ ...content, custom })} />}
 
       <Panel title="Contenuto" className={template === "custom" || template === "scratch" ? "hidden" : undefined}>
