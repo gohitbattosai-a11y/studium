@@ -70,8 +70,8 @@ export default function Palette({
     ) : null;
 
   return (
-    <div ref={paletteRef} className="rounded-xl border border-[#30363D] bg-[#161B22]" data-testid="scratch-palette">
-      <div className="flex flex-wrap gap-1.5 border-b border-[#30363D] p-2">
+    <div ref={paletteRef} className="flex h-full min-h-0 flex-col rounded-xl border border-[#30363D] bg-[#161B22]" data-testid="scratch-palette">
+      <div className="flex shrink-0 flex-wrap gap-1.5 border-b border-[#30363D] p-2">
         {CATEGORIES.map((c) => (
           <button
             key={c.id}
@@ -85,7 +85,7 @@ export default function Palette({
           </button>
         ))}
       </div>
-      <div className="max-h-[300px] overflow-y-auto overflow-x-hidden p-2.5 lg:max-h-[470px]">
+      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-2.5">
         {cat === "variables" && (
           <>
             <NameForm
