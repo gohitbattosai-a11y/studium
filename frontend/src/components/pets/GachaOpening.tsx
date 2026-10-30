@@ -5,6 +5,7 @@ import type { BoxInfo, RollResult } from "@/lib/types";
 import { BoxArt } from "./BoxArt";
 import { PetSprite } from "./PetSprite";
 import { PARTICLES, RARITY, TIER } from "./rarity";
+import { sfx, sfxReveal } from "@/lib/sfx";
 import "./gacha.css";
 
 type Phase = "shake" | "crack" | "burst" | "reveal";
@@ -115,6 +116,13 @@ export default function GachaOpening({ box, result, canAgain, onAgain, onClose }
     if (phase !== "burst") return;
     const timer = window.setTimeout(() => setPhase("reveal"), burstMs(tier));
     return () => window.clearTimeout(timer);
+  }, [phase, tier]);
+
+  useEffect(() => {
+    if (phase === "shake") sfx("gachaShake");
+    if (phase === "crack") sfx("gachaCrack");
+    if (phase === "burst") sfx("gachaBurst");
+    if (phase === "reveal") sfxReveal(tier);
   }, [phase, tier]);
 
   const particles = useMemo(() => particleSet(PARTICLES[rarity], tier), [rarity, tier]);
