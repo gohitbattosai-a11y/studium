@@ -1,5 +1,6 @@
 @property --gc-color { syntax: "<color>"; inherits: true; initial-value: #ffffff; }
 @property --gc-spin { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@property --gc-k { syntax: "<number>"; inherits: true; initial-value: 0.41; }
 
 .gc-stage { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; overflow: hidden; color: #e6edf3; background: radial-gradient(ellipse 80% 62% at 50% 56%, color-mix(in srgb, var(--gc-color) 20%, #070a12) 0%, #05070b 74%); transition: --gc-color 0.45s ease; }
 .gc-stage[data-phase="burst"][data-tier="2"], .gc-stage[data-phase="burst"][data-tier="3"] { animation: gc-quake 0.5s ease-out; }
@@ -12,17 +13,17 @@
 .gc-stage[data-phase="shake"] .gc-aura { animation: gc-aura-grow 1.9s ease-in forwards; }
 .gc-stage[data-phase="crack"] .gc-aura { animation: gc-aura-crack 0.2s ease-in-out infinite alternate; }
 
-.gc-rays { width: 150vmax; height: 150vmax; opacity: 0; background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--gc-color) 55%, transparent) 0deg 5deg, transparent 5deg 18deg); -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 62%); mask-image: radial-gradient(circle, #000 0%, transparent 62%); }
+.gc-rays { inset: auto; left: 50%; top: 50%; margin: 0; translate: -50% -50%; width: 150vmax; height: 150vmax; opacity: 0; background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--gc-color) 55%, transparent) 0deg 5deg, transparent 5deg 18deg); -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 62%); mask-image: radial-gradient(circle, #000 0%, transparent 62%); }
 .gc-stage[data-phase="burst"] .gc-rays, .gc-stage[data-phase="reveal"] .gc-rays { opacity: 0.5; animation: gc-rays 22s linear infinite, gc-fade-in 0.6s ease-out; }
 .gc-stage[data-tier="3"][data-phase="burst"] .gc-rays, .gc-stage[data-tier="3"][data-phase="reveal"] .gc-rays, .gc-stage[data-tier="4"][data-phase="burst"] .gc-rays, .gc-stage[data-tier="4"][data-phase="reveal"] .gc-rays { opacity: 0.65; }
 .gc-stage[data-tier="5"][data-phase="burst"] .gc-rays, .gc-stage[data-tier="5"][data-phase="reveal"] .gc-rays { opacity: 0.75; animation: gc-rays 18s linear infinite, gc-hue 5s linear infinite, gc-fade-in 0.6s ease-out; }
 
-.gc-floor { width: min(96vw, 560px); aspect-ratio: 1; opacity: 0; translate: 0 calc(min(70vw, 290px) * 0.385); transform: perspective(900px) rotateX(72deg); filter: drop-shadow(0 0 8px currentColor); }
-.gc-circle { display: block; width: 100%; height: 100%; overflow: visible; }
+.gc-floor { --gc-k: 0.41; inset: auto; left: 50%; top: calc(50% + min(70vw, 290px) * var(--gc-k)); margin: 0; translate: -50% -50%; z-index: 1; width: min(96vw, 560px); aspect-ratio: 1; opacity: 0; perspective: 1400px; filter: drop-shadow(0 0 8px currentColor); }
+.gc-circle { display: block; width: 100%; height: 100%; overflow: visible; transform: rotateX(72deg); }
 .gc-circle-a, .gc-circle-b { transform-box: fill-box; transform-origin: center; }
 .gc-circle-a { animation: gc-spin 26s linear infinite; }
 .gc-circle-b { animation: gc-spin-rev 18s linear infinite; }
-.gc-stage[data-phase="shake"] .gc-floor { animation: gc-floor-in 1.9s ease-out forwards; }
+.gc-stage[data-phase="shake"] .gc-floor { animation: gc-floor-in 1.9s ease-out forwards, gc-floor-drop 1.9s ease-in forwards; }
 .gc-stage[data-phase="shake"] .gc-circle-a { animation-duration: 6s; }
 .gc-stage[data-phase="shake"] .gc-circle-b { animation-duration: 4s; }
 .gc-stage[data-phase="crack"] .gc-floor { opacity: 1; }
@@ -30,9 +31,9 @@
 .gc-stage[data-phase="crack"] .gc-circle-b { animation-duration: 1s; }
 .gc-stage[data-phase="burst"] .gc-floor { animation: gc-floor-out 1s ease-out forwards; }
 
-.gc-box { position: relative; width: min(70vw, 290px); aspect-ratio: 1; filter: drop-shadow(0 14px 18px rgba(0, 0, 0, 0.45)); }
+.gc-box { position: relative; z-index: 3; width: min(70vw, 290px); aspect-ratio: 1; filter: drop-shadow(0 14px 18px rgba(0, 0, 0, 0.45)); }
 .gc-stage[data-phase="shake"] .gc-box { animation: gc-charge 1.9s linear forwards, gc-grow 1.9s ease-in forwards, gc-hold 0.09s linear 1.9s infinite; }
-.gc-stage[data-phase="crack"] .gc-box { scale: 1.2; filter: drop-shadow(0 0 26px var(--gc-color)) brightness(1.15); animation: gc-jit 0.08s linear 0.14s infinite; }
+.gc-stage[data-phase="crack"] .gc-box { scale: 1.2; filter: drop-shadow(0 0 26px var(--gc-color)) brightness(1.15); animation: gc-jit 0.08s linear infinite; }
 .gc-stage[data-phase="burst"] .gc-box { animation: gc-kick 0.5s ease-out forwards; }
 
 .gc-box .gc-seam, .gc-box .gc-glow, .gc-box .gc-mouth, .gc-box .gc-beam { opacity: 0; }
@@ -70,7 +71,7 @@
 .gc-odds { display: flex; gap: 2px; height: 6px; overflow: hidden; border-radius: 9999px; background: #0d1117; }
 .gc-odds span { min-width: 3px; }
 
-.gc-pillar { inset: auto 0 50% 0; margin: 0 auto; width: min(60vw, 170px); height: 115vh; opacity: 0; transform-origin: 50% 100%; mix-blend-mode: screen; background: linear-gradient(to top, #ffffff 0%, color-mix(in srgb, var(--gc-color) 70%, #ffffff) 14%, color-mix(in srgb, var(--gc-color) 45%, transparent) 55%, transparent 100%); -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 30%, #000 70%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0%, #000 30%, #000 70%, transparent 100%); }
+.gc-pillar { z-index: 2; inset: auto 0 50% 0; margin: 0 auto; width: min(60vw, 170px); height: 115vh; opacity: 0; transform-origin: 50% 100%; mix-blend-mode: screen; background: linear-gradient(to top, #ffffff 0%, color-mix(in srgb, var(--gc-color) 70%, #ffffff) 14%, color-mix(in srgb, var(--gc-color) 45%, transparent) 55%, transparent 100%); -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 30%, #000 70%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0%, #000 30%, #000 70%, transparent 100%); }
 .gc-stage[data-phase="burst"] .gc-pillar { animation: gc-pillar 1.3s ease-out forwards; }
 
 .gc-shock { width: 240px; height: 240px; border-radius: 9999px; border: 3px solid var(--gc-color); box-shadow: 0 0 26px var(--gc-color), inset 0 0 26px color-mix(in srgb, var(--gc-color) 60%, transparent); opacity: 0; }
@@ -85,26 +86,26 @@
 .gc-mote { display: none; width: 6px; height: 6px; border-radius: 9999px; background: #ffffff; box-shadow: 0 0 10px 2px var(--gc-color); opacity: 0; }
 .gc-stage[data-phase="shake"] .gc-mote, .gc-stage[data-phase="crack"] .gc-mote { display: block; animation: gc-mote var(--dur) ease-in var(--delay) infinite; }
 
-.gc-particle { border-radius: 9999px; opacity: 0; }
+.gc-particle { z-index: 4; border-radius: 9999px; opacity: 0; }
 .gc-particle[data-shape="star"] { border-radius: 0; clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); }
 .gc-stage[data-phase="burst"] .gc-particle, .gc-stage[data-phase="reveal"] .gc-particle { animation: gc-particle 1.6s cubic-bezier(0.1, 0.8, 0.3, 1) forwards; }
 
-.gc-confetti { position: absolute; top: -6vh; border-radius: 2px; opacity: 0; pointer-events: none; animation: gc-fall 4s linear forwards; }
+.gc-confetti { position: absolute; z-index: 4; top: -6vh; border-radius: 2px; opacity: 0; pointer-events: none; animation: gc-fall 4s linear forwards; }
 
-.gc-flash { inset: 0; background: radial-gradient(circle at 50% 50%, #ffffff 0%, color-mix(in srgb, var(--gc-color) 45%, #ffffff) 42%, color-mix(in srgb, var(--gc-color) 30%, transparent) 100%); opacity: 0; }
+.gc-flash { z-index: 5; inset: 0; background: radial-gradient(circle at 50% 50%, #ffffff 0%, color-mix(in srgb, var(--gc-color) 45%, #ffffff) 42%, color-mix(in srgb, var(--gc-color) 30%, transparent) 100%); opacity: 0; }
 .gc-stage[data-phase="burst"] .gc-flash { animation: gc-flash 0.8s ease-out 0.1s both; }
 .gc-stage[data-phase="burst"][data-tier="4"] .gc-flash, .gc-stage[data-phase="burst"][data-tier="5"] .gc-flash { animation-duration: 1.1s; }
 
-.gc-vignette { inset: 0; opacity: 0; background: radial-gradient(ellipse at 50% 50%, transparent 38%, color-mix(in srgb, var(--gc-color) 55%, transparent) 100%); }
+.gc-vignette { z-index: 5; inset: 0; opacity: 0; background: radial-gradient(ellipse at 50% 50%, transparent 38%, color-mix(in srgb, var(--gc-color) 55%, transparent) 100%); }
 .gc-stage[data-phase="burst"][data-tier="3"] .gc-vignette, .gc-stage[data-phase="burst"][data-tier="4"] .gc-vignette, .gc-stage[data-phase="burst"][data-tier="5"] .gc-vignette { animation: gc-vignette 1.2s ease-out forwards; }
 .gc-stage[data-phase="reveal"][data-tier="4"] .gc-vignette, .gc-stage[data-phase="reveal"][data-tier="5"] .gc-vignette { opacity: 0.4; animation: gc-vignette-breath 2.6s ease-in-out infinite alternate; }
 
-.gc-hint { position: absolute; bottom: max(28px, 6%); margin: 0; font-size: 0.875rem; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(201, 209, 217, 0.8); animation: gc-hint 1.2s ease-in-out infinite alternate; }
+.gc-hint { z-index: 6; position: absolute; bottom: max(28px, 6%); margin: 0; font-size: 0.875rem; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(201, 209, 217, 0.8); animation: gc-hint 1.2s ease-in-out infinite alternate; }
 .gc-hint-strong { color: color-mix(in srgb, var(--gc-color) 60%, #ffffff); font-weight: 700; letter-spacing: 0.4em; animation: none; text-shadow: 0 0 14px var(--gc-color); }
-.gc-skip { position: absolute; top: max(14px, env(safe-area-inset-top)); right: 14px; z-index: 3; border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 9999px; background: rgba(13, 17, 23, 0.55); padding: 6px 14px; font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(230, 237, 243, 0.85); backdrop-filter: blur(6px); cursor: pointer; }
+.gc-skip { position: absolute; top: max(14px, env(safe-area-inset-top)); right: 14px; z-index: 8; border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 9999px; background: rgba(13, 17, 23, 0.55); padding: 6px 14px; font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(230, 237, 243, 0.85); backdrop-filter: blur(6px); cursor: pointer; }
 .gc-skip:hover { background: rgba(33, 38, 45, 0.8); color: #ffffff; }
 
-.gc-frame { position: relative; z-index: 2; width: min(92vw, 340px); padding: 2px; border-radius: 22px; background: linear-gradient(160deg, color-mix(in srgb, var(--gc-color) 95%, #ffffff), color-mix(in srgb, var(--gc-color) 38%, #05070b) 60%, color-mix(in srgb, var(--gc-color) 70%, #05070b)); box-shadow: 0 0 46px color-mix(in srgb, var(--gc-color) 42%, transparent), 0 24px 60px rgba(0, 0, 0, 0.55); animation: gc-pop 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+.gc-frame { position: relative; z-index: 6; width: min(92vw, 340px); padding: 2px; border-radius: 22px; background: linear-gradient(160deg, color-mix(in srgb, var(--gc-color) 95%, #ffffff), color-mix(in srgb, var(--gc-color) 38%, #05070b) 60%, color-mix(in srgb, var(--gc-color) 70%, #05070b)); box-shadow: 0 0 46px color-mix(in srgb, var(--gc-color) 42%, transparent), 0 24px 60px rgba(0, 0, 0, 0.55); animation: gc-pop 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
 .gc-stage[data-tier="3"] .gc-frame { background: conic-gradient(from var(--gc-spin), #e9d5ff, #a855f7, #581c87, #c084fc, #f5d0fe, #a855f7, #e9d5ff); animation: gc-pop 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) both, gc-spin-border 7s linear infinite; }
 .gc-stage[data-tier="4"] .gc-frame { background: conic-gradient(from var(--gc-spin), #fff7c2, #f59e0b, #92400e, #fde68a, #fff7c2, #f59e0b, #fff7c2); animation: gc-pop 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) both, gc-spin-border 5s linear infinite; }
 .gc-stage[data-tier="5"] .gc-frame { background: conic-gradient(from var(--gc-spin), #f43f5e, #f59e0b, #facc15, #34d399, #38bdf8, #a78bfa, #f43f5e); animation: gc-pop 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) both, gc-spin-border 3.6s linear infinite; }
@@ -187,6 +188,7 @@
 @keyframes gc-aura-grow { from { transform: scale(0.7); opacity: 0.2; } to { transform: scale(1.7); opacity: 0.85; } }
 @keyframes gc-aura-crack { from { transform: scale(1.7); opacity: 0.85; } to { transform: scale(2); opacity: 1; } }
 @keyframes gc-floor-in { from { opacity: 0; scale: 0.6; } to { opacity: 0.95; scale: 1; } }
+@keyframes gc-floor-drop { from { --gc-k: 0.333; } }
 @keyframes gc-floor-out { 0% { opacity: 1; scale: 1; } 100% { opacity: 0; scale: 1.5; } }
 @keyframes gc-spin { to { rotate: 360deg; } }
 @keyframes gc-spin-rev { to { rotate: -360deg; } }
