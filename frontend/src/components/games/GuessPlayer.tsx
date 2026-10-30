@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { acceptedAnswers, normalize, shuffle } from "@/lib/games";
 import type { GameOut } from "@/lib/types";
+import { sfx } from "@/lib/sfx";
 import { Progress } from "./ui";
 
 export default function GuessPlayer({ game, onFinish }: { game: GameOut; onFinish: (percent: number) => void }) {
@@ -19,6 +20,7 @@ export default function GuessPlayer({ game, onFinish }: { game: GameOut; onFinis
     e.preventDefault();
     if (verdict !== null || !value.trim()) return;
     const ok = acceptedAnswers(item.right).includes(normalize(value));
+    sfx(ok ? "correct" : "wrong");
     setVerdict(ok);
     if (ok) setCorrect((c) => c + 1);
   };
