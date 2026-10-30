@@ -137,8 +137,10 @@ function Body({ state }: { state: PetsState }) {
   const actions = usePetActions();
   const [opening, setOpening] = useState<BoxInfo | null>(null);
   const [result, setResult] = useState<RollResult | null>(null);
+  const [round, setRound] = useState(0);
 
   const open = (box: BoxInfo) => {
+    setRound((r) => r + 1);
     setOpening(box);
     setResult(null);
     actions.roll.mutate(box.id, {
@@ -185,7 +187,7 @@ function Body({ state }: { state: PetsState }) {
 
       {opening && (
         <GachaOpening
-          key={`${opening.id}-${actions.roll.submittedAt}`}
+          key={`${opening.id}-${round}`}
           box={opening}
           result={result}
           canAgain={result !== null && result.balance >= opening.price}
