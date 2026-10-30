@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { Check, Coins, Lock, Sparkles } from "lucide-react";
 import { usePets } from "@/lib/queries";
 import { usePetActions } from "@/lib/petActions";
@@ -8,19 +8,24 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { LoadError, SkeletonList } from "@/components/common";
 import { Field, NativeSelect, Panel } from "@/components/shop/ui";
-import { RAIL, RAIL_ITEM } from "@/components/layout/rail";
 import { BoxArt } from "./BoxArt";
 import GachaOpening from "./GachaOpening";
 import { PetSprite } from "./PetSprite";
 import { RARITY } from "./rarity";
 import { setPetSettings, usePetSettings, type Chatter, type PetArea, type PetSize } from "./petSettings";
 
+const BOX_TINT: Record<string, string> = { base: "#7DB7FF", rara: "#FBBF24" };
+const BOX_TAG: Record<string, string> = { base: "Classica", rara: "Premium" };
+
 function BoxCard({ box, balance, onOpen }: { box: BoxInfo; balance: number; onOpen: () => void }) {
   const missing = box.price - balance;
+  const tint = BOX_TINT[box.id] ?? "#7DB7FF";
   return (
-    <article className="flex flex-col overflow-hidden rounded-xl border border-[#30363D] bg-[#161B22]" data-testid={`box-${box.id}`}>
-      <div className="grid h-40 place-items-center bg-[radial-gradient(circle_at_50%_60%,#1f2a44,#0D1117_70%)]">
-        <BoxArt kind={box.id} className="h-32 box-float" />
+    <article className="group flex flex-col overflow-hidden rounded-xl border bg-[#161B22]" style={{ borderColor: `color-mix(in srgb, ${tint} 28%, #30363D)` }} data-testid={`box-${box.id}`}>
+      <div className="gc-shelf" style={{ ["--gc-tint" as string]: tint } as CSSProperties}>
+        <div className="gc-shelf-floor" />
+        <BoxArt kind={box.id} className="gc-shelf-box box-float" />
+        {BOX_TAG[box.id] && <span className="gc-shelf-tag">{BOX_TAG[box.id]}</span>}
       </div>
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div>
@@ -29,6 +34,11 @@ function BoxCard({ box, balance, onOpen }: { box: BoxInfo; balance: number; onOp
             <span className="shrink-0 text-sm tabular-nums text-[#E3B341]">{box.price} pt</span>
           </div>
           <p className="mt-1 text-sm text-[#8B949E]">{box.description}</p>
+        </div>
+        <div className="gc-odds" aria-hidden>
+          {box.odds.map((o) => (
+            <span key={o.rarity} style={{ width: `${o.percent}%`, background: RARITY[o.rarity].color }} />
+          ))}
         </div>
         <div className="flex flex-wrap gap-1.5" data-testid={`box-odds-${box.id}`}>
           {box.odds.map((o) => (
@@ -155,22 +165,18 @@ function Body({ state }: { state: PetsState }) {
 
       <div>
         <h2 className="mb-3 text-sm font-medium">Box</h2>
-        <div className={cn(RAIL, "md:grid-cols-2")}>
+        <div className="grid gap-4 md:grid-cols-2">
           {state.boxes.map((b) => (
-            <div key={b.id} className={cn(RAIL_ITEM, "flex [&>article]:w-full")}>
-              <BoxCard box={b} balance={state.balance} onOpen={() => open(b)} />
-            </div>
+            <BoxCard key={b.id} box={b} balance={state.balance} onOpen={() => open(b)} />
           ))}
         </div>
       </div>
 
       <div>
         <h2 className="mb-3 text-sm font-medium">Collezione</h2>
-        <div className={cn(RAIL, "sm:grid-cols-2 xl:grid-cols-3")}>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {state.pets.map((p) => (
-            <div key={p.id} className={cn(RAIL_ITEM, "flex [&>article]:w-full")}>
-              <PetCard pet={p} busy={actions.setActive.isPending} onActivate={(id) => actions.setActive.mutate(id)} />
-            </div>
+            <PetCard key={p.id} pet={p} busy={actions.setActive.isPending} onActivate={(id) => actions.setActive.mutate(id)} />
           ))}
         </div>
       </div>
