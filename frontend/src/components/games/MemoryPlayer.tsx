@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { shuffle } from "@/lib/games";
 import type { GameOut } from "@/lib/types";
+import { sfx } from "@/lib/sfx";
 import { Progress } from "./ui";
 
 export default function MemoryPlayer({ game, onFinish }: { game: GameOut; onFinish: (percent: number) => void }) {
@@ -17,11 +18,13 @@ export default function MemoryPlayer({ game, onFinish }: { game: GameOut; onFini
   const flip = (i: number) => {
     if (flipped.length === 2 || flipped.includes(i) || matched.includes(cards[i].pair)) return;
     const next = [...flipped, i];
+    sfx("flip");
     setFlipped(next);
     if (next.length < 2) return;
     const total = moves + 1;
     setMoves(total);
     if (cards[next[0]].pair === cards[next[1]].pair) {
+      sfx("match");
       const done = [...matched, cards[i].pair];
       setMatched(done);
       setFlipped([]);
