@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { shuffle, toQuestions } from "@/lib/games";
 import type { GameOut } from "@/lib/types";
+import { sfx } from "@/lib/sfx";
 import { choiceClass, Progress } from "./ui";
 
 export default function QuizPlayer({ game, onFinish }: { game: GameOut; onFinish: (percent: number) => void }) {
@@ -16,6 +17,7 @@ export default function QuizPlayer({ game, onFinish }: { game: GameOut; onFinish
   const choose = (i: number) => {
     if (picked !== null) return;
     setPicked(i);
+    sfx(i === q.correct ? "correct" : "wrong");
     if (i === q.correct) setCorrect((c) => c + 1);
   };
 
