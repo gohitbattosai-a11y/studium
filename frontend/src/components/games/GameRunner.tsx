@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useGameActions } from "@/lib/gameActions";
 import { templateOf } from "@/lib/games";
+import { sfx } from "@/lib/sfx";
 import type { FinishResult, GameOut, GameTemplate } from "@/lib/types";
 import EnginePlayer from "./engine/EnginePlayer";
 import GuessPlayer from "./GuessPlayer";
@@ -95,6 +96,7 @@ export default function GameRunner({ game, preview = false, onExit }: { game: Ga
   const meta = templateOf(game.template);
 
   const finish = (p: number) => {
+    sfx(p >= 50 ? "win" : "wrong");
     setPercent(p);
     setResult(null);
     if (preview) return;
