@@ -36,6 +36,7 @@ export interface MemberOut {
   decoration: string | null;
   background: string | null;
   pet: string | null;
+  badges: string[];
 }
 
 export interface HomeworkCreate {
@@ -348,4 +349,80 @@ export interface RollResult {
   cost: number;
   balance: number;
   guaranteed_in: number;
+}
+
+export type StudyPhase = "focus" | "break";
+export type StudyMode = "pomodoro" | "lungo";
+
+export interface StudyMine {
+  mode: StudyMode;
+  phase: StudyPhase;
+  remaining_s: number;
+  focus_s: number;
+  break_s: number;
+  started_ts: number;
+}
+
+export interface StudyPresence {
+  member_id: string;
+  nickname: string;
+  mode: StudyMode;
+  phase: StudyPhase;
+  remaining_s: number;
+}
+
+export interface StudyState {
+  server_now: number;
+  mine: StudyMine | null;
+  active: StudyPresence[];
+  study_seconds: number;
+}
+
+export interface Capsule {
+  id: string;
+  author: string;
+  is_mine: boolean;
+  created_at: string;
+  open_at: string;
+  is_open: boolean;
+  message: string | null;
+}
+
+export interface CapsulesState {
+  today: string;
+  can_write: boolean;
+  capsules: Capsule[];
+}
+
+export interface BadgeInfo {
+  id: string;
+  name: string;
+  description: string;
+  owned: boolean;
+  earned_at: string | null;
+}
+
+export interface ExclusiveInfo {
+  id: string;
+  name: string;
+  description: string;
+  equipped: boolean;
+}
+
+export interface BadgesState {
+  badges: BadgeInfo[];
+  exclusives: ExclusiveInfo[];
+}
+
+export interface HuntLine {
+  title: string;
+  reveal: string;
+}
+
+export interface HuntState {
+  started: boolean;
+  solved: HuntLine[];
+  needs_code: boolean;
+  finished: boolean;
+  reward: ExclusiveInfo | null;
 }
