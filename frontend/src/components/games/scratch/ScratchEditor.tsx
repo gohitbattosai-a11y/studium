@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { ArrowLeft, Copy, Eraser, LayoutGrid, Play, Redo2, Sparkles, Square, Trash2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { addScript, canDropOnSlot, canInsert, detach, dropOnSlot, duplicateFrom, initialView, insertAt, sampleApples, sampleQuiz, setArg, stackAt, tidy, type StackRef } from "@/lib/scratch/project";
+import { addScript, canDropOnSlot, canInsert, detach, dropOnSlot, duplicateFrom, initialView, insertAt, SAMPLES, setArg, stackAt, tidy, type StackRef } from "@/lib/scratch/project";
 import { cloneBlocks, isReporterShape, procsOf, projectBlockCount, SPEC_BY_OP, newBlock } from "@/lib/scratch/spec";
 import type { CategoryId, SBlock, Script, ScratchProject } from "@/lib/scratch/types";
 import { cn } from "@/lib/utils";
@@ -443,13 +443,11 @@ export default function ScratchEditor({ project, onChange, open, onClose }: { pr
             </Button>
             {empty && (
               <>
-                <Button variant="outline" size="sm" onClick={() => loadSample(sampleApples)} data-testid="scratch-sample-apples">
-                  <Sparkles className="size-3.5" /> <span className="sm:hidden">Esempio: mele</span>
-                  <span className="hidden sm:inline">Esempio: prendi le mele</span>
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => loadSample(sampleQuiz)} data-testid="scratch-sample-quiz">
-                  <Sparkles className="size-3.5" /> Esempio: quiz
-                </Button>
+                {SAMPLES.map((x) => (
+                  <Button key={x.id} variant="outline" size="sm" onClick={() => loadSample(x.make)} data-testid={`scratch-sample-${x.id}`}>
+                    <Sparkles className="size-3.5" /> {x.label}
+                  </Button>
+                ))}
               </>
             )}
             <Segmented
