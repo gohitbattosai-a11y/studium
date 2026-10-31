@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pymongo.errors import DuplicateKeyError
 
+from lib.badges import badges_by_member
 from lib.dates import today_iso
 from lib.db import db
 from lib.security import COOKIE_NAME, TZ, current_member, hash_secret, new_id, now_iso, verify_secret
@@ -201,7 +202,11 @@ async def change_group_password(body: GroupPasswordChange, member: dict = Depend
 @router.get("/members", response_model=List[MemberOut])
 async def members(member: dict = Depends(current_member)):
     docs = await db.members.find({"group_id": member["group_id"]}, {"_id": 0}).sort("joined_at", 1).to_list(500)
-    return [member_out(d) for d in docs]
+    earned = await badges_by_member(member["group_id"])
+    out = [member_out(d) for d in docs]
+    for m in out:
+        m.badges = earned.get(m.member_id, [])
+    return out
 
 
 @router.post("/members/{member_id}/kick")
@@ -215,7 +220,7 @@ async def kick_member(member_id: str, member: dict = Depends(current_member)):
     if target.get("role") == "admin":
         raise HTTPException(status_code=409, detail="Non puoi espellere un admin: togli prima il ruolo")
     await db.sessions.delete_many({"member_id": member_id})
-    for name in ("purchases", "member_pets", "point_events", "poll_votes", "game_plays", "game_claims", "homework_done"):
+    for name in ("purchases", "member_pets", "point_events", "poll_votes", "game_plays", "game_claims", "homework_done", "study_sessions", "capsules", "member_badges", "member_rewards", "hunt"):
         await db[name].delete_many({"member_id": member_id})
     await db.members.delete_one({"id": member_id})
     return {"ok": True}
