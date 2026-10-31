@@ -4,7 +4,6 @@ import type { Block, BlockKind, CustomContent, GameContent, GameInput, GameOut, 
 
 export const TEMPLATES: { id: GameTemplate; label: string; tagline: string; icon: LucideIcon }[] = [
   { id: "scratch", label: "Blocchi Scratch", tagline: "Programma un vero gioco trascinando i blocchi: sprite, clone, variabili e altro", icon: Puzzle },
-  { id: "custom", label: "Costruttore", tagline: "Componi il gioco a blocchi, con scene e regole tue", icon: Blocks },
   { id: "quiz", label: "Quiz", tagline: "Domande a risposta multipla, anche vero o falso", icon: ListChecks },
   { id: "sort", label: "Categorie", tagline: "Smista gli elementi nel gruppo giusto", icon: FolderTree },
   { id: "abbina", label: "Abbina", tagline: "Collega ogni termine alla sua coppia", icon: Link2 },
@@ -31,7 +30,9 @@ export const SCENES: { id: SceneId; label: string; hint: string }[] = [
   { id: "plant", label: "Pianta", hint: "La pianta cresce e fiorisce" },
 ];
 
-export const templateOf = (id: GameTemplate) => TEMPLATES.find((t) => t.id === id) ?? TEMPLATES[1];
+const LEGACY = { id: "custom" as GameTemplate, label: "Costruttore", tagline: "Gioco creato con il vecchio costruttore", icon: Blocks };
+
+export const templateOf = (id: GameTemplate) => TEMPLATES.find((t) => t.id === id) ?? (id === "custom" ? LEGACY : TEMPLATES[0]);
 export const blockMeta = (kind: BlockKind) => BLOCK_KINDS.find((b) => b.kind === kind) ?? BLOCK_KINDS[0];
 
 export const defaultRules = (): Rules => ({ lives: 0, seconds: 0, penalty: 0, streak_bonus: false, shuffle: true });
