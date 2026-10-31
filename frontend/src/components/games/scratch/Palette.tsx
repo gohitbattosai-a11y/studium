@@ -71,14 +71,14 @@ export default function Palette({
 
   return (
     <div ref={paletteRef} className="flex h-full min-h-0 flex-col rounded-xl border border-[#30363D] bg-[#161B22]" data-testid="scratch-palette">
-      <div className="flex shrink-0 flex-wrap gap-1.5 border-b border-[#30363D] p-2">
+      <div className="no-scrollbar flex shrink-0 gap-1.5 overflow-x-auto border-b border-[#30363D] p-2 xl:flex-wrap xl:overflow-visible">
         {CATEGORIES.map((c) => (
           <button
             key={c.id}
             type="button"
             onClick={() => onCat(c.id)}
             data-testid={`scratch-cat-${c.id}`}
-            className={cn("inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors", c.id === cat ? "border-[#388BFD] bg-[#388BFD]/10" : "border-[#30363D] hover:border-[#8B949E]")}
+            className={cn("inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs transition-colors", c.id === cat ? "border-[#388BFD] bg-[#388BFD]/10" : "border-[#30363D] hover:border-[#8B949E]")}
           >
             <span className="size-2.5 rounded-full" style={{ backgroundColor: c.color }} />
             {c.label}
