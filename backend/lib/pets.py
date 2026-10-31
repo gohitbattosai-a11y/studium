@@ -21,6 +21,7 @@ PETS: list[dict] = [
 ]
 
 PETS.extend(load_pets({p["id"] for p in PETS}))
+PETS.sort(key=lambda p: RARITIES.index(p["rarity"]))
 
 PETS_BY_ID: dict[str, dict] = {p["id"]: p for p in PETS}
 
