@@ -1,10 +1,10 @@
 import { FlaskConical, Wrench } from "lucide-react";
 import { testingFeatures } from "@/lib/release";
-import type { SiteStatus } from "@/lib/types";
+import type { Role, SiteStatus } from "@/lib/types";
 
-export default function StatusBanner({ status }: { status: SiteStatus | undefined }) {
+export default function StatusBanner({ status, role }: { status: SiteStatus | undefined; role: Role }) {
   if (!status) return null;
-  const testing = testingFeatures(status);
+  const testing = role === "admin" ? testingFeatures(status) : [];
   if (!status.updating && testing.length === 0) return null;
   return (
     <div className="space-y-2" data-testid="status-banner">
