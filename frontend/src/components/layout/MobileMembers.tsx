@@ -19,9 +19,7 @@ function MemberCard({ member, isMe, showPet }: { member: MemberOut; isMe: boolea
     >
       {background && (
         <div className="bgx-mini" aria-hidden style={{ borderRadius: 11 }}>
-          <div className="absolute inset-x-0 top-1/2 aspect-video -translate-y-1/2">
-            <BackgroundPreview id={background} />
-          </div>
+          <BackgroundPreview id={background} />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0D1117]/80 via-[#0D1117]/30 to-transparent" />
         </div>
       )}
@@ -70,7 +68,7 @@ function MembersSheet({ me, members, showPet, onClose }: { me: Me; members: Memb
         </div>
         <ul className="min-h-0 flex-1 space-y-1.5 overflow-y-auto overscroll-contain px-5 pb-5" data-testid="mobile-members-list">
           {members.map((m) => (
-            <MemberRow key={m.nickname} member={m} isMe={m.nickname === me.nickname} showPet={showPet} />
+            <MemberRow key={m.member_id} member={m} isMe={m.nickname === me.nickname} showPet={showPet} canKick={me.role === "admin" && m.nickname !== me.nickname && m.role !== "admin"} />
           ))}
         </ul>
       </div>
