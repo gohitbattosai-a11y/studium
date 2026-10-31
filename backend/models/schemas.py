@@ -61,6 +61,7 @@ class MemberOut(BaseModel):
     decoration: Optional[str] = None
     background: Optional[str] = None
     pet: Optional[str] = None
+    badges: List[str] = []
 
 
 class HomeworkCreate(BaseModel):
@@ -434,3 +435,93 @@ class RollResult(BaseModel):
     cost: int
     balance: int
     guaranteed_in: int
+
+
+class StudyStart(BaseModel):
+    mode: Literal["pomodoro", "lungo"]
+
+
+class StudyMine(BaseModel):
+    mode: str
+    phase: Literal["focus", "break"]
+    remaining_s: int
+    focus_s: int
+    break_s: int
+    started_ts: float
+
+
+class StudyPresence(BaseModel):
+    member_id: str
+    nickname: str
+    mode: str
+    phase: Literal["focus", "break"]
+    remaining_s: int
+
+
+class StudyState(BaseModel):
+    server_now: float
+    mine: Optional[StudyMine] = None
+    active: List[StudyPresence]
+    study_seconds: int
+
+
+class CapsuleCreate(BaseModel):
+    message: Text(1, 1000)
+    open_at: Annotated[str, StringConstraints(pattern=r"^\d{4}-\d{2}-\d{2}$")]
+
+
+class CapsuleOut(BaseModel):
+    id: str
+    author: str
+    is_mine: bool
+    created_at: str
+    open_at: str
+    is_open: bool
+    message: Optional[str] = None
+
+
+class CapsulesState(BaseModel):
+    today: str
+    can_write: bool
+    capsules: List[CapsuleOut]
+
+
+class BadgeOut(BaseModel):
+    id: str
+    name: str
+    description: str
+    owned: bool
+    earned_at: Optional[str] = None
+
+
+class ExclusiveOut(BaseModel):
+    id: str
+    name: str
+    description: str
+    equipped: bool
+
+
+class BadgesState(BaseModel):
+    badges: List[BadgeOut]
+    exclusives: List[ExclusiveOut]
+
+
+class ExclusiveEquip(BaseModel):
+    item_id: Optional[str] = None
+
+
+class HuntAnswer(BaseModel):
+    answer: Text(1, 60)
+
+
+class HuntLine(BaseModel):
+    title: str
+    reveal: str
+
+
+class HuntState(BaseModel):
+    started: bool
+    solved: List[HuntLine]
+    needs_code: bool = False
+    finished: bool = False
+    reward: Optional[ExclusiveOut] = None
