@@ -160,7 +160,7 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
 
         <main className="mx-auto max-w-6xl px-4 pt-4 pb-24 md:px-8 md:pt-8 md:pb-12">
           <div className="mb-4 empty:hidden">
-            <StatusBanner status={status} />
+            <StatusBanner status={status} role={me.role} />
           </div>
           <div className={panel("home")} data-testid="panel-home">
             <MobileMembers me={me} members={members.data ?? []} showPet={petsOpen && petSettings.visible} />
