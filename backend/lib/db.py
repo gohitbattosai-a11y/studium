@@ -51,6 +51,20 @@ INDEXES: dict[str, list[IndexModel]] = {
         IndexModel([("member_id", ASCENDING), ("item_id", ASCENDING)], name="member_item", unique=True),
         IndexModel([("group_id", ASCENDING)], name="group"),
     ],
+    "study_sessions": [
+        IndexModel([("member_id", ASCENDING)], name="member", unique=True),
+        IndexModel([("group_id", ASCENDING)], name="group"),
+    ],
+    "capsules": [
+        IndexModel([("group_id", ASCENDING), ("member_id", ASCENDING)], name="group_member", unique=True),
+        IndexModel([("member_id", ASCENDING)], name="member"),
+    ],
+    "member_badges": [
+        IndexModel([("member_id", ASCENDING), ("badge_id", ASCENDING)], name="member_badge", unique=True),
+        IndexModel([("group_id", ASCENDING)], name="group"),
+    ],
+    "member_rewards": [IndexModel([("member_id", ASCENDING), ("item_id", ASCENDING)], name="member_item", unique=True)],
+    "hunt": [IndexModel([("member_id", ASCENDING)], name="member", unique=True)],
 }
 
 
