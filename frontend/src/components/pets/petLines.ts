@@ -59,6 +59,12 @@ export const PET_LINES: Record<string, string[]> = {
     "Il mio segreto? Pause lunghe e tanta calma.",
     "Anche la leggenda più rara comincia con un piccolo passo. Tipo aprire il quaderno.",
   ],
+  "drago-cinese": [
+    "Dicono che porti fortuna a chi studia con costanza. Io ci credo.",
+    "Inseguo la perla della saggezza da mille anni: oggi la trovi tu?",
+    "Il vero potere? Un piccolo passo ogni giorno, come il fiume.",
+    "Scrivi un appunto, e che sia così chiaro da farmi sputare fuoco.",
+  ],
   squalo: [
     "Ho annusato un compito difficile a tre chilometri di distanza.",
     "Se smetto di nuotare mi fermo. Tu non smettere di studiare!",
