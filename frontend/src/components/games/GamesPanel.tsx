@@ -188,7 +188,7 @@ export default function GamesPanel({ me }: { me: Me }) {
           {table.data.author_rewards.length > 0 && (
             <>
               {" "}
-              Se un tuo gioco viene approvato guadagni punti: {table.data.author_rewards.find((r) => r.template === "scratch")?.points ?? 0} per un gioco a blocchi, {table.data.author_rewards.find((r) => r.template === "custom")?.points ?? 0} per un costruttore, {table.data.author_rewards.find((r) => r.template === "default")?.points ?? 0} per gli altri.
+              Se un tuo gioco viene approvato guadagni punti: {table.data.author_rewards.find((r) => r.template === "scratch")?.points ?? 0} per un gioco a blocchi, {table.data.author_rewards.find((r) => r.template === "default")?.points ?? 0} per gli altri.
             </>
           )}
         </p>
