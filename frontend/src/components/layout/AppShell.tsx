@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { BarChart3, BookOpen, FolderOpen, Gamepad2, LayoutGrid, LogOut, Megaphone, ShoppingBag, Users } from "lucide-react";
+import { lazy, Suspense, useState, type ReactNode } from "react";
+import { BarChart3, BookOpen, FolderOpen, Gamepad2, LayoutGrid, LogOut, Megaphone, ShoppingBag, User, Users } from "lucide-react";
 import type { Me, SiteStatus } from "@/lib/types";
 import { endSession } from "@/lib/session";
 import { useMembers, usePets, useShop } from "@/lib/queries";
@@ -8,23 +8,25 @@ import { useShopActions } from "@/lib/shopActions";
 import { useAmbient } from "@/lib/ambient";
 import { BACKGROUNDS, isBackgroundId, type BackgroundId, type BackgroundOption } from "@/lib/theme";
 import { cn } from "@/lib/utils";
-import { Avatar, BrandMark, Eyebrow } from "@/components/common";
+import { Avatar, BrandMark, Eyebrow, SkeletonList } from "@/components/common";
 import MemberRow from "@/components/layout/MemberRow";
 import MobileMembers from "@/components/layout/MobileMembers";
 import MobileNav from "@/components/layout/MobileNav";
 import ThemeBackground from "@/components/theme/ThemeBackground";
 import ThemePicker from "@/components/theme/ThemePicker";
 import SoundSettings from "@/components/sound/SoundSettings";
-import ShopPanel from "@/components/shop/ShopPanel";
+import ProfileDialog from "@/components/profile/ProfileDialog";
 import StatusBanner from "@/components/release/StatusBanner";
 import PetCompanion from "@/components/pets/PetCompanion";
 import { usePetSettings } from "@/components/pets/petSettings";
-import GamesPanel from "@/components/games/GamesPanel";
 import Overview from "@/components/Overview";
 import HomeworkPanel from "@/components/agenda/HomeworkPanel";
 import PollsPanel from "@/components/polls/PollsPanel";
 import MaterialsPanel from "@/components/materials/MaterialsPanel";
 import NoticesPanel from "@/components/notices/NoticesPanel";
+
+const ShopPanel = lazy(() => import("@/components/shop/ShopPanel"));
+const GamesPanel = lazy(() => import("@/components/games/GamesPanel"));
 
 export type Tab = "home" | "compiti" | "sondaggi" | "materiali" | "bacheca" | "shop" | "giochi";
 
@@ -40,6 +42,7 @@ const NAV: { id: Tab; label: string; icon: typeof BookOpen }[] = [
 
 export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }) {
   const [tab, setTab] = useState<Tab>("home");
+  const [visited, setVisited] = useState<Tab[]>(["home"]);
   const members = useMembers();
   const shop = useShop();
   const petsOpen = featureOpen(status, "pets", me.role);
@@ -58,10 +61,12 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
 
   const go = (t: Tab) => {
     setTab(t);
+    setVisited((v) => (v.includes(t) ? v : [...v, t]));
     window.scrollTo({ top: 0 });
   };
 
   const panel = (id: Tab) => cn(tab === id ? "block animate-in fade-in-0 slide-in-from-bottom-1 duration-200" : "hidden");
+  const mounted = (id: Tab, node: ReactNode) => (visited.includes(id) ? node : null);
 
   return (
     <div className="relative isolate min-h-screen md:flex" data-background={background}>
@@ -100,16 +105,18 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
           <Eyebrow className="mb-2">Compagni</Eyebrow>
           <ul className="space-y-1.5" data-testid="sidebar-members">
             {(members.data ?? []).map((m) => (
-              <MemberRow key={m.nickname} member={m} isMe={m.nickname === me.nickname} showPet={petsOpen && petSettings.visible} />
+              <MemberRow key={m.member_id} member={m} isMe={m.nickname === me.nickname} showPet={petsOpen && petSettings.visible} canKick={me.role === "admin" && m.nickname !== me.nickname && m.role !== "admin"} />
             ))}
           </ul>
         </div>
         <div className="flex items-center gap-2.5 border-t border-[#30363D] p-3">
-          <Avatar name={me.nickname} />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium" data-testid="sidebar-nickname">{me.nickname}</p>
-            <p className="text-xs text-[#8B949E]">Connesso</p>
-          </div>
+          <ProfileDialog me={me} testId="sidebar-profile-button" className="-m-1 flex min-w-0 flex-1 items-center gap-2.5 rounded-md p-1 text-left transition-colors duration-150 hover:bg-[#161B22]/60">
+            <Avatar name={me.nickname} />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-medium" data-testid="sidebar-nickname">{me.nickname}</span>
+              <span className="block text-xs text-[#8B949E]">Profilo</span>
+            </span>
+          </ProfileDialog>
           <ThemePicker
             value={background}
             owned={ownedBackgrounds}
@@ -140,10 +147,13 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
             onChange={setBackground}
             onShop={() => go("shop")}
             testId="header-background-button"
-            className="grid size-10 place-items-center rounded-md text-[#8B949E] active:scale-95"
+            className="grid size-9 place-items-center rounded-md text-[#8B949E] active:scale-95"
           />
-          <SoundSettings testId="header-sound-button" className="grid size-10 place-items-center rounded-md text-[#8B949E] active:scale-95" />
-          <button type="button" onClick={logout} className="grid size-10 place-items-center rounded-md text-[#8B949E] active:scale-95" aria-label="Esci" data-testid="header-logout-button">
+          <ProfileDialog me={me} testId="header-profile-button" className="grid size-9 place-items-center rounded-md text-[#8B949E] active:scale-95">
+            <User className="size-4" />
+          </ProfileDialog>
+          <SoundSettings testId="header-sound-button" className="grid size-9 place-items-center rounded-md text-[#8B949E] active:scale-95" />
+          <button type="button" onClick={logout} className="grid size-9 place-items-center rounded-md text-[#8B949E] active:scale-95" aria-label="Esci" data-testid="header-logout-button">
             <LogOut className="size-4" />
           </button>
         </header>
@@ -157,22 +167,32 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
             <Overview me={me} onNavigate={go} />
           </div>
           <div className={panel("compiti")} data-testid="panel-compiti">
-            <HomeworkPanel me={me} />
+            {mounted("compiti", <HomeworkPanel me={me} />)}
           </div>
           <div className={panel("sondaggi")} data-testid="panel-sondaggi">
-            <PollsPanel me={me} />
+            {mounted("sondaggi", <PollsPanel me={me} />)}
           </div>
           <div className={panel("materiali")} data-testid="panel-materiali">
-            <MaterialsPanel me={me} />
+            {mounted("materiali", <MaterialsPanel me={me} />)}
           </div>
           <div className={panel("bacheca")} data-testid="panel-bacheca">
-            <NoticesPanel me={me} />
+            {mounted("bacheca", <NoticesPanel me={me} />)}
           </div>
           <div className={panel("giochi")} data-testid="panel-giochi">
-            <GamesPanel me={me} />
+            {mounted(
+              "giochi",
+              <Suspense fallback={<SkeletonList />}>
+                <GamesPanel me={me} />
+              </Suspense>,
+            )}
           </div>
           <div className={panel("shop")} data-testid="panel-shop">
-            <ShopPanel me={me} />
+            {mounted(
+              "shop",
+              <Suspense fallback={<SkeletonList />}>
+                <ShopPanel me={me} />
+              </Suspense>,
+            )}
           </div>
         </main>
       </div>
