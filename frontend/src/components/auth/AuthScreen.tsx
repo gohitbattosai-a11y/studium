@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { BrandMark, Segmented } from "@/components/common";
 
 const FEATURES = [
-  { icon: BookOpen, title: "Compiti condivisi", text: "Una spunta vale per tutta la classe." },
+  { icon: BookOpen, title: "Compiti condivisi", text: "Compiti della classe, spunta personale per ognuno." },
   { icon: BarChart3, title: "Sondaggi", text: "Voto palese o anonimo, modificabile quando vuoi." },
   { icon: FolderOpen, title: "Materiali", text: "Cartelle per materia: link, appunti, PDF." },
   { icon: Megaphone, title: "Bacheca", text: "Avvisi trasparenti, visibili a tutti." },
@@ -32,7 +32,7 @@ export default function AuthScreen({ onJoined }: { onJoined: () => void }) {
     onSuccess: (me) => {
       beginSession();
       queryClient.setQueryData(["me"], me);
-      onJoined(); // re-render the parent so its ["me"] observer re-attaches to the fresh cache entry
+      onJoined();
     },
     onError: (e) => setError(errMsg(e)),
   });
@@ -58,7 +58,6 @@ export default function AuthScreen({ onJoined }: { onJoined: () => void }) {
   return (
     <div className="min-h-dvh bg-[radial-gradient(ellipse_at_top,rgba(56,139,253,0.10),transparent_60%)]">
       <div className="mx-auto grid min-h-dvh max-w-6xl grid-cols-1 gap-10 px-5 py-10 md:grid-cols-12 md:items-center md:px-10">
-        {/* Brand / pitch */}
         <section className="md:col-span-6 lg:col-span-7" data-testid="auth-intro">
           <div className="flex items-center gap-2.5">
             <BrandMark />
@@ -83,7 +82,6 @@ export default function AuthScreen({ onJoined }: { onJoined: () => void }) {
           </div>
         </section>
 
-        {/* Form */}
         <section className="md:col-span-6 lg:col-span-5">
           <button
             type="button"
