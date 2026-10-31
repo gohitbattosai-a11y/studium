@@ -1,20 +1,20 @@
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, UserMinus } from "lucide-react";
 import type { MemberOut } from "@/lib/types";
+import { useKickMember } from "@/lib/memberActions";
 import { isBackgroundId } from "@/lib/theme";
 import { Avatar } from "@/components/common";
 import { BackgroundPreview } from "@/components/theme/ThemeBackground";
 import { PetWalker } from "@/components/pets/PetWalker";
 
-export default function MemberRow({ member, isMe, showPet }: { member: MemberOut; isMe: boolean; showPet: boolean }) {
+export default function MemberRow({ member, isMe, showPet, canKick = false }: { member: MemberOut; isMe: boolean; showPet: boolean; canKick?: boolean }) {
+  const kick = useKickMember();
   const background = isBackgroundId(member.background) ? member.background : null;
   const pet = showPet ? member.pet : null;
   return (
     <li className="bgx-mini-host dc-host relative -mx-2 rounded-md px-2 py-1.5 text-sm text-[#C9D1D9]" data-testid={`member-row-${member.nickname}`}>
       {background && (
         <div className="bgx-mini" aria-hidden>
-          <div className="absolute inset-x-0 top-1/2 aspect-video -translate-y-1/2">
-            <BackgroundPreview id={background} />
-          </div>
+          <BackgroundPreview id={background} />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0D1117]/85 via-[#0D1117]/45 to-[#0D1117]/10" />
         </div>
       )}
@@ -23,6 +23,18 @@ export default function MemberRow({ member, isMe, showPet }: { member: MemberOut
         <span className="truncate">{member.nickname}</span>
         {isMe && <span className="text-xs text-[#8B949E]">(tu)</span>}
         {member.role === "admin" && <ShieldCheck className="size-3.5 shrink-0 text-[#58A6FF]" aria-label="Admin" />}
+        {canKick && (
+          <button
+            type="button"
+            aria-label={`Espelli ${member.nickname}`}
+            disabled={kick.isPending}
+            onClick={() => window.confirm(`Espellere ${member.nickname} dal gruppo? Potrà rientrare con la password del gruppo.`) && kick.mutate({ member_id: member.member_id, nickname: member.nickname })}
+            className="relative z-10 ml-auto grid size-7 shrink-0 place-items-center rounded-md text-[#8B949E] transition-colors hover:bg-[#21262D] hover:text-[#FF7B72] active:scale-95"
+            data-testid={`member-kick-${member.nickname}`}
+          >
+            <UserMinus className="size-4" />
+          </button>
+        )}
       </div>
       {pet && (
         <div className="pointer-events-none absolute bottom-0 left-12 w-[38%]" aria-hidden>
