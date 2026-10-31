@@ -1,5 +1,6 @@
 import logging
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -25,6 +26,10 @@ INDEXES: dict[str, list[IndexModel]] = {
     ],
     "sessions": [IndexModel([("token", ASCENDING)], name="token", unique=True)],
     "homework": [IndexModel([("group_id", ASCENDING), ("id", ASCENDING)], name="group_id_id")],
+    "homework_done": [
+        IndexModel([("member_id", ASCENDING), ("homework_id", ASCENDING)], name="member_homework", unique=True),
+        IndexModel([("homework_id", ASCENDING)], name="homework"),
+    ],
     "polls": [IndexModel([("group_id", ASCENDING), ("created_at", DESCENDING)], name="group_created")],
     "poll_votes": [IndexModel([("poll_id", ASCENDING), ("member_id", ASCENDING)], name="poll_member", unique=True)],
     "folders": [IndexModel([("group_id", ASCENDING), ("name_key", ASCENDING)], name="group_name", unique=True)],
@@ -67,5 +72,26 @@ async def ensure_roles() -> None:
             if not any(m.get("role") == "admin" for m in members):
                 await db.members.update_one({"id": members[0]["id"]}, {"$set": {"role": "admin"}})
             await db.members.update_many({"group_id": group["id"], "role": {"$exists": False}}, {"$set": {"role": "member"}})
+            admin_ids = [m["id"] for m in members if m.get("role") == "admin"]
+            owner = admin_ids[0] if admin_ids else members[0]["id"]
+            await db.groups.update_one({"id": group["id"], "owner_id": {"$exists": False}}, {"$set": {"owner_id": owner}})
     except Exception as exc:
         logger.error("ensure_roles: %s", exc)
+    await migrate_homework()
+
+
+async def migrate_homework() -> None:
+    try:
+        async for hw in db.homework.find({"completed": True}, {"_id": 0}):
+            by = hw.get("completed_by")
+            if by:
+                member = await db.members.find_one({"group_id": hw["group_id"], "nickname_key": by.casefold()}, {"_id": 0, "id": 1})
+                if member:
+                    await db.homework_done.update_one(
+                        {"member_id": member["id"], "homework_id": hw["id"]},
+                        {"$setOnInsert": {"group_id": hw["group_id"], "completed_at": hw.get("completed_at") or datetime.now(timezone.utc).isoformat()}},
+                        upsert=True,
+                    )
+            await db.homework.update_one({"id": hw["id"]}, {"$set": {"completed": False, "completed_by": None, "completed_at": None}})
+    except Exception as exc:
+        logger.error("migrate_homework: %s", exc)
