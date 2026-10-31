@@ -179,6 +179,149 @@ const bubble = (p: Parts, scape: Scape) => {
   note(p, scape, f, 0.12, 0.05, "sine", f * 1.8);
 };
 
+const burst = (p: Parts, scape: Scape, type: BiquadFilterType, freq: number, q: number, gain: number, dur: number, attack = 0.02, sweepTo?: number) => {
+  const { ctx, noise } = p;
+  const t = ctx.currentTime;
+  const src = ctx.createBufferSource();
+  src.buffer = noise;
+  const f = ctx.createBiquadFilter();
+  f.type = type;
+  f.frequency.setValueAtTime(freq, t);
+  if (sweepTo) f.frequency.exponentialRampToValueAtTime(sweepTo, t + dur);
+  f.Q.value = q;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(gain, t + attack);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(f);
+  f.connect(g);
+  g.connect(scape.out);
+  src.start(t, Math.random());
+  src.stop(t + dur + 0.05);
+};
+
+const steady = (p: Parts, scape: Scape, type: BiquadFilterType, freq: number, q: number, level: number, lfoSpeed = 0, lfoDepth = 0) => {
+  const { ctx, noise } = p;
+  const src = ctx.createBufferSource();
+  src.buffer = noise;
+  src.loop = true;
+  const f = ctx.createBiquadFilter();
+  f.type = type;
+  f.frequency.value = freq;
+  f.Q.value = q;
+  const g = ctx.createGain();
+  g.gain.value = level;
+  src.connect(f);
+  f.connect(g);
+  g.connect(scape.out);
+  src.start();
+  const stops: Array<() => void> = [() => src.stop()];
+  if (lfoSpeed > 0) {
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = lfoSpeed;
+    const lg = ctx.createGain();
+    lg.gain.value = level * lfoDepth;
+    lfo.connect(lg);
+    lg.connect(g.gain);
+    lfo.start();
+    stops.push(() => lfo.stop());
+  }
+  scape.stops.push(...stops);
+};
+
+const thunder = (p: Parts, scape: Scape) => {
+  burst(p, scape, "lowpass", 220, 0.7, 0.2, 4.2, 0.4, 70);
+  window.setTimeout(() => burst(p, scape, "lowpass", 160, 0.7, 0.12, 3, 0.3, 60), 900);
+};
+
+const howl = (p: Parts, scape: Scape, base: number, gain: number) => {
+  const steps: Array<[number, number, number]> = [[base, base * 1.35, 1.2], [base * 1.35, base * 1.3, 1.4], [base * 1.3, base * 0.8, 1.6]];
+  let at = 0;
+  steps.forEach(([a, b, d]) => {
+    window.setTimeout(() => note(p, scape, a, d, gain, "sine", b, 1400), at * 1000);
+    at += d * 0.85;
+  });
+};
+
+const yips = (p: Parts, scape: Scape) => {
+  for (let i = 0; i < 4; i++) window.setTimeout(() => note(p, scape, 620 + Math.random() * 120, 0.16, 0.03, "triangle", 900, 1800), i * 190);
+};
+
+const creak = (p: Parts, scape: Scape) => {
+  const b = 90 + Math.random() * 60;
+  note(p, scape, b, 1.1, 0.025, "sawtooth", b * 0.7, 420);
+};
+
+const squeak = (p: Parts, scape: Scape) => {
+  for (let i = 0; i < 3; i++) window.setTimeout(() => note(p, scape, 5200 + Math.random() * 1200, 0.07, 0.008, "sine", 7200), i * 90);
+};
+
+const crackle = (p: Parts, scape: Scape, gain: number) => {
+  burst(p, scape, "highpass", 1600 + Math.random() * 2000, 1, gain, 0.035, 0.004);
+};
+
+const frog = (p: Parts, scape: Scape) => {
+  const b = 190 + Math.random() * 60;
+  for (let i = 0; i < 2; i++) window.setTimeout(() => note(p, scape, b, 0.12, 0.03, "square", b * 0.8, 520), i * 150);
+};
+
+const sleigh = (p: Parts, scape: Scape) => {
+  for (let i = 0; i < 9; i++) window.setTimeout(() => bell(p, scape, 2600 + Math.random() * 1600, 0.012, 0.5), i * 70);
+};
+
+const musicBox = (p: Parts, scape: Scape) => {
+  const tune = [523.25, 659.25, 783.99, 659.25, 880, 783.99, 659.25, 587.33];
+  tune.forEach((fr, i) => window.setTimeout(() => note(p, scape, fr, 1.1, 0.025, "triangle", undefined, 2500), i * 420));
+};
+
+const ping = (p: Parts, scape: Scape) => {
+  note(p, scape, 1180, 2.4, 0.02, "sine");
+  window.setTimeout(() => note(p, scape, 1180, 2.2, 0.01, "sine"), 520);
+  window.setTimeout(() => note(p, scape, 1180, 2, 0.005, "sine"), 1040);
+};
+
+const blips = (p: Parts, scape: Scape) => {
+  const n = 3 + Math.floor(Math.random() * 4);
+  for (let i = 0; i < n; i++) window.setTimeout(() => note(p, scape, Math.random() < 0.5 ? 1000 : 1500, 0.05, 0.012, "square", undefined, 2200), i * 120);
+};
+
+const eagle = (p: Parts, scape: Scape) => {
+  note(p, scape, 2600, 0.7, 0.025, "sawtooth", 1700, 3200);
+  window.setTimeout(() => note(p, scape, 2300, 0.5, 0.02, "sawtooth", 1500, 3000), 800);
+};
+
+const siren = (p: Parts, scape: Scape) => {
+  for (let i = 0; i < 4; i++) window.setTimeout(() => note(p, scape, i % 2 ? 900 : 650, 0.7, 0.018, "triangle", i % 2 ? 650 : 900, 1400), i * 700);
+};
+
+const honk = (p: Parts, scape: Scape) => {
+  const b = 200 + Math.random() * 80;
+  note(p, scape, b, 0.3, 0.02, "sawtooth", undefined, 700);
+  window.setTimeout(() => note(p, scape, b * 1.26, 0.3, 0.02, "sawtooth", undefined, 700), 40);
+};
+
+const tock = (p: Parts, scape: Scape, hi: boolean) => {
+  note(p, scape, hi ? 1250 : 980, 0.05, 0.03, "triangle", undefined, 2600);
+  click(p, scape, hi ? 3200 : 2600, 0.03);
+};
+
+const scribble = (p: Parts, scape: Scape) => {
+  for (let i = 0; i < 6; i++) window.setTimeout(() => burst(p, scape, "bandpass", 3200 + Math.random() * 1500, 2, 0.012, 0.06, 0.01), i * 110);
+};
+
+const iceCreak = (p: Parts, scape: Scape) => {
+  note(p, scape, 320, 1.4, 0.02, "sine", 140, 600);
+  window.setTimeout(() => note(p, scape, 220, 0.9, 0.015, "sine", 110, 500), 700);
+};
+
+const whoosh = (p: Parts, scape: Scape) => {
+  burst(p, scape, "bandpass", 300, 1.2, 0.05, 1.6, 0.6, 2200);
+};
+
+const rattle = (p: Parts, scape: Scape) => {
+  for (let i = 0; i < 12; i++) window.setTimeout(() => burst(p, scape, "highpass", 3500, 1, 0.012, 0.03, 0.004), i * 45);
+};
+
 const build = (id: string, p: Parts): Scape => {
   const out = p.ctx.createGain();
   out.gain.value = 0;
@@ -186,85 +329,81 @@ const build = (id: string, p: Parts): Scape => {
   const s: Scape = { out, stops: [] };
   switch (id) {
     case "halloween":
-      wind(p, s, 0.1, 420, 0.07);
-      pad(p, s, [55, 58.3], 0.05, "sawtooth", 260, 0.05);
+      wind(p, s, 0.11, 420, 0.07);
+      pad(p, s, [55, 58.3], 0.045, "sawtooth", 240, 0.05);
       every(s, 9000, 18000, () => owl(p, s));
-      every(s, 14000, 26000, () => bell(p, s, 196, 0.03, 3));
+      every(s, 15000, 28000, () => howl(p, s, 330, 0.035));
+      every(s, 11000, 22000, () => creak(p, s));
+      every(s, 6000, 14000, () => squeak(p, s));
+      every(s, 18000, 34000, () => thunder(p, s));
+      every(s, 20000, 36000, () => bell(p, s, 196, 0.03, 3.4));
       break;
     case "natale":
       wind(p, s, 0.05, 500, 0.06);
-      pad(p, s, [130.8, 196], 0.025, "sine", 700, 0.06);
-      every(s, 6000, 12000, () => {
-        for (let i = 0; i < 5; i++) window.setTimeout(() => bell(p, s, 1500 + Math.random() * 900, 0.014, 0.9), i * 90);
-      });
-      every(s, 12000, 22000, () => bell(p, s, [392, 523.25, 659.25][Math.floor(Math.random() * 3)], 0.04, 2.4));
+      pad(p, s, [130.8, 196], 0.02, "sine", 700, 0.06);
+      steady(p, s, "lowpass", 260, 0.7, 0.025, 0.4, 0.5);
+      every(s, 90, 380, () => crackle(p, s, 0.012));
+      every(s, 7000, 14000, () => sleigh(p, s));
+      every(s, 26000, 40000, () => musicBox(p, s));
+      every(s, 12000, 22000, () => bell(p, s, [392, 523.25, 659.25][Math.floor(Math.random() * 3)], 0.03, 2.4));
       break;
-    case "biblioteca":
-      wind(p, s, 0.03, 260, 0.05);
-      pad(p, s, [82.4], 0.02, "sine", 300, 0.04);
-      {
-        let flip = false;
-        every(s, 1000, 1000, () => {
-          flip = !flip;
-          click(p, s, flip ? 1900 : 1500, 0.05);
-        });
-      }
-      every(s, 14000, 28000, () => {
-        const { ctx, noise } = p;
-        const t = ctx.currentTime;
-        const src = ctx.createBufferSource();
-        src.buffer = noise;
-        const f = ctx.createBiquadFilter();
-        f.type = "highpass";
-        f.frequency.value = 2400;
-        const g = ctx.createGain();
-        g.gain.setValueAtTime(0.0001, t);
-        g.gain.exponentialRampToValueAtTime(0.03, t + 0.05);
-        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
-        src.connect(f);
-        f.connect(g);
-        g.connect(s.out);
-        src.start(t, Math.random());
-        src.stop(t + 0.4);
+    case "biblioteca": {
+      let flip = false;
+      steady(p, s, "bandpass", 1900, 0.8, 0.012, 0.13, 0.5);
+      steady(p, s, "lowpass", 220, 0.7, 0.03, 0.08, 0.4);
+      pad(p, s, [82.4], 0.015, "sine", 300, 0.04);
+      every(s, 1000, 1000, () => {
+        flip = !flip;
+        tock(p, s, flip);
       });
+      every(s, 14000, 26000, () => burst(p, s, "highpass", 2400, 1, 0.03, 0.35, 0.05));
+      every(s, 20000, 38000, () => scribble(p, s));
+      every(s, 25000, 50000, () => creak(p, s));
+      every(s, 120, 600, () => crackle(p, s, 0.006));
       break;
+    }
     case "spazio":
-      pad(p, s, [65.4, 98, 130.8], 0.05, "sine", 600, 0.04);
-      pad(p, s, [523.25, 784], 0.008, "sine", 2000, 0.07);
-      every(s, 6000, 12000, () => note(p, s, 1800 + Math.random() * 1500, 1.6, 0.012, "sine", undefined));
-      break;
-    case "oceano":
-      waves(p, s, 0.12);
-      pad(p, s, [73.4], 0.02, "sine", 300, 0.05);
-      every(s, 900, 3000, () => bubble(p, s));
+      pad(p, s, [55, 82.4, 110], 0.05, "sine", 500, 0.04);
+      pad(p, s, [523.25, 784], 0.007, "sine", 2000, 0.07);
+      steady(p, s, "lowpass", 140, 0.7, 0.03, 0.05, 0.6);
+      every(s, 9000, 18000, () => ping(p, s));
+      every(s, 6000, 14000, () => blips(p, s));
+      every(s, 12000, 24000, () => whoosh(p, s));
+      every(s, 6000, 12000, () => note(p, s, 1800 + Math.random() * 1500, 1.6, 0.01, "sine"));
       break;
     case "tramonto":
-      wind(p, s, 0.07, 650, 0.08);
-      every(s, 3000, 8000, () => chirp(p, s, 2200 + Math.random() * 700));
-      break;
-    case "giappone":
-      wind(p, s, 0.035, 500, 0.06);
-      every(s, 1500, 4000, () => cricket(p, s, 0.01));
-      every(s, 7000, 14000, () => {
-        const scale = [587.33, 659.25, 783.99, 880, 1046.5];
-        for (let i = 0; i < 3; i++) window.setTimeout(() => bell(p, s, scale[Math.floor(Math.random() * scale.length)], 0.025, 1.8), i * 260);
-      });
+      wind(p, s, 0.08, 650, 0.08);
+      steady(p, s, "bandpass", 5200, 3, 0.006, 0.3, 0.6);
+      every(s, 2500, 7000, () => chirp(p, s, 2200 + Math.random() * 700));
+      every(s, 14000, 28000, () => eagle(p, s));
+      every(s, 8000, 16000, () => note(p, s, 130, 1.8, 0.015, "sine", 110, 300));
+      every(s, 5000, 11000, () => chirp(p, s, 3000 + Math.random() * 500));
       break;
     case "foresta":
-      wind(p, s, 0.06, 450, 0.07);
-      every(s, 1200, 3500, () => cricket(p, s, 0.011));
+      wind(p, s, 0.05, 450, 0.07);
+      steady(p, s, "bandpass", 1400, 1.2, 0.03, 0.2, 0.5);
+      every(s, 1000, 3000, () => cricket(p, s, 0.011));
       every(s, 12000, 24000, () => owl(p, s));
-      every(s, 5000, 11000, () => note(p, s, 2600 + Math.random() * 800, 0.5, 0.012, "sine"));
+      every(s, 3500, 9000, () => frog(p, s));
+      every(s, 4000, 9000, () => note(p, s, 2600 + Math.random() * 800, 0.5, 0.012, "sine"));
+      every(s, 9000, 18000, () => bell(p, s, 1318.5 + Math.random() * 400, 0.012, 1.6));
+      every(s, 20000, 40000, () => creak(p, s));
       break;
     case "deserto":
       wind(p, s, 0.12, 380, 0.05);
-      every(s, 12000, 24000, () => note(p, s, 180, 2.4, 0.03, "sine", 150, 400));
+      steady(p, s, "highpass", 2800, 0.7, 0.012, 0.09, 0.7);
+      every(s, 100, 420, () => crackle(p, s, 0.008));
+      every(s, 14000, 26000, () => howl(p, s, 560, 0.025));
+      every(s, 18000, 32000, () => yips(p, s));
       every(s, 3000, 7000, () => cricket(p, s, 0.006));
+      every(s, 20000, 40000, () => rattle(p, s));
       break;
     case "citta":
-      pad(p, s, [55, 110], 0.04, "sawtooth", 350, 0.1);
-      wind(p, s, 0.035, 900, 0.09);
-      every(s, 7000, 16000, () => {
+      pad(p, s, [55, 110], 0.035, "sawtooth", 320, 0.1);
+      pad(p, s, [100, 200], 0.008, "sawtooth", 900, 0.2);
+      steady(p, s, "highpass", 2000, 0.7, 0.05, 0, 0);
+      steady(p, s, "lowpass", 600, 0.7, 0.05, 0.1, 0.5);
+      every(s, 6000, 14000, () => {
         const { ctx, noise } = p;
         const t = ctx.currentTime;
         const src = ctx.createBufferSource();
@@ -283,11 +422,31 @@ const build = (id: string, p: Parts): Scape => {
         src.start(t, Math.random());
         src.stop(t + 2);
       });
+      every(s, 16000, 30000, () => siren(p, s));
+      every(s, 9000, 20000, () => honk(p, s));
+      every(s, 700, 2600, () => click(p, s, 5200, 0.012));
       break;
     case "aurora":
-      pad(p, s, [130.8, 196, 261.6], 0.035, "sine", 1200, 0.05);
+      pad(p, s, [130.8, 196, 261.6], 0.03, "sine", 1200, 0.05);
       pad(p, s, [784, 1174.7], 0.007, "sine", 2400, 0.09);
+      wind(p, s, 0.06, 420, 0.05);
       every(s, 5000, 11000, () => bell(p, s, [784, 987.77, 1174.7][Math.floor(Math.random() * 3)], 0.02, 3));
+      every(s, 16000, 30000, () => howl(p, s, 300, 0.025));
+      every(s, 18000, 34000, () => iceCreak(p, s));
+      every(s, 8000, 16000, () => burst(p, s, "highpass", 3000, 1, 0.012, 0.5, 0.2));
+      break;
+    case "oceano":
+      waves(p, s, 0.12);
+      pad(p, s, [73.4], 0.02, "sine", 300, 0.05);
+      every(s, 900, 3000, () => bubble(p, s));
+      break;
+    case "giappone":
+      wind(p, s, 0.035, 500, 0.06);
+      every(s, 1500, 4000, () => cricket(p, s, 0.01));
+      every(s, 7000, 14000, () => {
+        const scale = [587.33, 659.25, 783.99, 880, 1046.5];
+        for (let i = 0; i < 3; i++) window.setTimeout(() => bell(p, s, scale[Math.floor(Math.random() * scale.length)], 0.025, 1.8), i * 260);
+      });
       break;
     default:
       pad(p, s, [110, 164.8], 0.03, "sine", 500, 0.05);
