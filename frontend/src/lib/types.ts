@@ -23,6 +23,8 @@ export interface Me {
   today: string;
   role: Role;
   participating: boolean;
+  is_owner: boolean;
+  next_nickname_change: string | null;
 }
 
 export interface MemberOut {
