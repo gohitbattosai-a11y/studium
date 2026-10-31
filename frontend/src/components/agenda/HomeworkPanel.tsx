@@ -23,7 +23,7 @@ function HomeworkCard({ h, today, isAdmin }: { h: Homework; today: string; isAdm
     mutationFn: () => apiPost<Homework>(`/homework/${h.id}/toggle`),
     onSuccess: (res) => {
       void queryClient.invalidateQueries({ queryKey: ["homework"] });
-      toast.success(res.completed ? "Segnato come completato per tutta la classe" : "Compito riaperto");
+      toast.success(res.completed ? "Segnato come completato" : "Compito riaperto");
     },
     onError: (e) => toast.error(errMsg(e)),
   });
@@ -95,8 +95,8 @@ function HomeworkCard({ h, today, isAdmin }: { h: Homework; today: string; isAdm
           <span className="flex items-center gap-1.5" data-testid={`homework-author-${h.id}`}>
             <Avatar name={h.author} size="sm" /> di <b className="font-medium text-[#C9D1D9]">{h.author}</b> · {relTime(h.created_at)}
           </span>
-          {h.completed && h.completed_by && (
-            <span className="text-[#7EE787]" data-testid={`homework-completed-by-${h.id}`}>✓ completato da {h.completed_by}</span>
+          {h.completed && (
+            <span className="text-[#7EE787]" data-testid={`homework-completed-by-${h.id}`}>✓ completato da te</span>
           )}
         </div>
       </div>
@@ -108,7 +108,6 @@ export default function HomeworkPanel({ me }: { me: Me }) {
   const homework = useHomework();
   const [filter, setFilter] = useState<Filter>("da-fare");
   const [open, setOpen] = useState(false);
-  // Draft lives here (panel never unmounts), so it survives tab switches and dialog closes.
   const [subject, setSubject] = useState("");
   const [dueDate, setDueDate] = useState(() => addDays(me.today, 1));
   const [description, setDescription] = useState("");
@@ -141,7 +140,7 @@ export default function HomeworkPanel({ me }: { me: Me }) {
     <div>
       <SectionHeader
         title="Compiti & Agenda"
-        subtitle="Una spunta vale per tutta la classe."
+        subtitle="La spunta vale solo per te: ognuno segna i propri compiti."
         testId="homework"
         action={
           <Button onClick={() => setOpen(true)} className="h-9 gap-1.5" data-testid="add-homework-button">
