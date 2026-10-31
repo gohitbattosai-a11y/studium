@@ -13,6 +13,9 @@ Role = Literal["admin", "member"]
 ItemKind = Literal["decoration", "background"]
 
 
+Pin = Annotated[str, StringConstraints(pattern=r"^\d{4,6}$")]
+
+
 class JoinRequest(BaseModel):
     mode: Literal["join", "create"]
     group_name: Text(2, 60)
@@ -30,6 +33,23 @@ class Me(BaseModel):
     today: str
     role: Role = "member"
     participating: bool = False
+    is_owner: bool = False
+    next_nickname_change: Optional[str] = None
+
+
+class NicknameChange(BaseModel):
+    nickname: Text(2, 30)
+    pin: Pin
+
+
+class PinChange(BaseModel):
+    current_pin: Pin
+    new_pin: Pin
+
+
+class GroupPasswordChange(BaseModel):
+    pin: Pin
+    new_password: Text(3, 100)
 
 
 class MemberOut(BaseModel):
