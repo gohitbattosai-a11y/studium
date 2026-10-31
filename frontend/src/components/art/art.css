@@ -9,3 +9,7 @@
   height: 100%;
   overflow: hidden;
 }
+
+.art-decorations > svg {
+  overflow: visible;
+}
