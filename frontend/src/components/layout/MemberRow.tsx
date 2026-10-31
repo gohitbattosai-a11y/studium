@@ -5,6 +5,7 @@ import { isBackgroundId } from "@/lib/theme";
 import { Avatar } from "@/components/common";
 import { BackgroundPreview } from "@/components/theme/ThemeBackground";
 import { PetWalker } from "@/components/pets/PetWalker";
+import { BadgeStrip } from "@/components/badges/badges";
 
 export default function MemberRow({ member, isMe, showPet, canKick = false }: { member: MemberOut; isMe: boolean; showPet: boolean; canKick?: boolean }) {
   const kick = useKickMember();
@@ -23,6 +24,7 @@ export default function MemberRow({ member, isMe, showPet, canKick = false }: { 
         <span className="truncate">{member.nickname}</span>
         {isMe && <span className="text-xs text-[#8B949E]">(tu)</span>}
         {member.role === "admin" && <ShieldCheck className="size-3.5 shrink-0 text-[#58A6FF]" aria-label="Admin" />}
+        <BadgeStrip ids={member.badges ?? []} />
         {canKick && (
           <button
             type="button"
