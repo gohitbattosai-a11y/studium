@@ -586,14 +586,15 @@ export default function ScratchEditor({ project, onChange, open, onClose }: { pr
         document.body,
       )}
 
-      {ghost && (
+      {ghost && createPortal(
         <div ref={ghostRef} className="pointer-events-none fixed left-0 top-0 z-[100] w-max opacity-90" style={{ transform: `translate(${pointer.current.x - (drag.current?.offX ?? 0)}px, ${pointer.current.y - (drag.current?.offY ?? 0)}px)` }}>
           <div className="flex flex-col items-start">
             {ghost.map((b) => (
               <BlockView key={b.id} block={b} mode="ghost" />
             ))}
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </EditorContext.Provider>
   );
