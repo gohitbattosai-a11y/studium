@@ -36,6 +36,8 @@ interface DragRun {
   offY: number;
   spriteId: string;
   target: Target | null;
+  armed: boolean;
+  timer: number | null;
 }
 
 const withScripts = (p: ScratchProject, spriteId: string, scripts: Script[]): ScratchProject => ({ ...p, sprites: p.sprites.map((s) => (s.id === spriteId ? { ...s, scripts } : s)) });
@@ -66,6 +68,7 @@ export default function ScratchEditor({ project, onChange, open, onClose }: { pr
   const palRef = useRef<HTMLDivElement>(null);
   const ghostRef = useRef<HTMLDivElement>(null);
   const pointer = useRef({ x: 0, y: 0 });
+  const auto = useRef<number | null>(null);
 
   const procs = useMemo(() => procsOf(sprite), [sprite]);
 
@@ -199,6 +202,20 @@ export default function ScratchEditor({ project, onChange, open, onClose }: { pr
     return { kind: "free", x: x - d.offX - r.left + ws.scrollLeft, y: y - d.offY - r.top + ws.scrollTop };
   };
 
+  const autoScroll = () => {
+    const ws = wsRef.current;
+    if (!ws || !drag.current?.started) return;
+    const r = ws.getBoundingClientRect();
+    const { x, y } = pointer.current;
+    if (x < r.left || x > r.right || y < r.top || y > r.bottom) return;
+    const edge = 40;
+    const step = 12;
+    if (y < r.top + edge) ws.scrollTop -= step;
+    else if (y > r.bottom - edge) ws.scrollTop += step;
+    if (x < r.left + edge) ws.scrollLeft -= step;
+    else if (x > r.right - edge) ws.scrollLeft += step;
+  };
+
   const startDrag = (d: DragRun) => {
     if (d.origin === "palette") d.blocks = cloneBlocks([d.block]);
     else {
@@ -208,6 +225,7 @@ export default function ScratchEditor({ project, onChange, open, onClose }: { pr
       transient(withScripts(projectRef.current, d.spriteId, cut.scripts));
     }
     d.started = true;
+    if (auto.current === null) auto.current = window.setInterval(autoScroll, 16);
     setSelectedId(null);
     setGhost(d.blocks);
     return true;
@@ -242,7 +260,12 @@ export default function ScratchEditor({ project, onChange, open, onClose }: { pr
     if (!d) return;
     pointer.current = { x: e.clientX, y: e.clientY };
     if (!d.started) {
-      if (Math.hypot(e.clientX - d.startX, e.clientY - d.startY) < 5) return;
+      const dist = Math.hypot(e.clientX - d.startX, e.clientY - d.startY);
+      if (!d.armed) {
+        if (dist > 10) stop();
+        return;
+      }
+      if (dist < 5) return;
       if (!startDrag(d)) {
         stop();
         return;
@@ -278,18 +301,30 @@ export default function ScratchEditor({ project, onChange, open, onClose }: { pr
     }
   };
 
-  const handlers = useRef({ move, up, cancel });
-  handlers.current = { move, up, cancel };
+  const touch = (e: TouchEvent) => {
+    const d = drag.current;
+    if (d && (d.armed || d.started) && e.cancelable) e.preventDefault();
+  };
+
+  const handlers = useRef({ move, up, cancel, touch });
+  handlers.current = { move, up, cancel, touch };
   const stable = useRef({
     move: (e: PointerEvent) => handlers.current.move(e),
     up: (e: PointerEvent) => handlers.current.up(e),
     cancel: () => handlers.current.cancel(),
+    touch: (e: TouchEvent) => handlers.current.touch(e),
   }).current;
 
   const stop = () => {
     window.removeEventListener("pointermove", stable.move);
     window.removeEventListener("pointerup", stable.up);
     window.removeEventListener("pointercancel", stable.cancel);
+    window.removeEventListener("touchmove", stable.touch);
+    if (drag.current?.timer) window.clearTimeout(drag.current.timer);
+    if (auto.current !== null) {
+      window.clearInterval(auto.current);
+      auto.current = null;
+    }
     drag.current = null;
   };
 
@@ -299,7 +334,8 @@ export default function ScratchEditor({ project, onChange, open, onClose }: { pr
     if (drag.current) return;
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     pointer.current = { x: e.clientX, y: e.clientY };
-    drag.current = {
+    const holdFirst = origin === "palette" && e.pointerType === "touch";
+    const run: DragRun = {
       startX: e.clientX,
       startY: e.clientY,
       block,
@@ -311,7 +347,18 @@ export default function ScratchEditor({ project, onChange, open, onClose }: { pr
       offY: e.clientY - rect.top,
       spriteId: spriteRef.current,
       target: null,
+      armed: !holdFirst,
+      timer: null,
     };
+    if (holdFirst) {
+      run.timer = window.setTimeout(() => {
+        if (drag.current !== run) return;
+        run.armed = true;
+        navigator.vibrate?.(12);
+      }, 220);
+    }
+    drag.current = run;
+    window.addEventListener("touchmove", stable.touch, { passive: false });
     window.addEventListener("pointermove", stable.move);
     window.addEventListener("pointerup", stable.up);
     window.addEventListener("pointercancel", stable.cancel);
@@ -379,25 +426,26 @@ export default function ScratchEditor({ project, onChange, open, onClose }: { pr
   return (
     <EditorContext.Provider value={ctx}>
       {createPortal(
-        <div className={cn("fixed inset-0 z-[60] flex-col bg-[#0D1117] text-[#E6EDF3]", open ? "flex" : "hidden")} data-testid="editor-scratch">
-          <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-[#30363D] bg-[#161B22] px-3 py-2">
+        <div className={cn("fixed inset-0 z-[60] flex-col bg-[#0D1117] pb-[env(safe-area-inset-bottom)] text-[#E6EDF3]", open ? "flex" : "hidden")} data-testid="editor-scratch">
+          <header className="no-scrollbar flex shrink-0 items-center gap-2 overflow-x-auto border-b border-[#30363D] bg-[#161B22] px-3 py-2 [&>*]:shrink-0">
             <Button variant="outline" size="sm" onClick={close} data-testid="scratch-back">
-              <ArrowLeft className="size-3.5" /> Indietro
+              <ArrowLeft className="size-3.5" /> <span className="hidden sm:inline">Indietro</span>
             </Button>
             <div className="mx-1 hidden h-5 w-px bg-[#30363D] sm:block" />
             <Button variant="outline" size="sm" disabled={hist.past.length === 0} onClick={undo} data-testid="scratch-undo">
-              <Undo2 className="size-3.5" /> Annulla
+              <Undo2 className="size-3.5" /> <span className="hidden sm:inline">Annulla</span>
             </Button>
             <Button variant="outline" size="sm" disabled={hist.future.length === 0} onClick={redo}>
-              <Redo2 className="size-3.5" /> Ripeti
+              <Redo2 className="size-3.5" /> <span className="hidden sm:inline">Ripeti</span>
             </Button>
             <Button variant="outline" size="sm" disabled={scripts.length < 2} onClick={tidyUp}>
-              <LayoutGrid className="size-3.5" /> Riordina
+              <LayoutGrid className="size-3.5" /> <span className="hidden sm:inline">Riordina</span>
             </Button>
             {empty && (
               <>
                 <Button variant="outline" size="sm" onClick={() => loadSample(sampleApples)} data-testid="scratch-sample-apples">
-                  <Sparkles className="size-3.5" /> Esempio: prendi le mele
+                  <Sparkles className="size-3.5" /> <span className="sm:hidden">Esempio: mele</span>
+                  <span className="hidden sm:inline">Esempio: prendi le mele</span>
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => loadSample(sampleQuiz)} data-testid="scratch-sample-quiz">
                   <Sparkles className="size-3.5" /> Esempio: quiz
@@ -417,8 +465,8 @@ export default function ScratchEditor({ project, onChange, open, onClose }: { pr
           </header>
 
           <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,1fr)_380px]">
-            <div className={cn("min-h-0 min-w-0 flex-col gap-3 p-3 xl:flex-row", tab === "code" ? "flex" : "hidden", "lg:flex")}>
-              <div className="h-[38%] shrink-0 xl:h-full xl:w-[250px]">
+            <div className={cn("min-h-0 min-w-0 flex-col gap-2 p-2 sm:gap-3 sm:p-3 xl:flex-row", tab === "code" ? "flex" : "hidden", "lg:flex")}>
+              <div className="h-[40%] shrink-0 xl:h-full xl:w-[250px]">
                 <Palette project={project} sprite={sprite} cat={cat} onCat={setCat} onProject={(p) => commit(p)} onCreateProc={createProc} paletteRef={palRef} />
               </div>
               <section className="flex min-h-0 min-w-0 flex-1 flex-col rounded-xl border border-[#30363D] bg-[#161B22]">
@@ -437,7 +485,7 @@ export default function ScratchEditor({ project, onChange, open, onClose }: { pr
                         </Button>
                       </>
                     )}
-                    {!selectedId && <span className="text-xs text-[#8B949E]">Trascina i blocchi qui, oppure toccali nella palette</span>}
+                    {!selectedId && <span className="text-xs text-[#8B949E]">Tieni premuto e trascina un blocco, oppure toccalo nella palette</span>}
                   </div>
                 </div>
                 <div
