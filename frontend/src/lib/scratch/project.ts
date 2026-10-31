@@ -132,6 +132,116 @@ export const sampleQuiz = (): ScratchProject => {
   };
 };
 
+export const sampleMeteors = (): ScratchProject => {
+  const ship: SpriteDef = { ...blankSprite("Navicella", "🚀"), y: -140, size: 120 };
+  const rock: SpriteDef = { ...blankSprite("Meteorite", "☄️"), y: 150, size: 80, visible: false };
+  ship.scripts = [
+    script(24, 24, b("evt_flag"), b("ctl_forever", {}, {
+      a: [
+        b("ctl_if", { cond: b("sen_key", { key: "right" }) }, { a: [b("mot_changex", { n: 12 })] }),
+        b("ctl_if", { cond: b("sen_key", { key: "left" }) }, { a: [b("mot_changex", { n: -12 })] }),
+      ],
+    })),
+    script(24, 230, b("evt_when", { cond: b("op_gt", { a: b("game_score"), b: 11 }) }), b("snd_play", { sound: "win" }), b("game_end")),
+  ];
+  rock.scripts = [
+    script(24, 24, b("evt_flag"), b("look_hide"), b("ctl_forever", {}, { a: [b("ctl_wait", { s: 0.7 }), b("ctl_clone", { who: "_myself_" })] })),
+    script(
+      24,
+      200,
+      b("evt_clone"),
+      b("mot_goto", { x: b("op_random", { a: -200, b: 200 }), y: 160 }),
+      b("look_show"),
+      b("ctl_repeat_until", { cond: b("op_or", { a: b("sen_touching", { t: ship.id }), b: b("op_lt", { a: b("mot_y"), b: -165 }) }) }, { a: [b("mot_changey", { n: -8 })] }),
+      b("ctl_ifelse", { cond: b("sen_touching", { t: ship.id }) }, {
+        a: [b("game_change_lives", { n: -1 }), b("snd_play", { sound: "lose" })],
+        b: [b("game_change_score", { n: 1 }), b("snd_play", { sound: "coin" })],
+      }),
+      b("ctl_clone_delete"),
+    ),
+  ];
+  return { v: 1, settings: { goal: 12, lives: 3, time: 0 }, backdrops: [{ id: uid(), ...BACKDROP_PRESETS[3] }], messages: [], vars: [], lists: [], sprites: [ship, rock] };
+};
+
+export const sampleTarget = (): ScratchProject => {
+  const target: SpriteDef = { ...blankSprite("Bersaglio", "🎯"), size: 140 };
+  target.scripts = [
+    script(
+      24,
+      24,
+      b("evt_click"),
+      b("game_change_score", { n: 1 }),
+      b("snd_play", { sound: "coin" }),
+      b("mot_goto", { x: b("op_random", { a: -180, b: 180 }), y: b("op_random", { a: -120, b: 120 }) }),
+    ),
+    script(24, 200, b("evt_flag"), b("ctl_forever", {}, { a: [b("ctl_wait", { s: 1.5 }), b("mot_goto", { x: b("op_random", { a: -180, b: 180 }), y: b("op_random", { a: -120, b: 120 }) })] })),
+    script(380, 24, b("evt_when", { cond: b("op_gt", { a: b("game_score"), b: 14 }) }), b("snd_play", { sound: "win" }), b("game_end")),
+  ];
+  return { v: 1, settings: { goal: 15, lives: 0, time: 40 }, backdrops: [{ id: uid(), ...BACKDROP_PRESETS[2] }], messages: [], vars: [], lists: [], sprites: [target] };
+};
+
+export const sampleGuess = (): ScratchProject => {
+  const wizard: SpriteDef = { ...blankSprite("Mago", "🧙"), size: 160 };
+  const secret = { id: uid(), name: "segreto", initial: 0, scope: "all", shown: false };
+  wizard.scripts = [
+    script(
+      24,
+      24,
+      b("evt_flag"),
+      b("var_set", { var: secret.id, v: b("op_random", { a: 1, b: 50 }) }),
+      b("look_say_for", { text: "Ho pensato un numero da 1 a 50", s: 2 }),
+      b("ctl_repeat_until", { cond: b("op_eq", { a: b("sen_answer"), b: b("var_get", { var: secret.id }) }) }, {
+        a: [
+          b("sen_ask", { q: "Che numero è?" }),
+          b("ctl_if", { cond: b("op_gt", { a: b("sen_answer"), b: b("var_get", { var: secret.id }) }) }, { a: [b("look_say_for", { text: "Più basso!", s: 1 })] }),
+          b("ctl_if", { cond: b("op_lt", { a: b("sen_answer"), b: b("var_get", { var: secret.id }) }) }, { a: [b("look_say_for", { text: "Più alto!", s: 1 })] }),
+        ],
+      }),
+      b("game_change_score", { n: 1 }),
+      b("snd_play", { sound: "win" }),
+      b("look_say_for", { text: "Esatto!", s: 1.5 }),
+      b("game_end"),
+    ),
+  ];
+  return { v: 1, settings: { goal: 1, lives: 0, time: 0 }, backdrops: [{ id: uid(), ...BACKDROP_PRESETS[1] }], messages: [], vars: [secret], lists: [], sprites: [wizard] };
+};
+
+export const sampleChase = (): ScratchProject => {
+  const player: SpriteDef = { ...blankSprite("Giocatore", "😎"), size: 100 };
+  const ghost: SpriteDef = { ...blankSprite("Fantasma", "👻"), x: 180, y: 130, size: 120 };
+  player.scripts = [
+    script(24, 24, b("evt_flag"), b("ctl_forever", {}, { a: [b("mot_goto", { x: b("sen_mouse_x"), y: b("sen_mouse_y") })] })),
+    script(24, 200, b("evt_flag"), b("ctl_forever", {}, { a: [b("ctl_wait", { s: 1 }), b("game_change_score", { n: 1 })] })),
+    script(380, 24, b("evt_when", { cond: b("op_gt", { a: b("game_score"), b: 14 }) }), b("snd_play", { sound: "win" }), b("game_end")),
+  ];
+  ghost.scripts = [
+    script(
+      24,
+      24,
+      b("evt_flag"),
+      b("ctl_forever", {}, {
+        a: [
+          b("mot_point_towards", { to: player.id }),
+          b("mot_move", { n: 3 }),
+          b("ctl_if", { cond: b("sen_touching", { t: player.id }) }, {
+            a: [b("game_change_lives", { n: -1 }), b("snd_play", { sound: "lose" }), b("mot_goto", { x: 180, y: 130 }), b("ctl_wait", { s: 1 })],
+          }),
+        ],
+      }),
+    ),
+  ];
+  return { v: 1, settings: { goal: 15, lives: 3, time: 0 }, backdrops: [{ id: uid(), ...BACKDROP_PRESETS[6] }], messages: [], vars: [], lists: [], sprites: [player, ghost] };
+};
+
+export const SAMPLES: { id: string; label: string; make: () => ScratchProject }[] = [
+  { id: "apples", label: "Prendi le mele", make: sampleApples },
+  { id: "quiz", label: "Quiz", make: sampleQuiz },
+  { id: "meteors", label: "Schiva i meteoriti", make: sampleMeteors },
+  { id: "target", label: "Clicca il bersaglio", make: sampleTarget },
+  { id: "guess", label: "Indovina il numero", make: sampleGuess },
+  { id: "chase", label: "Scappa dal fantasma", make: sampleChase },
+];
+
 export type StackRef = { script: string } | { block: string; stack: string };
 
 const mapList = (list: SBlock[], fn: (b: SBlock) => SBlock): SBlock[] => list.map(fn);
