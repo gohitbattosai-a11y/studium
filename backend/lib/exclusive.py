@@ -1,0 +1,31 @@
+from pymongo.errors import DuplicateKeyError
+
+from lib.db import db
+from lib.security import new_id, now_iso
+
+EXCLUSIVE_ITEMS: list[dict] = [
+    {
+        "id": "sigillo-segreto",
+        "kind": "decoration",
+        "name": "Sigillo del Custode",
+        "description": "Un sigillo dorato che orbita attorno all'avatar. Non si compra: si merita.",
+    },
+]
+
+EXCLUSIVE_BY_ID: dict[str, dict] = {i["id"]: i for i in EXCLUSIVE_ITEMS}
+
+
+async def grant(member_id: str, group_id: str, item_id: str) -> bool:
+    if item_id not in EXCLUSIVE_BY_ID:
+        return False
+    try:
+        await db.member_rewards.insert_one(
+            {"id": new_id(), "member_id": member_id, "group_id": group_id, "item_id": item_id, "created_at": now_iso()}
+        )
+    except DuplicateKeyError:
+        return False
+    return True
+
+
+async def owned_ids(member_id: str) -> set[str]:
+    return {d["item_id"] async for d in db.member_rewards.find({"member_id": member_id}, {"_id": 0, "item_id": 1})}
