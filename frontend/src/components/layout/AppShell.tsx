@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, type ReactNode } from "react";
+import { lazy, Suspense, useRef, useState, type ReactNode } from "react";
 import { BarChart3, BookOpen, FolderOpen, Gamepad2, LayoutGrid, LogOut, Megaphone, ShoppingBag, User, Users } from "lucide-react";
 import type { Me, SiteStatus } from "@/lib/types";
 import { endSession } from "@/lib/session";
@@ -25,9 +25,11 @@ import PollsPanel from "@/components/polls/PollsPanel";
 import MaterialsPanel from "@/components/materials/MaterialsPanel";
 import NoticesPanel from "@/components/notices/NoticesPanel";
 import SecretPassage, { SecretLogo } from "@/components/hunt/SecretPassage";
+import { OBS_SEQUENCE, OBS_WINDOW } from "@/components/obs/entry";
 
 const ShopPanel = lazy(() => import("@/components/shop/ShopPanel"));
 const GamesPanel = lazy(() => import("@/components/games/GamesPanel"));
+const Observatory = lazy(() => import("@/components/obs/Observatory"));
 
 export type Tab = "home" | "compiti" | "sondaggi" | "materiali" | "bacheca" | "shop" | "giochi";
 
@@ -45,6 +47,8 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
   const [tab, setTab] = useState<Tab>("home");
   const [visited, setVisited] = useState<Tab[]>(["home"]);
   const [secretOpen, setSecretOpen] = useState(false);
+  const [obsOpen, setObsOpen] = useState(false);
+  const trail = useRef<{ id: Tab; at: number }[]>([]);
   const members = useMembers();
   const shop = useShop();
   const petsOpen = featureOpen(status, "pets", me.role);
@@ -65,6 +69,12 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
     setTab(t);
     setVisited((v) => (v.includes(t) ? v : [...v, t]));
     window.scrollTo({ top: 0 });
+    const now = Date.now();
+    trail.current = [...trail.current.filter((x) => now - x.at < OBS_WINDOW), { id: t, at: now }].slice(-OBS_SEQUENCE.length);
+    if (trail.current.length === OBS_SEQUENCE.length && trail.current.every((x, i) => x.id === OBS_SEQUENCE[i])) {
+      trail.current = [];
+      setObsOpen(true);
+    }
   };
 
   const panel = (id: Tab) => cn(tab === id ? "block animate-in fade-in-0 slide-in-from-bottom-1 duration-200" : "hidden");
@@ -205,6 +215,11 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
 
       <MobileNav items={NAV} tab={tab} onGo={go} />
       <SecretPassage me={me} open={secretOpen} onOpenChange={setSecretOpen} />
+      {obsOpen && (
+        <Suspense fallback={null}>
+          <Observatory me={me} open={obsOpen} onClose={() => setObsOpen(false)} />
+        </Suspense>
+      )}
     </div>
   );
 }
