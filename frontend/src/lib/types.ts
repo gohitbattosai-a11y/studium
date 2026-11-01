@@ -351,49 +351,6 @@ export interface RollResult {
   guaranteed_in: number;
 }
 
-export type StudyPhase = "focus" | "break";
-export type StudyMode = "pomodoro" | "lungo";
-
-export interface StudyMine {
-  mode: StudyMode;
-  phase: StudyPhase;
-  remaining_s: number;
-  focus_s: number;
-  break_s: number;
-  started_ts: number;
-}
-
-export interface StudyPresence {
-  member_id: string;
-  nickname: string;
-  mode: StudyMode;
-  phase: StudyPhase;
-  remaining_s: number;
-}
-
-export interface StudyState {
-  server_now: number;
-  mine: StudyMine | null;
-  active: StudyPresence[];
-  study_seconds: number;
-}
-
-export interface Capsule {
-  id: string;
-  author: string;
-  is_mine: boolean;
-  created_at: string;
-  open_at: string;
-  is_open: boolean;
-  message: string | null;
-}
-
-export interface CapsulesState {
-  today: string;
-  can_write: boolean;
-  capsules: Capsule[];
-}
-
 export interface BadgeInfo {
   id: string;
   name: string;
@@ -404,6 +361,7 @@ export interface BadgeInfo {
 
 export interface ExclusiveInfo {
   id: string;
+  kind: "decoration" | "background";
   name: string;
   description: string;
   equipped: boolean;
@@ -419,10 +377,15 @@ export interface HuntLine {
   reveal: string;
 }
 
+export type HuntKind = "order" | "pick" | "code" | "sequence";
+
 export interface HuntState {
   started: boolean;
+  scene: string | null;
+  kind: HuntKind | null;
+  length: number;
+  sequence: string[] | null;
   solved: HuntLine[];
-  needs_code: boolean;
   finished: boolean;
-  reward: ExclusiveInfo | null;
+  rewards: ExclusiveInfo[];
 }
