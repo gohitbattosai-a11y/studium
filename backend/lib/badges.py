@@ -6,6 +6,9 @@ from lib.security import new_id, now_iso
 BADGES: list[dict] = [
     {"id": "bussatore", "name": "Bussatore", "description": "Hai bussato alla porta giusta.", "secret": True},
     {"id": "a-meta-strada", "name": "A metà strada", "description": "Metà del passaggio è alle tue spalle.", "secret": True},
+    {"id": "lente-curiosa", "name": "Lente curiosa", "description": "Hai trovato la porta dell'osservatorio.", "secret": True},
+    {"id": "tra-gli-ingranaggi", "name": "Tra gli ingranaggi", "description": "Hai lasciato l'Atrio e la Biblioteca alle spalle.", "secret": True},
+    {"id": "astronomo-d-ottone", "name": "Astronomo d'ottone", "description": "Hai rimesso in ordine le stelle.", "secret": True},
     {"id": "custode-del-segreto", "name": "Custode del segreto", "description": "Hai seguito la traccia fino in fondo.", "secret": True},
 ]
 
