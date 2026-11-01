@@ -3,6 +3,14 @@ import type { Arg, Backdrop, CategoryId, SBlock, Script, ScratchProject, SpriteD
 
 export const MAX_SPRITES = 8;
 export const MAX_BLOCKS = 800;
+export const MAX_COSTUME_IMAGE = 60000;
+export const MAX_BACKDROP_IMAGE = 160000;
+export const MAX_DRAWN_TOTAL = 1200000;
+
+export const isDrawn = (s: string) => s.startsWith("data:image/");
+
+export const drawnSize = (p: ScratchProject) =>
+  p.sprites.reduce((n, s) => n + s.costumes.reduce((m, c) => m + (isDrawn(c) ? c.length : 0), 0), 0) + p.backdrops.reduce((n, b) => n + (b.image ? b.image.length : 0), 0);
 
 export const BACKDROP_PRESETS: Omit<Backdrop, "id">[] = [
   { name: "Cielo", from: "#8EC5FF", to: "#E8F4FF", deco: "☁️" },
@@ -443,7 +451,7 @@ export const cleanScratch = (p: ScratchProject): ScratchProject => {
   return {
     v: 1,
     settings: { goal: Math.max(1, int(p.settings.goal)), lives: Math.max(0, int(p.settings.lives)), time: Math.max(0, int(p.settings.time)) },
-    backdrops: p.backdrops.map((x) => ({ ...x, name: t(x.name) || "Sfondo" })),
+    backdrops: p.backdrops.map((x) => ({ ...x, name: t(x.name) || "Sfondo", rot: ((int(x.rot ?? 0) % 360) + 360) % 360 })),
     messages: [...new Set(p.messages.map(t).filter(Boolean))],
     vars: p.vars.map((v) => ({ ...v, name: t(v.name), initial: Number.isFinite(v.initial) ? v.initial : 0 })),
     lists: p.lists.map((l) => ({ ...l, name: t(l.name) })),
@@ -465,6 +473,9 @@ export function validateScratch(p: ScratchProject | null): string | null {
   if (p.sprites.length > MAX_SPRITES) return `Massimo ${MAX_SPRITES} sprite`;
   if (p.sprites.some((s) => s.costumes.length < 1)) return "Ogni sprite ha bisogno di almeno un costume";
   if (p.backdrops.length < 1) return "Serve almeno uno sfondo";
+  if (p.sprites.some((s) => s.costumes.some((c) => isDrawn(c) && c.length > MAX_COSTUME_IMAGE))) return "Un costume disegnato è troppo pesante: semplificalo";
+  if (p.backdrops.some((b) => b.image && b.image.length > MAX_BACKDROP_IMAGE)) return "Un disegno di sfondo è troppo pesante: semplificalo";
+  if (drawnSize(p) > MAX_DRAWN_TOTAL) return "Troppi disegni nel gioco: elimina qualche costume o sfondo disegnato";
   const { goal, lives, time } = p.settings;
   if (!(goal >= 1 && goal <= 1000)) return "L'obiettivo di punti deve essere tra 1 e 1000";
   if (lives < 0 || lives > 9) return "Le vite vanno da 0 a 9";
@@ -523,6 +534,7 @@ export const initialView = (p: ScratchProject): import("./types").View => ({
     clone: false,
   })),
   backdrop: 0,
+  backdropTurn: 0,
   vars: p.vars.filter((v) => v.shown && v.scope === "all").map((v) => ({ name: v.name, value: String(v.initial) })),
   asking: null,
   ended: false,
