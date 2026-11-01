@@ -1,8 +1,9 @@
-import { Brain, Crown, Hourglass, KeyRound, Lock, Mail, Sparkles, Timer, type LucideIcon } from "lucide-react";
+import { KeyRound, Lock, Sparkles, Star, type LucideIcon } from "lucide-react";
 import { useBadges } from "@/lib/queries";
 import { useHuntActions } from "@/lib/extraActions";
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/common";
+import { BackgroundPreview } from "@/components/theme/ThemeBackground";
 import { Button } from "@/components/ui/button";
 
 interface BadgeStyle {
@@ -13,11 +14,8 @@ interface BadgeStyle {
 }
 
 const STYLE: Record<string, BadgeStyle> = {
-  "primo-pomodoro": { icon: Timer, from: "#FF7B72", to: "#D29922", label: "Primo pomodoro" },
-  "mente-di-ferro": { icon: Brain, from: "#388BFD", to: "#BC8CFF", label: "Mente di ferro" },
-  "monaco-studioso": { icon: Crown, from: "#E3B341", to: "#F0883E", label: "Monaco studioso" },
-  messaggero: { icon: Mail, from: "#2DD4BF", to: "#3FB950", label: "Messaggero" },
-  "viaggiatore-del-tempo": { icon: Hourglass, from: "#F778BA", to: "#A371F7", label: "Viaggiatore del tempo" },
+  bussatore: { icon: Sparkles, from: "#58A6FF", to: "#BC8CFF", label: "Bussatore" },
+  "a-meta-strada": { icon: Star, from: "#F778BA", to: "#F0883E", label: "A metà strada" },
   "custode-del-segreto": { icon: KeyRound, from: "#FDE68A", to: "#C084FC", label: "Custode del segreto" },
 };
 
@@ -56,13 +54,14 @@ export function BadgeStrip({ ids, max = 3 }: { ids: string[]; max?: number }) {
   );
 }
 
-export function BadgesBody({ nickname }: { nickname: string }) {
+export function BadgesSection({ nickname }: { nickname: string }) {
   const badges = useBadges();
   const { equip } = useHuntActions();
   const data = badges.data;
-  if (!data) return <div className="h-16 animate-pulse rounded-lg bg-[#161B22]" />;
+  if (!data || (!data.badges.length && !data.exclusives.length)) return null;
   return (
-    <div className="space-y-4">
+    <section className="space-y-3 rounded-xl border border-[#30363D] bg-[#161B22] p-4" data-testid="badges-section">
+      <h3 className="text-sm font-medium">Badge</h3>
       <ul className="grid grid-cols-2 gap-2" data-testid="badges-grid">
         {data.badges.map((b) => {
           const s = styleOf(b.id);
@@ -89,18 +88,24 @@ export function BadgesBody({ nickname }: { nickname: string }) {
           <p className="text-xs font-medium uppercase tracking-wider text-[#8B949E]">Esclusivi</p>
           {data.exclusives.map((x) => (
             <div key={x.id} className="flex items-center gap-3 rounded-lg border border-[#30363D] bg-[#0D1117] p-2">
-              <Avatar name={nickname} decoration={x.id} />
+              {x.kind === "background" ? (
+                <div className="relative h-10 w-16 shrink-0 overflow-hidden rounded-md">
+                  <BackgroundPreview id={x.id} />
+                </div>
+              ) : (
+                <Avatar name={nickname} decoration={x.id} />
+              )}
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{x.name}</p>
                 <p className="text-[11px] leading-snug text-[#8B949E]">{x.description}</p>
               </div>
-              <Button size="sm" variant={x.equipped ? "outline" : "default"} disabled={equip.isPending} onClick={() => equip.mutate(x.equipped ? null : x.id)} data-testid={`exclusive-equip-${x.id}`}>
+              <Button size="sm" variant={x.equipped ? "outline" : "default"} disabled={equip.isPending} onClick={() => equip.mutate({ kind: x.kind, item_id: x.equipped ? null : x.id })} data-testid={`exclusive-equip-${x.id}`}>
                 {x.equipped ? "Togli" : "Indossa"}
               </Button>
             </div>
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
 }
