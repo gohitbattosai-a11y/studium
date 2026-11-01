@@ -1,5 +1,5 @@
 import { parseParams, SPEC_BY_OP } from "./spec";
-import type { Arg, SBlock, ScratchProject, SpriteDef, SpriteView, View } from "./types";
+import type { Arg, RotationStyle, SBlock, ScratchProject, SpriteDef, SpriteView, View } from "./types";
 
 export type Val = string | number | boolean;
 
@@ -24,6 +24,7 @@ interface Inst {
   x: number;
   y: number;
   dir: number;
+  rotation: RotationStyle;
   size: number;
   visible: boolean;
   costume: number;
@@ -113,6 +114,7 @@ export class Runtime {
   score = 0;
   lives = 0;
   backdrop = 0;
+  bdTurn = 0;
   asking: string | null = null;
   keys = new Set<string>();
   mouse = { x: 0, y: 0, down: false };
@@ -147,6 +149,7 @@ export class Runtime {
     this.score = 0;
     this.lives = p.settings.lives;
     this.backdrop = 0;
+    this.bdTurn = 0;
     this.asking = null;
     this.answerReady = false;
     this.keys.clear();
@@ -180,6 +183,7 @@ export class Runtime {
         x: def.x,
         y: def.y,
         dir: def.dir,
+        rotation: def.rotation,
         size: def.size,
         visible: def.visible,
         costume: 0,
@@ -304,7 +308,7 @@ export class Runtime {
         y: i.y,
         size: i.size,
         dir: i.dir,
-        rotation: i.def.rotation,
+        rotation: i.rotation,
         visible: i.visible,
         opacity: i.opacity,
         say: i.say && i.say.text ? i.say.text : null,
@@ -321,6 +325,7 @@ export class Runtime {
     return {
       sprites,
       backdrop: this.backdrop,
+      backdropTurn: this.bdTurn,
       vars,
       asking: this.asking,
       ended: this.ended,
@@ -707,6 +712,17 @@ export class Runtime {
       case "mot_bounce":
         this.bounce(i);
         return;
+      case "mot_rotstyle": {
+        const m = String(b.args.m);
+        if (m === "all" || m === "lr" || m === "none") i.rotation = m;
+        return;
+      }
+      case "look_bd_turn":
+        this.bdTurn = (((this.bdTurn + this.n(c, b, "n")) % 360) + 360) % 360;
+        return;
+      case "look_bd_set":
+        this.bdTurn = (((this.n(c, b, "n")) % 360) + 360) % 360;
+        return;
       case "look_say_for": {
         const token = this.nextSay++;
         i.say = { text: this.s(c, b, "text").slice(0, 120), token };
@@ -734,10 +750,12 @@ export class Runtime {
       case "look_backdrop": {
         const idx = Math.floor(num(String(b.args.b))) - 1;
         this.backdrop = clamp(idx, 0, Math.max(0, this.project.backdrops.length - 1));
+        this.bdTurn = 0;
         return;
       }
       case "look_next_backdrop":
         this.backdrop = (this.backdrop + 1) % Math.max(1, this.project.backdrops.length);
+        this.bdTurn = 0;
         return;
       case "look_size_set":
         i.size = clamp(this.n(c, b, "n"), 5, 500);
