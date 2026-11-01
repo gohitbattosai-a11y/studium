@@ -16,6 +16,7 @@ export interface Species {
   pattern: FishPattern;
   min_cm: number;
   max_cm: number;
+  difficulty: number;
   name: string | null;
   description: string | null;
 }
