@@ -1,51 +1,69 @@
+import hashlib
 import re
 import time
-from typing import Awaitable, Callable, Optional
+from typing import Optional
 
 from lib.badges import award
 from lib.catalog import GRADE_POINTS
 from lib.db import db
-from lib.exclusive import grant
+from lib.exclusive import EXCLUSIVE_ITEMS, grant
 from lib.pets import PETS
 from lib.security import now_iso
-from lib.study import settle
 
-REWARD_ID = "sigillo-segreto"
 FINAL_BADGE = "custode-del-segreto"
-POMODORO_SECONDS = 1500
-COOLDOWN = 4.0
+HALFWAY_BADGE = "a-meta-strada"
+KNOCK_BADGE = "bussatore"
+HALFWAY_AT = 3
+COOLDOWN = 1.5
+RUNES = 4
+ECHO_LENGTH = 6
 
 
-async def _has_capsule(member: dict, group: dict) -> bool:
-    return await db.capsules.count_documents({"member_id": member["id"]}) > 0
+def _code(member: dict, group: dict) -> list[str]:
+    return list(f"{GRADE_POINTS[max(GRADE_POINTS)]:02d}{len(PETS):02d}")
 
 
-async def _has_studied(member: dict, group: dict) -> bool:
-    await settle(member["group_id"])
-    fresh = await db.members.find_one({"id": member["id"]}, {"_id": 0, "study_seconds": 1})
-    return int((fresh or {}).get("study_seconds", 0)) >= POMODORO_SECONDS
-
-
-def _grade_answer(member: dict, group: dict) -> str:
-    return str(GRADE_POINTS[max(GRADE_POINTS)])
-
-
-def _name_answer(member: dict, group: dict) -> str:
-    return str(len(re.findall(r"[^\W\d_]", group.get("name", ""))))
-
-
-def _pets_answer(member: dict, group: dict) -> str:
-    return str(len(PETS))
+def _echo(member: dict, group: dict) -> list[str]:
+    digest = hashlib.sha256(f"eco:{member['id']}".encode()).digest()
+    return [f"runa-{b % RUNES}" for b in digest[:ECHO_LENGTH]]
 
 
 STEPS: list[dict] = [
-    {"title": "La porta", "reveal": "Chi parla al futuro lascia una porta chiusa a chiave.", "kind": "knock"},
-    {"title": "La capsula", "reveal": "Un giro intero del timer, nella stanza dove nessuno parla.", "kind": "auto", "check": _has_capsule},
-    {"title": "Il silenzio", "reveal": "Il voto più alto vale un certo numero di punti. Sussurralo dove tutto è iniziato.", "kind": "auto", "check": _has_studied},
-    {"title": "Il voto", "reveal": "Ogni gruppo ha un nome. Conta solo le sue lettere, niente spazi né numeri.", "kind": "code", "answer": _grade_answer},
-    {"title": "Il nome", "reveal": "Nelle casse dei pet vivono tanti amici. Quanti, tra tutti, possono uscire?", "kind": "code", "answer": _name_answer},
-    {"title": "Il bestiario", "reveal": "Il passaggio è aperto. Ciò che cerchi ora ti appartiene.", "kind": "code", "answer": _pets_answer},
+    {
+        "id": "soglia",
+        "title": "La Soglia",
+        "kind": "order",
+        "answer": ["pietra-3", "pietra-1", "pietra-5", "pietra-2", "pietra-4"],
+        "reveal": "Il tramonto ha cinque colori. Leggi i libri come lui.",
+    },
+    {
+        "id": "biblioteca",
+        "title": "La Biblioteca",
+        "kind": "order",
+        "answer": ["libro-giallo", "libro-arancio", "libro-rosso", "libro-viola", "libro-blu"],
+        "reveal": "Una sola luce non respira come le altre.",
+    },
+    {
+        "id": "giardino",
+        "title": "Il Giardino",
+        "kind": "pick",
+        "answer": ["lucciola-5"],
+        "reveal": "Il voto migliore vale tanti punti. I pet che escono dalle casse sono altrettanti compagni. Due numeri, uno accanto all'altro.",
+    },
+    {"id": "torre", "title": "La Torre", "kind": "code", "answer": _code, "reveal": "Ripeti ciò che vedi brillare."},
+    {
+        "id": "eco",
+        "title": "L'Eco",
+        "kind": "sequence",
+        "answer": _echo,
+        "reveal": "Il passaggio è aperto. Ciò che cerchi ora ti appartiene.",
+    },
 ]
+
+
+def expected(step: dict, member: dict, group: dict) -> list[str]:
+    answer = step["answer"]
+    return answer(member, group) if callable(answer) else list(answer)
 
 
 async def load(member: dict) -> Optional[dict]:
@@ -55,52 +73,45 @@ async def load(member: dict) -> Optional[dict]:
 async def knock(member: dict) -> dict:
     await db.hunt.update_one(
         {"member_id": member["id"]},
-        {"$setOnInsert": {"member_id": member["id"], "group_id": member["group_id"], "solved": 1, "started_at": now_iso(), "finished_at": None, "last_attempt_ts": 0.0}},
+        {"$setOnInsert": {"member_id": member["id"], "group_id": member["group_id"], "solved": 0, "started_at": now_iso(), "finished_at": None, "last_attempt_ts": 0.0}},
         upsert=True,
     )
-    return await advance(member)
+    await award(member["id"], member["group_id"], KNOCK_BADGE)
+    return await load(member)
 
 
 async def _finish(member: dict) -> None:
-    await grant(member["id"], member["group_id"], REWARD_ID)
+    for item in EXCLUSIVE_ITEMS:
+        await grant(member["id"], member["group_id"], item["id"])
     await award(member["id"], member["group_id"], FINAL_BADGE)
     await db.hunt.update_one({"member_id": member["id"], "finished_at": None}, {"$set": {"finished_at": now_iso()}})
 
 
-async def advance(member: dict) -> Optional[dict]:
+async def group_of(member: dict) -> dict:
+    return await db.groups.find_one({"id": member["group_id"]}, {"_id": 0}) or {}
+
+
+async def solve(member: dict, taps: list[str]) -> str:
     doc = await load(member)
-    if not doc:
-        return None
-    group = await db.groups.find_one({"id": member["group_id"]}, {"_id": 0}) or {}
-    solved = doc["solved"]
-    while solved < len(STEPS) and STEPS[solved]["kind"] == "auto":
-        check: Callable[[dict, dict], Awaitable[bool]] = STEPS[solved]["check"]
-        if not await check(member, group):
-            break
-        moved = await db.hunt.update_one({"member_id": member["id"], "solved": solved}, {"$set": {"solved": solved + 1}})
-        if not moved.modified_count:
-            break
-        solved += 1
-    if solved >= len(STEPS):
-        await _finish(member)
-    return await load(member)
-
-
-async def answer(member: dict, raw: str) -> str:
-    doc = await advance(member)
     if not doc:
         return "closed"
     solved = doc["solved"]
-    if solved >= len(STEPS) or STEPS[solved]["kind"] != "code":
+    if solved >= len(STEPS):
         return "wrong"
     now = time.time()
     if now - float(doc.get("last_attempt_ts", 0.0)) < COOLDOWN:
         return "wait"
     await db.hunt.update_one({"member_id": member["id"]}, {"$set": {"last_attempt_ts": now}})
-    group = await db.groups.find_one({"id": member["group_id"]}, {"_id": 0}) or {}
-    expected = STEPS[solved]["answer"](member, group).strip().casefold()
-    if raw.strip().casefold() != expected:
+    step = STEPS[solved]
+    want = expected(step, member, await group_of(member))
+    got = [t.strip().casefold() for t in taps]
+    if got != want:
         return "wrong"
-    await db.hunt.update_one({"member_id": member["id"], "solved": solved}, {"$set": {"solved": solved + 1}})
-    await advance(member)
+    moved = await db.hunt.update_one({"member_id": member["id"], "solved": solved}, {"$set": {"solved": solved + 1}})
+    if not moved.modified_count:
+        return "wrong"
+    if solved + 1 >= HALFWAY_AT:
+        await award(member["id"], member["group_id"], HALFWAY_BADGE)
+    if solved + 1 >= len(STEPS):
+        await _finish(member)
     return "ok"
