@@ -21,6 +21,7 @@ OPS = {
     'mot_changey': {"shape": 'stack', "args": {'n': 'num'}, "stacks": []},
     'mot_sety': {"shape": 'stack', "args": {'n': 'num'}, "stacks": []},
     'mot_bounce': {"shape": 'stack', "args": {}, "stacks": []},
+    'mot_rotstyle': {"shape": 'stack', "args": {'m': 'menu:static'}, "stacks": []},
     'mot_x': {"shape": 'reporter', "args": {}, "stacks": []},
     'mot_y': {"shape": 'reporter', "args": {}, "stacks": []},
     'mot_dir': {"shape": 'reporter', "args": {}, "stacks": []},
@@ -32,6 +33,8 @@ OPS = {
     'look_next_costume': {"shape": 'stack', "args": {}, "stacks": []},
     'look_backdrop': {"shape": 'stack', "args": {'b': 'menu:backdrop'}, "stacks": []},
     'look_next_backdrop': {"shape": 'stack', "args": {}, "stacks": []},
+    'look_bd_turn': {"shape": 'stack', "args": {'n': 'num'}, "stacks": []},
+    'look_bd_set': {"shape": 'stack', "args": {'n': 'num'}, "stacks": []},
     'look_size_set': {"shape": 'stack', "args": {'n': 'num'}, "stacks": []},
     'look_size_change': {"shape": 'stack', "args": {'n': 'num'}, "stacks": []},
     'look_opacity': {"shape": 'stack', "args": {'n': 'num'}, "stacks": []},
@@ -104,12 +107,18 @@ OPS = {
     'game_end': {"shape": 'cap', "args": {}, "stacks": []},
 }
 
+import base64
+import binascii
 import math
 import re
 from typing import Any
 
 ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,24}$")
 COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
+IMAGE_RE = re.compile(r"^data:image/(png|jpeg);base64,([A-Za-z0-9+/]+={0,2})$")
+MAX_COSTUME_IMAGE = 60000
+MAX_BACKDROP_IMAGE = 160000
+MAX_DRAWN_TOTAL = 1200000
 
 MAX_SPRITES = 8
 MAX_BLOCKS = 800
@@ -166,6 +175,24 @@ def as_number(value: Any, what: str, low: float, high: float) -> float | int:
     if not low <= value <= high:
         fail(f"{what}: valore fuori limite")
     return int(value) if float(value).is_integer() else float(value)
+
+
+def as_image(value: Any, what: str, limit: int) -> str:
+    if not isinstance(value, str) or len(value) > limit:
+        fail(f"{what}: immagine non valida o troppo pesante")
+    match = IMAGE_RE.match(value)
+    if not match:
+        fail(f"{what}: immagine non valida")
+    try:
+        raw = base64.b64decode(match.group(2), validate=True)
+    except (binascii.Error, ValueError):
+        fail(f"{what}: immagine non valida")
+    kind = match.group(1)
+    if kind == "png" and not raw.startswith(b"\x89PNG\r\n\x1a\n"):
+        fail(f"{what}: immagine non valida")
+    if kind == "jpeg" and not raw.startswith(b"\xff\xd8\xff"):
+        fail(f"{what}: immagine non valida")
+    return value
 
 
 def as_bool(value: Any, what: str) -> bool:
@@ -272,21 +299,25 @@ def clean_scratch(raw: Any) -> dict:
     lives = as_number(settings.get("lives"), "Vite", 0, 9)
     time = as_number(settings.get("time"), "Tempo", 0, 600)
 
+    drawn = 0
     backdrops = []
     for item in as_list(raw.get("backdrops"), "Sfondi", 1, 10):
         item = as_dict(item, "Sfondo")
         for key in ("from", "to"):
             if not isinstance(item.get(key), str) or not COLOR_RE.match(item[key]):
                 fail("Sfondo: colore non valido")
-        backdrops.append(
-            {
-                "id": as_id(item.get("id"), "Sfondo"),
-                "name": as_text(item.get("name", ""), "Sfondo", 30),
-                "from": item["from"],
-                "to": item["to"],
-                "deco": as_text(item.get("deco", ""), "Sfondo", 8),
-            }
-        )
+        entry = {
+            "id": as_id(item.get("id"), "Sfondo"),
+            "name": as_text(item.get("name", ""), "Sfondo", 30),
+            "from": item["from"],
+            "to": item["to"],
+            "deco": as_text(item.get("deco", ""), "Sfondo", 8),
+            "rot": as_number(item.get("rot", 0), "Sfondo", 0, 360),
+        }
+        if item.get("image"):
+            entry["image"] = as_image(item["image"], "Sfondo", MAX_BACKDROP_IMAGE)
+            drawn += len(entry["image"])
+        backdrops.append(entry)
 
     messages = []
     for m in as_list(raw.get("messages", []), "Messaggi", 0, 30):
@@ -326,7 +357,15 @@ def clean_scratch(raw: Any) -> dict:
     counter = Counter()
     sprites = []
     for s in sprites_raw:
-        costumes = [as_text(c, "Costume", 8, 1) for c in as_list(s.get("costumes"), "Costumi", 1, 12)]
+        costumes = []
+        for c in as_list(s.get("costumes"), "Costumi", 1, 12):
+            if isinstance(c, str) and c.startswith("data:image/"):
+                costumes.append(as_image(c, "Costume", MAX_COSTUME_IMAGE))
+                drawn += len(c)
+            else:
+                costumes.append(as_text(c, "Costume", 8, 1))
+        if drawn > MAX_DRAWN_TOTAL:
+            fail("Troppi disegni nel gioco: elimina qualche costume o sfondo disegnato")
         rotation = s.get("rotation")
         if rotation not in ("all", "lr", "none"):
             fail("Sprite: rotazione non valida")
