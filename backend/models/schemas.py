@@ -437,55 +437,6 @@ class RollResult(BaseModel):
     guaranteed_in: int
 
 
-class StudyStart(BaseModel):
-    mode: Literal["pomodoro", "lungo"]
-
-
-class StudyMine(BaseModel):
-    mode: str
-    phase: Literal["focus", "break"]
-    remaining_s: int
-    focus_s: int
-    break_s: int
-    started_ts: float
-
-
-class StudyPresence(BaseModel):
-    member_id: str
-    nickname: str
-    mode: str
-    phase: Literal["focus", "break"]
-    remaining_s: int
-
-
-class StudyState(BaseModel):
-    server_now: float
-    mine: Optional[StudyMine] = None
-    active: List[StudyPresence]
-    study_seconds: int
-
-
-class CapsuleCreate(BaseModel):
-    message: Text(1, 1000)
-    open_at: Annotated[str, StringConstraints(pattern=r"^\d{4}-\d{2}-\d{2}$")]
-
-
-class CapsuleOut(BaseModel):
-    id: str
-    author: str
-    is_mine: bool
-    created_at: str
-    open_at: str
-    is_open: bool
-    message: Optional[str] = None
-
-
-class CapsulesState(BaseModel):
-    today: str
-    can_write: bool
-    capsules: List[CapsuleOut]
-
-
 class BadgeOut(BaseModel):
     id: str
     name: str
@@ -496,6 +447,7 @@ class BadgeOut(BaseModel):
 
 class ExclusiveOut(BaseModel):
     id: str
+    kind: Literal["decoration", "background"]
     name: str
     description: str
     equipped: bool
@@ -507,11 +459,12 @@ class BadgesState(BaseModel):
 
 
 class ExclusiveEquip(BaseModel):
+    kind: Literal["decoration", "background"]
     item_id: Optional[str] = None
 
 
-class HuntAnswer(BaseModel):
-    answer: Text(1, 60)
+class HuntSolve(BaseModel):
+    taps: List[Text(1, 20)] = Field(min_length=1, max_length=8)
 
 
 class HuntLine(BaseModel):
@@ -521,7 +474,10 @@ class HuntLine(BaseModel):
 
 class HuntState(BaseModel):
     started: bool
+    scene: Optional[str] = None
+    kind: Optional[Literal["order", "pick", "code", "sequence"]] = None
+    length: int = 0
+    sequence: Optional[List[str]] = None
     solved: List[HuntLine]
-    needs_code: bool = False
     finished: bool = False
-    reward: Optional[ExclusiveOut] = None
+    rewards: List[ExclusiveOut] = []
