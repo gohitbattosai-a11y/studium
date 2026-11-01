@@ -1,5 +1,5 @@
 import { lazy, Suspense, useRef, useState, type ReactNode } from "react";
-import { BarChart3, BookOpen, FolderOpen, Gamepad2, LayoutGrid, LogOut, Megaphone, ShoppingBag, User, Users } from "lucide-react";
+import { BarChart3, BookOpen, Building2, FolderOpen, Gamepad2, LayoutGrid, LogOut, Megaphone, ShoppingBag, User, Users } from "lucide-react";
 import type { Me, SiteStatus } from "@/lib/types";
 import { endSession } from "@/lib/session";
 import { useMembers, usePets, useShop } from "@/lib/queries";
@@ -30,8 +30,9 @@ import { OBS_SEQUENCE, OBS_WINDOW } from "@/components/obs/entry";
 const ShopPanel = lazy(() => import("@/components/shop/ShopPanel"));
 const GamesPanel = lazy(() => import("@/components/games/GamesPanel"));
 const Observatory = lazy(() => import("@/components/obs/Observatory"));
+const CityPanel = lazy(() => import("@/components/city/CityPanel"));
 
-export type Tab = "home" | "compiti" | "sondaggi" | "materiali" | "bacheca" | "shop" | "giochi";
+export type Tab = "home" | "compiti" | "sondaggi" | "materiali" | "bacheca" | "shop" | "giochi" | "citta";
 
 const NAV: { id: Tab; label: string; icon: typeof BookOpen }[] = [
   { id: "home", label: "Home", icon: LayoutGrid },
@@ -40,6 +41,7 @@ const NAV: { id: Tab; label: string; icon: typeof BookOpen }[] = [
   { id: "materiali", label: "Materiali", icon: FolderOpen },
   { id: "bacheca", label: "Bacheca", icon: Megaphone },
   { id: "giochi", label: "Giochi", icon: Gamepad2 },
+  { id: "citta", label: "Città", icon: Building2 },
   { id: "shop", label: "Shop", icon: ShoppingBag },
 ];
 
@@ -52,6 +54,8 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
   const members = useMembers();
   const shop = useShop();
   const petsOpen = featureOpen(status, "pets", me.role);
+  const cityOpen = featureOpen(status, "citta", me.role);
+  const nav = cityOpen ? NAV : NAV.filter((n) => n.id !== "citta");
   const pets = usePets(petsOpen);
   const petSettings = usePetSettings();
   const { equip } = useShopActions();
@@ -99,7 +103,7 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
           </p>
         </div>
         <nav className="mt-4 space-y-0.5 px-3">
-          {NAV.map((n) => (
+          {nav.map((n) => (
             <button
               key={n.id}
               type="button"
@@ -202,6 +206,16 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
               </Suspense>,
             )}
           </div>
+          {cityOpen && (
+            <div className={panel("citta")} data-testid="panel-citta">
+              {mounted(
+                "citta",
+                <Suspense fallback={<SkeletonList />}>
+                  <CityPanel me={me} />
+                </Suspense>,
+              )}
+            </div>
+          )}
           <div className={panel("shop")} data-testid="panel-shop">
             {mounted(
               "shop",
@@ -213,7 +227,7 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
         </main>
       </div>
 
-      <MobileNav items={NAV} tab={tab} onGo={go} />
+      <MobileNav items={nav} tab={tab} onGo={go} />
       <SecretPassage me={me} open={secretOpen} onOpenChange={setSecretOpen} />
       {obsOpen && (
         <Suspense fallback={null}>
