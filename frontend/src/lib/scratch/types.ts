@@ -35,6 +35,8 @@ export interface Backdrop {
   from: string;
   to: string;
   deco: string;
+  rot?: number;
+  image?: string;
 }
 
 export interface VarDef {
@@ -98,6 +100,7 @@ export type CategoryId = "events" | "motion" | "looks" | "sound" | "control" | "
 export interface View {
   sprites: SpriteView[];
   backdrop: number;
+  backdropTurn: number;
   vars: { name: string; value: string }[];
   asking: string | null;
   ended: boolean;
