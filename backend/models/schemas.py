@@ -481,3 +481,49 @@ class HuntState(BaseModel):
     solved: List[HuntLine]
     finished: bool = False
     rewards: List[ExclusiveOut] = []
+
+
+class ObsSolve(BaseModel):
+    puzzle: Text(1, 20)
+    taps: List[Text(1, 40)] = Field(min_length=1, max_length=12)
+
+
+class ObsPuzzle(BaseModel):
+    id: str
+    title: str
+    solved: bool
+    params: Optional[Dict[str, Any]] = None
+
+
+class ObsRoom(BaseModel):
+    id: str
+    title: str
+    done: bool
+    puzzles: List[ObsPuzzle]
+
+
+class ObsFragment(BaseModel):
+    puzzle: str
+    letter: str
+
+
+class ObsPetInfo(BaseModel):
+    id: str
+    name: str
+    rarity: Rarity
+    active: bool
+
+
+class ObsPetEquip(BaseModel):
+    active: bool
+
+
+class ObsState(BaseModel):
+    started: bool
+    finished: bool = False
+    total_rooms: int = 0
+    rooms: List[ObsRoom] = []
+    fragments: List[ObsFragment] = []
+    reveals: List[str] = []
+    rewards: List[ExclusiveOut] = []
+    pet: Optional[ObsPetInfo] = None
