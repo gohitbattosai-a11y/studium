@@ -1,6 +1,6 @@
-import { useRef, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { ArrowRight, BarChart3, BookOpen, FolderOpen, Lock, Megaphone, Sparkles } from "lucide-react";
+import { BarChart3, BookOpen, FolderOpen, Lock, Megaphone } from "lucide-react";
 import { apiPost } from "@/lib/api";
 import { beginSession } from "@/lib/session";
 import { queryClient } from "@/lib/queryClient";
@@ -25,7 +25,6 @@ export default function AuthScreen({ onJoined }: { onJoined: () => void }) {
   const [nickname, setNickname] = useState("");
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const nickRef = useRef<HTMLInputElement>(null);
 
   const join = useMutation({
     mutationFn: (body: JoinRequest) => apiPost<Me>("/auth/join", body),
@@ -45,14 +44,6 @@ export default function AuthScreen({ onJoined }: { onJoined: () => void }) {
       return;
     }
     join.mutate({ mode, group_name: groupName.trim(), group_password: password, nickname: nickname.trim(), pin });
-  };
-
-  const fillDemo = () => {
-    setMode("join");
-    setGroupName("3°B Liceo");
-    setPassword("1234");
-    setError(null);
-    nickRef.current?.focus();
   };
 
   return (
@@ -83,22 +74,6 @@ export default function AuthScreen({ onJoined }: { onJoined: () => void }) {
         </section>
 
         <section className="md:col-span-6 lg:col-span-5">
-          <button
-            type="button"
-            onClick={fillDemo}
-            data-testid="demo-login-button"
-            className="group mb-4 flex w-full items-center gap-3 rounded-lg border border-[#30363D] bg-[#161B22] px-4 py-3 text-left transition-colors duration-150 hover:border-[#58A6FF]/40 hover:bg-[#1C2128]"
-          >
-            <span className="grid size-9 place-items-center rounded-md bg-[#3FB950]/12 text-[#7EE787]">
-              <Sparkles className="size-4" />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-medium">Prova il gruppo demo «3°B Liceo»</span>
-              <span className="block text-[13px] text-[#8B949E]">Compila gruppo e password, scegli solo il tuo nickname</span>
-            </span>
-            <ArrowRight className="size-4 text-[#8B949E] transition-transform duration-150 group-hover:translate-x-0.5" />
-          </button>
-
           <form onSubmit={submit} className="rounded-xl border border-[#30363D] bg-[#161B22] p-5 md:p-6" data-testid="auth-form">
             <Segmented
               value={mode}
@@ -127,7 +102,7 @@ export default function AuthScreen({ onJoined }: { onJoined: () => void }) {
               <div className="grid grid-cols-5 gap-3">
                 <div className="col-span-3 space-y-1.5">
                   <Label htmlFor="nickname">Il tuo nickname</Label>
-                  <Input id="nickname" ref={nickRef} value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="es. Giulia" required minLength={2} maxLength={30} autoComplete="off" className="h-10" data-testid="auth-nickname-input" />
+                  <Input id="nickname" value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="es. Giulia" required minLength={2} maxLength={30} autoComplete="off" className="h-10" data-testid="auth-nickname-input" />
                 </div>
                 <div className="col-span-2 space-y-1.5">
                   <Label htmlFor="pin">PIN personale</Label>
