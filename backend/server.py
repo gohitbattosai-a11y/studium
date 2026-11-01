@@ -12,7 +12,7 @@ load_dotenv(Path(__file__).parent / ".env")
 
 from lib.db import client, ensure_indexes, ensure_roles  # noqa: E402
 from lib.gate import site_gate  # noqa: E402
-from routers import auth, badges, games, homework, hunt, materials, notices, obs, pets, polls, shop, status  # noqa: E402
+from routers import auth, badges, city, games, homework, hunt, materials, notices, obs, pets, polls, shop, status  # noqa: E402
 
 
 @asynccontextmanager
@@ -35,7 +35,7 @@ async def root():
 for _r in (auth.router, status.router):
     api_router.include_router(_r)
 
-for _r in (homework.router, polls.router, materials.router, notices.router, shop.router, games.router, pets.router, badges.router, hunt.router, obs.router):
+for _r in (homework.router, polls.router, materials.router, notices.router, shop.router, games.router, pets.router, badges.router, hunt.router, obs.router, city.router):
     api_router.include_router(_r, dependencies=[Depends(site_gate)])
 
 app.include_router(api_router)
