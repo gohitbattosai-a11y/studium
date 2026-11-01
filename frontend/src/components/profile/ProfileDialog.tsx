@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useChangeGroupPassword, useChangePin, useRenameMe } from "@/lib/memberActions";
 import type { Me } from "@/lib/types";
-import { BadgesBody } from "@/components/badges/badges";
+import { BadgesSection } from "@/components/badges/badges";
 
 const PIN = /^\d{4,6}$/;
 
@@ -158,9 +158,7 @@ export default function ProfileDialog({ me, className, testId, children }: { me:
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <Section title="Badge" hint="Si sbloccano studiando in Sala studio e usando la Capsula del tempo.">
-              <BadgesBody nickname={me.nickname} />
-            </Section>
+            <BadgesSection nickname={me.nickname} />
             <NameSection me={me} />
             <PinSection />
             {me.is_owner && <GroupPasswordSection />}
