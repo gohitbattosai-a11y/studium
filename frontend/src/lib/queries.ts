@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiGet } from "./api";
-import type { BadgesState, CapsulesState, Folder, Homework, GameSummary, LeaderboardEntry, Material, MemberOut, Notice, PetsState, PointEvent, PointsTable, Poll, ShopState, SiteStatus, StudyState } from "./types";
+import type { BadgesState, Folder, Homework, GameSummary, LeaderboardEntry, Material, MemberOut, Notice, PetsState, PointEvent, PointsTable, Poll, ShopState, SiteStatus } from "./types";
 
 const REFRESH = 30_000;
 
@@ -34,9 +34,5 @@ export const useStatus = () =>
   useQuery({ queryKey: ["status"], queryFn: () => apiGet<SiteStatus>("/status"), refetchInterval: 15_000, retry: false });
 export const usePets = (enabled: boolean) =>
   useQuery({ queryKey: ["pets"], queryFn: () => apiGet<PetsState>("/pets"), enabled, refetchInterval: REFRESH });
-export const useStudio = () =>
-  useQuery({ queryKey: ["studio"], queryFn: () => apiGet<StudyState>("/studio"), refetchInterval: 10_000 });
-export const useCapsules = () =>
-  useQuery({ queryKey: ["capsules"], queryFn: () => apiGet<CapsulesState>("/capsules"), refetchInterval: 60_000 });
 export const useBadges = () =>
   useQuery({ queryKey: ["badges"], queryFn: () => apiGet<BadgesState>("/badges") });
