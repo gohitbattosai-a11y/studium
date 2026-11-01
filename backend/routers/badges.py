@@ -8,11 +8,12 @@ from models.schemas import BadgeOut, BadgesState, ExclusiveEquip, ExclusiveOut
 
 router = APIRouter()
 
+FIELD = {"decoration": "equipped_decoration", "background": "equipped_background"}
+
 
 async def build_state(member: dict) -> BadgesState:
     earned = {d["badge_id"]: d["created_at"] async for d in db.member_badges.find({"member_id": member["id"]}, {"_id": 0})}
-    fresh = await db.members.find_one({"id": member["id"]}, {"_id": 0, "equipped_decoration": 1})
-    equipped = (fresh or {}).get("equipped_decoration")
+    fresh = await db.members.find_one({"id": member["id"]}, {"_id": 0, "equipped_decoration": 1, "equipped_background": 1}) or {}
     owned = await owned_ids(member["id"])
     badges = [
         BadgeOut(id=b["id"], name=b["name"], description=b["description"], owned=b["id"] in earned, earned_at=earned.get(b["id"]))
@@ -20,7 +21,7 @@ async def build_state(member: dict) -> BadgesState:
         if not b["secret"] or b["id"] in earned
     ]
     exclusives = [
-        ExclusiveOut(id=i["id"], name=i["name"], description=i["description"], equipped=equipped == i["id"])
+        ExclusiveOut(id=i["id"], kind=i["kind"], name=i["name"], description=i["description"], equipped=fresh.get(FIELD[i["kind"]]) == i["id"])
         for i in EXCLUSIVE_ITEMS
         if i["id"] in owned
     ]
@@ -35,7 +36,8 @@ async def get_badges(member: dict = Depends(current_member)):
 @router.post("/badges/exclusive/equip", response_model=BadgesState)
 async def equip_exclusive(body: ExclusiveEquip, member: dict = Depends(current_member)):
     if body.item_id is not None:
-        if body.item_id not in EXCLUSIVE_BY_ID or body.item_id not in await owned_ids(member["id"]):
+        item = EXCLUSIVE_BY_ID.get(body.item_id)
+        if not item or item["kind"] != body.kind or body.item_id not in await owned_ids(member["id"]):
             raise HTTPException(status_code=403, detail="Non possiedi questo oggetto")
-    await db.members.update_one({"id": member["id"]}, {"$set": {"equipped_decoration": body.item_id}})
+    await db.members.update_one({"id": member["id"]}, {"$set": {FIELD[body.kind]: body.item_id}})
     return await build_state(member)
