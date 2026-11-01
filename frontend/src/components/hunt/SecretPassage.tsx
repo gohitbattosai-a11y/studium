@@ -1,17 +1,24 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { KeyRound } from "lucide-react";
 import { apiGet } from "@/lib/api";
 import { useHuntActions } from "@/lib/extraActions";
 import { queryClient } from "@/lib/queryClient";
-import type { HuntState, Me } from "@/lib/types";
+import type { ExclusiveInfo, HuntState, Me } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/common";
+import { SvgArt } from "@/components/art/SvgArt";
+import { BackgroundPreview } from "@/components/theme/ThemeBackground";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { SCENES } from "./scenes";
+import "./hunt.css";
 
 const TAPS = 7;
 const WINDOW_MS = 4000;
-const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
+const PLAY_START = 900;
+const PLAY_STEP = 800;
+const PLAY_ON = 520;
 
 export function SecretLogo({ onOpen, children }: { onOpen: () => void; children: ReactNode }) {
   const taps = useRef<number[]>([]);
@@ -30,88 +37,206 @@ export function SecretLogo({ onOpen, children }: { onOpen: () => void; children:
   );
 }
 
+function Finale({ me, rewards }: { me: Me; rewards: ExclusiveInfo[] }) {
+  const { equip } = useHuntActions();
+  const deco = rewards.find((r) => r.kind === "decoration");
+  const bg = rewards.find((r) => r.kind === "background");
+  const toggle = (r: ExclusiveInfo) => {
+    equip.mutate(
+      { kind: r.kind, item_id: r.equipped ? null : r.id },
+      {
+        onSuccess: (badges) => {
+          queryClient.setQueryData<HuntState>(["hunt"], (s) =>
+            s ? { ...s, rewards: s.rewards.map((x) => ({ ...x, equipped: badges.exclusives.find((e) => e.id === x.id)?.equipped ?? false })) } : s,
+          );
+        },
+      },
+    );
+  };
+  return (
+    <div data-testid="secret-finale">
+      <div className="hx-finale relative aspect-video w-full overflow-hidden bg-black">
+        {bg && <SvgArt kind="backgrounds" id={bg.id} className="absolute inset-0 size-full" />}
+        <div className="hx-reveal absolute inset-0 grid place-items-center pb-6">
+          <div className="scale-[3] sm:scale-[4.4]">
+            <Avatar name={me.nickname} decoration={deco?.id ?? null} />
+          </div>
+        </div>
+        <div className="absolute inset-x-0 bottom-3 text-center">
+          <p className="hx-glow-text font-serif text-lg tracking-[0.35em] text-[#fde68a] uppercase sm:text-2xl">Custode del segreto</p>
+        </div>
+      </div>
+      <div className="space-y-2 bg-[#07050f] p-4">
+        {rewards.map((r) => (
+          <div key={r.id} className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/[0.03] p-2.5">
+            {r.kind === "background" ? (
+              <div className="relative h-10 w-16 shrink-0 overflow-hidden rounded-md">
+                <BackgroundPreview id={r.id} />
+              </div>
+            ) : (
+              <div className="grid size-10 shrink-0 place-items-center">
+                <Avatar name={me.nickname} decoration={r.id} />
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-[#E6EDF3]">{r.name}</p>
+              <p className="text-[11px] leading-snug text-[#8B949E]">{r.description}</p>
+            </div>
+            <Button size="sm" variant={r.equipped ? "outline" : "default"} disabled={equip.isPending} onClick={() => toggle(r)} data-testid={`secret-equip-${r.id}`}>
+              {r.equipped ? "Togli" : "Indossa"}
+            </Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function SecretPassage({ me, open, onOpenChange }: { me: Me; open: boolean; onOpenChange: (open: boolean) => void }) {
-  const { knock, answer, equip } = useHuntActions();
-  const [word, setWord] = useState("");
+  const { knock, solve } = useHuntActions();
   const state = useQuery({ queryKey: ["hunt"], queryFn: () => apiGet<HuntState>("/hunt"), enabled: false }).data;
+  const [taps, setTaps] = useState<string[]>([]);
+  const [digits, setDigits] = useState<number[]>([0, 0, 0, 0]);
+  const [lit, setLit] = useState<string | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [replay, setReplay] = useState(0);
+  const [shaking, setShaking] = useState(false);
+  const [flashing, setFlashing] = useState(false);
   const knockRef = useRef(knock.mutate);
   knockRef.current = knock.mutate;
+
+  const scene = state?.scene ?? null;
+  const seqKey = state?.sequence?.join(",") ?? "";
 
   useEffect(() => {
     if (open) knockRef.current();
   }, [open]);
 
-  const submit = (e: FormEvent) => {
-    e.preventDefault();
-    const value = word.trim();
-    if (!value) return;
-    answer.mutate(value, { onSuccess: () => setWord("") });
+  useEffect(() => {
+    setTaps([]);
+    setDigits([0, 0, 0, 0]);
+  }, [scene]);
+
+  useEffect(() => {
+    if (scene !== "eco" || !seqKey) return;
+    const seq = seqKey.split(",");
+    const timers: number[] = [];
+    setPlaying(true);
+    seq.forEach((id, i) => {
+      timers.push(window.setTimeout(() => setLit(id), PLAY_START + i * PLAY_STEP));
+      timers.push(window.setTimeout(() => setLit(null), PLAY_START + i * PLAY_STEP + PLAY_ON));
+    });
+    timers.push(window.setTimeout(() => setPlaying(false), PLAY_START + seq.length * PLAY_STEP));
+    return () => {
+      timers.forEach((t) => window.clearTimeout(t));
+      setLit(null);
+      setPlaying(false);
+    };
+  }, [scene, seqKey, replay]);
+
+  const buzz = () => {
+    setShaking(true);
+    window.setTimeout(() => setShaking(false), 500);
   };
 
-  const toggle = (reward: NonNullable<HuntState["reward"]>) => {
-    equip.mutate(reward.equipped ? null : reward.id, {
-      onSuccess: (badges) => {
-        const now = badges.exclusives.find((x) => x.id === reward.id)?.equipped ?? false;
-        queryClient.setQueryData<HuntState>(["hunt"], (s) => (s && s.reward ? { ...s, reward: { ...s.reward, equipped: now } } : s));
+  const submit = (list: string[]) => {
+    solve.mutate(list, {
+      onSuccess: () => {
+        setFlashing(true);
+        window.setTimeout(() => setFlashing(false), 800);
+      },
+      onError: () => {
+        buzz();
+        setTaps([]);
+        if (scene === "eco") window.setTimeout(() => setReplay((n) => n + 1), 600);
       },
     });
   };
 
+  const tap = (id: string) => {
+    if (!state || state.finished || solve.isPending || playing) return;
+    if (state.kind === "pick") {
+      setTaps([id]);
+      submit([id]);
+      return;
+    }
+    if (state.kind === "order") {
+      if (taps.includes(id)) return;
+      const next = [...taps, id];
+      setTaps(next);
+      if (next.length >= state.length) submit(next);
+      return;
+    }
+    if (state.kind === "sequence") {
+      setLit(id);
+      window.setTimeout(() => setLit(null), 260);
+      const next = [...taps, id];
+      setTaps(next);
+      if (next.length >= state.length) submit(next);
+    }
+  };
+
+  const bump = (index: number, delta: number) => {
+    setDigits((d) => d.map((v, i) => (i === index ? (v + delta + 10) % 10 : v)));
+  };
+
+  const Scene = scene ? SCENES[scene] : null;
+  const hint = state?.solved[state.solved.length - 1]?.reveal;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[88dvh] overflow-y-auto border border-[#BC8CFF]/25 bg-[#0B0E14] sm:max-w-md" data-testid="secret-dialog">
-        <DialogHeader>
-          <DialogTitle className="font-mono text-base tracking-[0.5em] text-[#D2A8FF]">· · ·</DialogTitle>
-          <DialogDescription className="sr-only">Passaggio segreto</DialogDescription>
-        </DialogHeader>
+      <DialogContent className="gap-0 overflow-hidden border border-[#BC8CFF]/25 bg-black p-0 sm:max-w-3xl" data-testid="secret-dialog">
+        <DialogTitle className="sr-only">Il passaggio</DialogTitle>
+        <DialogDescription className="sr-only">Passaggio segreto</DialogDescription>
 
-        {!state ? (
-          <p className="animate-pulse py-6 text-center font-mono text-sm text-[#6E7681]">…</p>
-        ) : (
-          <div className="space-y-4">
-            <ol className="space-y-3" data-testid="secret-log">
-              {state.solved.map((line, i) => {
-                const last = i === state.solved.length - 1 && !state.finished;
-                return (
-                  <li key={line.title} className="flex gap-3">
-                    <span className="w-6 shrink-0 pt-0.5 text-right font-mono text-xs text-[#6E7681]">{ROMAN[i] ?? i + 1}</span>
-                    <div className="min-w-0">
-                      <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#6E7681]">{line.title}</p>
-                      <p className={last ? "mt-0.5 text-sm leading-relaxed text-[#E6EDF3] italic" : "mt-0.5 text-sm leading-relaxed text-[#6E7681] italic"}>{line.reveal}</p>
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
+        {!state && <p className="animate-pulse py-24 text-center font-mono text-sm tracking-[0.5em] text-[#6E7681]">· · ·</p>}
 
-            {state.needs_code && (
-              <form onSubmit={submit} className="flex gap-2" data-testid="secret-form">
-                <Input value={word} onChange={(e) => setWord(e.target.value)} maxLength={60} autoComplete="off" autoCapitalize="none" spellCheck={false} placeholder="Sussurra…" className="font-mono" data-testid="secret-input" />
-                <Button type="submit" disabled={answer.isPending || !word.trim()} data-testid="secret-submit">
-                  Invia
-                </Button>
-              </form>
-            )}
+        {state?.finished && <Finale me={me} rewards={state.rewards} />}
 
-            {!state.needs_code && !state.finished && <p className="text-center text-xs text-[#6E7681]">Ora servono i fatti, non le parole.</p>}
-
-            {state.finished && state.reward && (
-              <div className="rounded-xl bg-gradient-to-br from-[#FDE68A]/60 via-[#C084FC]/50 to-[#7C3AED]/60 p-px" data-testid="secret-reward">
-                <div className="flex items-center gap-4 rounded-[11px] bg-[#0B0E14] p-4">
-                  <div className="grid size-16 shrink-0 place-items-center">
-                    <Avatar name={me.nickname} decoration={state.reward.id} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium">{state.reward.name}</p>
-                    <p className="text-xs leading-snug text-[#8B949E]">{state.reward.description}</p>
-                    <Button size="sm" className="mt-2" variant={state.reward.equipped ? "outline" : "default"} disabled={equip.isPending} onClick={() => state.reward && toggle(state.reward)} data-testid="secret-equip">
-                      {state.reward.equipped ? "Togli" : "Indossa"}
-                    </Button>
-                  </div>
+        {state && !state.finished && Scene && (
+          <>
+            <div className="relative bg-black">
+              <div key={scene} className="hx-enter">
+                <div className={cn(shaking && "hx-shake")} data-testid={`hunt-scene-${scene}`}>
+                  <Scene taps={taps} onTap={tap} lit={lit} digits={digits} onDigit={bump} />
                 </div>
               </div>
-            )}
-          </div>
+              {flashing && <div className="hx-flash pointer-events-none absolute inset-0" />}
+            </div>
+            <div className="space-y-3 border-t border-white/10 bg-[#07050f] p-4">
+              <div className="flex items-center gap-1.5" aria-hidden>
+                {state.solved.map((s) => (
+                  <span key={s.title} className="size-2 rotate-45 bg-gradient-to-br from-[#fde68a] to-[#c084fc]" />
+                ))}
+                <span className="size-2 rotate-45 border border-[#6E7681]" />
+              </div>
+              {hint && (
+                <p className="text-sm leading-relaxed text-[#E6EDF3] italic" data-testid="secret-hint">
+                  {hint}
+                </p>
+              )}
+              {state.kind === "code" && (
+                <Button onClick={() => submit(digits.map(String))} disabled={solve.isPending} data-testid="secret-key">
+                  <KeyRound className="size-4" /> Gira la chiave
+                </Button>
+              )}
+              {state.kind === "sequence" && (
+                <Button variant="outline" onClick={() => setReplay((n) => n + 1)} disabled={playing || solve.isPending} data-testid="secret-replay">
+                  Rivedi la sequenza
+                </Button>
+              )}
+              {state.solved.length > 1 && (
+                <details className="text-xs text-[#6E7681]">
+                  <summary className="cursor-pointer select-none">Indizi raccolti</summary>
+                  <ol className="mt-2 space-y-1.5 italic">
+                    {state.solved.map((s) => (
+                      <li key={s.title}>{s.reveal}</li>
+                    ))}
+                  </ol>
+                </details>
+              )}
+            </div>
+          </>
         )}
       </DialogContent>
     </Dialog>
