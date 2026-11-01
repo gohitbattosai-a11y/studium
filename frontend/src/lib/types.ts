@@ -389,3 +389,40 @@ export interface HuntState {
   finished: boolean;
   rewards: ExclusiveInfo[];
 }
+
+export interface ObsPuzzle {
+  id: string;
+  title: string;
+  solved: boolean;
+  params: Record<string, unknown> | null;
+}
+
+export interface ObsRoom {
+  id: string;
+  title: string;
+  done: boolean;
+  puzzles: ObsPuzzle[];
+}
+
+export interface ObsFragment {
+  puzzle: string;
+  letter: string;
+}
+
+export interface ObsPetInfo {
+  id: string;
+  name: string;
+  rarity: Rarity;
+  active: boolean;
+}
+
+export interface ObsState {
+  started: boolean;
+  finished: boolean;
+  total_rooms: number;
+  rooms: ObsRoom[];
+  fragments: ObsFragment[];
+  reveals: string[];
+  rewards: ExclusiveInfo[];
+  pet: ObsPetInfo | null;
+}
