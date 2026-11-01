@@ -1,6 +1,7 @@
 import random
 
 from lib.custom_catalog import load_pets
+from lib.exclusive import OBS_PET
 
 RARITIES = ["comune", "non_comune", "raro", "epico", "leggendario", "mitico"]
 
@@ -24,6 +25,7 @@ PETS.extend(load_pets({p["id"] for p in PETS}))
 PETS.sort(key=lambda p: RARITIES.index(p["rarity"]))
 
 PETS_BY_ID: dict[str, dict] = {p["id"]: p for p in PETS}
+PETS_BY_ID[OBS_PET["id"]] = OBS_PET
 
 BOXES: list[dict] = [
     {
