@@ -42,6 +42,11 @@ export const SOUND_OPTIONS = [
 ];
 
 const MATH_OPTIONS = ["abs", "sqrt", "floor", "ceiling", "sin", "cos", "tan", "ln", "log"].map((v) => ({ value: v, label: v }));
+const ROT_OPTIONS = [
+  { value: "all", label: "libera" },
+  { value: "lr", label: "destra / sinistra" },
+  { value: "none", label: "nessuna" },
+];
 const STOP_OPTIONS = [
   { value: "all", label: "tutto" },
   { value: "this", label: "questo script" },
@@ -76,6 +81,7 @@ export const SPECS: OpSpec[] = [
   def("mot_changey", "motion", "stack", ["cambia y di", a("n")], { n: N(10) }),
   def("mot_sety", "motion", "stack", ["porta y a", a("n")], { n: N(0) }),
   def("mot_bounce", "motion", "stack", ["rimbalza se tocchi il bordo"]),
+  def("mot_rotstyle", "motion", "stack", ["imposta rotazione", a("m")], { m: M("static", "all", ROT_OPTIONS) }),
   def("mot_x", "motion", "reporter", ["posizione x"]),
   def("mot_y", "motion", "reporter", ["posizione y"]),
   def("mot_dir", "motion", "reporter", ["direzione"]),
@@ -88,6 +94,8 @@ export const SPECS: OpSpec[] = [
   def("look_next_costume", "looks", "stack", ["costume successivo"]),
   def("look_backdrop", "looks", "stack", ["cambia sfondo in", a("b")], { b: M("backdrop", "1") }),
   def("look_next_backdrop", "looks", "stack", ["sfondo successivo"]),
+  def("look_bd_turn", "looks", "stack", ["ruota lo sfondo di", a("n"), "gradi"], { n: N(15) }),
+  def("look_bd_set", "looks", "stack", ["porta rotazione sfondo a", a("n"), "gradi"], { n: N(0) }),
   def("look_size_set", "looks", "stack", ["porta dimensione a", a("n"), "%"], { n: N(100) }),
   def("look_size_change", "looks", "stack", ["cambia dimensione di", a("n")], { n: N(10) }),
   def("look_opacity", "looks", "stack", ["porta visibilità a", a("n"), "%"], { n: N(100) }),
@@ -259,7 +267,7 @@ export const menuOptions = (kind: MenuKind, ctx: MenuCtx, spec: ArgSpec): { valu
     case "cloneTarget":
       return [{ value: "_myself_", label: "me stesso" }, ...others];
     case "costume":
-      return (sprite?.costumes ?? []).map((c, i) => ({ value: String(i + 1), label: `${i + 1} ${c}` }));
+      return (sprite?.costumes ?? []).map((c, i) => ({ value: String(i + 1), label: `${i + 1} ${c.startsWith("data:image/") ? "🖼️" : c}` }));
     case "backdrop":
       return project.backdrops.map((b, i) => ({ value: String(i + 1), label: `${i + 1} ${b.name}` }));
     default:
