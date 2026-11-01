@@ -50,6 +50,7 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
   const [visited, setVisited] = useState<Tab[]>(["home"]);
   const [secretOpen, setSecretOpen] = useState(false);
   const [obsOpen, setObsOpen] = useState(false);
+  const [cityScreen, setCityScreen] = useState(false);
   const trail = useRef<{ id: Tab; at: number }[]>([]);
   const members = useMembers();
   const shop = useShop();
@@ -70,6 +71,10 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
   const logout = () => void endSession("/");
 
   const go = (t: Tab) => {
+    if (t === "citta") {
+      setCityScreen(true);
+      return;
+    }
     setTab(t);
     setVisited((v) => (v.includes(t) ? v : [...v, t]));
     window.scrollTo({ top: 0 });
@@ -206,16 +211,6 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
               </Suspense>,
             )}
           </div>
-          {cityOpen && (
-            <div className={panel("citta")} data-testid="panel-citta">
-              {mounted(
-                "citta",
-                <Suspense fallback={<SkeletonList />}>
-                  <CityPanel me={me} />
-                </Suspense>,
-              )}
-            </div>
-          )}
           <div className={panel("shop")} data-testid="panel-shop">
             {mounted(
               "shop",
@@ -229,6 +224,11 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
 
       <MobileNav items={nav} tab={tab} onGo={go} />
       <SecretPassage me={me} open={secretOpen} onOpenChange={setSecretOpen} />
+      {cityOpen && cityScreen && (
+        <Suspense fallback={null}>
+          <CityPanel me={me} onClose={() => setCityScreen(false)} />
+        </Suspense>
+      )}
       {obsOpen && (
         <Suspense fallback={null}>
           <Observatory me={me} open={obsOpen} onClose={() => setObsOpen(false)} />
