@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState, type ReactNode } from "react";
-import { BarChart3, BookOpen, FolderOpen, Gamepad2, Hourglass, LayoutGrid, LogOut, Megaphone, ShoppingBag, Timer, User, Users } from "lucide-react";
+import { BarChart3, BookOpen, FolderOpen, Gamepad2, LayoutGrid, LogOut, Megaphone, ShoppingBag, User, Users } from "lucide-react";
 import type { Me, SiteStatus } from "@/lib/types";
 import { endSession } from "@/lib/session";
 import { useMembers, usePets, useShop } from "@/lib/queries";
@@ -24,14 +24,12 @@ import HomeworkPanel from "@/components/agenda/HomeworkPanel";
 import PollsPanel from "@/components/polls/PollsPanel";
 import MaterialsPanel from "@/components/materials/MaterialsPanel";
 import NoticesPanel from "@/components/notices/NoticesPanel";
-import StudioPanel from "@/components/studio/StudioPanel";
-import CapsulePanel from "@/components/capsule/CapsulePanel";
 import SecretPassage, { SecretLogo } from "@/components/hunt/SecretPassage";
 
 const ShopPanel = lazy(() => import("@/components/shop/ShopPanel"));
 const GamesPanel = lazy(() => import("@/components/games/GamesPanel"));
 
-export type Tab = "home" | "compiti" | "sondaggi" | "materiali" | "bacheca" | "shop" | "giochi" | "studio" | "capsula";
+export type Tab = "home" | "compiti" | "sondaggi" | "materiali" | "bacheca" | "shop" | "giochi";
 
 const NAV: { id: Tab; label: string; icon: typeof BookOpen }[] = [
   { id: "home", label: "Home", icon: LayoutGrid },
@@ -40,8 +38,6 @@ const NAV: { id: Tab; label: string; icon: typeof BookOpen }[] = [
   { id: "materiali", label: "Materiali", icon: FolderOpen },
   { id: "bacheca", label: "Bacheca", icon: Megaphone },
   { id: "giochi", label: "Giochi", icon: Gamepad2 },
-  { id: "studio", label: "Sala studio", icon: Timer },
-  { id: "capsula", label: "Capsula", icon: Hourglass },
   { id: "shop", label: "Shop", icon: ShoppingBag },
 ];
 
@@ -195,12 +191,6 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
                 <GamesPanel me={me} />
               </Suspense>,
             )}
-          </div>
-          <div className={panel("studio")} data-testid="panel-studio">
-            {mounted("studio", <StudioPanel me={me} active={tab === "studio"} />)}
-          </div>
-          <div className={panel("capsula")} data-testid="panel-capsula">
-            {mounted("capsula", <CapsulePanel />)}
           </div>
           <div className={panel("shop")} data-testid="panel-shop">
             {mounted(
