@@ -8,7 +8,13 @@ EXCLUSIVE_ITEMS: list[dict] = [
         "id": "sigillo-segreto",
         "kind": "decoration",
         "name": "Sigillo del Custode",
-        "description": "Un sigillo dorato che orbita attorno all'avatar. Non si compra: si merita.",
+        "description": "Ali di luce, corona e alloro attorno all'avatar. Non si compra: si merita.",
+    },
+    {
+        "id": "santuario-del-custode",
+        "kind": "background",
+        "name": "Santuario del Custode",
+        "description": "Un sole sospeso tra colonne e raggi d'oro. Sfondo esclusivo.",
     },
 ]
 
