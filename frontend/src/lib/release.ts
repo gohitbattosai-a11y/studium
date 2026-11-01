@@ -2,6 +2,7 @@ import type { Role, SiteStatus } from "./types";
 
 export const FEATURE_LABELS: Record<string, string> = {
   pets: "Pet e Box",
+  citta: "Città",
 };
 
 export const featureStage = (status: SiteStatus | undefined, feature: string) => status?.features[feature] ?? "all";
