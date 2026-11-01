@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from lib.badges import BADGES
 from lib.db import db
-from lib.exclusive import EXCLUSIVE_BY_ID, EXCLUSIVE_ITEMS, owned_ids
+from lib.exclusive import ALL_EXCLUSIVE, EXCLUSIVE_BY_ID, owned_ids
 from lib.security import current_member
 from models.schemas import BadgeOut, BadgesState, ExclusiveEquip, ExclusiveOut
 
@@ -22,7 +22,7 @@ async def build_state(member: dict) -> BadgesState:
     ]
     exclusives = [
         ExclusiveOut(id=i["id"], kind=i["kind"], name=i["name"], description=i["description"], equipped=fresh.get(FIELD[i["kind"]]) == i["id"])
-        for i in EXCLUSIVE_ITEMS
+        for i in ALL_EXCLUSIVE
         if i["id"] in owned
     ]
     return BadgesState(badges=badges, exclusives=exclusives)
