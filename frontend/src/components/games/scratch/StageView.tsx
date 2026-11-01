@@ -2,10 +2,18 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { STAGE_H, STAGE_W } from "@/lib/scratch/engine";
 import type { Backdrop, SpriteView, View } from "@/lib/scratch/types";
 import { cn } from "@/lib/utils";
+import { isImage } from "./costume";
 
 const DECO_SPOTS: [number, number, number][] = [
   [6, 10, 26], [24, 62, 20], [41, 22, 30], [58, 74, 24], [72, 14, 22], [88, 52, 28], [14, 84, 22], [50, 48, 18], [80, 86, 24], [92, 20, 20],
 ];
+
+const coverScale = (deg: number) => {
+  const r = (deg * Math.PI) / 180;
+  const c = Math.abs(Math.cos(r));
+  const sn = Math.abs(Math.sin(r));
+  return Math.max(c + (STAGE_H / STAGE_W) * sn, (STAGE_W / STAGE_H) * sn + c);
+};
 
 export const toStage = (clientX: number, clientY: number, rect: DOMRect) => {
   const k = rect.width / STAGE_W;
@@ -30,9 +38,13 @@ function SpriteEl({ s, onPointerDown, selected }: { s: SpriteView; onPointerDown
       }}
       onPointerDown={onPointerDown}
     >
-      <div className="grid size-full place-items-center leading-none" style={{ fontSize: box * 0.82, transform: `rotate(${angle}deg) scaleX(${flip})` }}>
-        {s.emoji}
-      </div>
+      {isImage(s.emoji) ? (
+        <img src={s.emoji} alt="" draggable={false} className="pointer-events-none size-full select-none object-contain" style={{ transform: `rotate(${angle}deg) scaleX(${flip})` }} />
+      ) : (
+        <div className="grid size-full place-items-center leading-none" style={{ fontSize: box * 0.82, transform: `rotate(${angle}deg) scaleX(${flip})` }}>
+          {s.emoji}
+        </div>
+      )}
       {s.say && (
         <div className="pointer-events-none absolute bottom-full left-1/2 mb-1 w-max max-w-[180px] -translate-x-1/2 rounded-xl border border-black/20 bg-white px-2 py-1 text-center text-[13px] font-medium leading-tight text-black shadow">
           {s.say}
@@ -76,6 +88,7 @@ export default function StageView({
   }, []);
 
   const bd = backdrops[Math.min(view.backdrop, backdrops.length - 1)] ?? backdrops[0];
+  const bdRot = (((bd?.rot ?? 0) + (view.backdropTurn ?? 0)) % 360 + 360) % 360;
 
   const rect = () => outer.current!.getBoundingClientRect();
 
@@ -115,13 +128,18 @@ export default function StageView({
         drag.current = null;
       }}
     >
-      <div className="absolute left-0 top-0 origin-top-left" style={{ width: STAGE_W, height: STAGE_H, transform: `scale(${scale})`, background: bd ? `linear-gradient(160deg, ${bd.from}, ${bd.to})` : "#0D1117" }}>
-        {bd?.deco &&
-          DECO_SPOTS.map(([l, t, size], i) => (
-            <span key={i} className="pointer-events-none absolute select-none opacity-30" style={{ left: `${l}%`, top: `${t}%`, fontSize: size }}>
-              {bd.deco}
-            </span>
-          ))}
+      <div className="absolute left-0 top-0 origin-top-left" style={{ width: STAGE_W, height: STAGE_H, transform: `scale(${scale})`, background: bd ? bd.to : "#0D1117" }}>
+        {bd && (
+          <div className="pointer-events-none absolute left-0 top-0 overflow-hidden" style={{ width: STAGE_W, height: STAGE_H, background: `linear-gradient(160deg, ${bd.from}, ${bd.to})`, transform: `rotate(${bdRot}deg) scale(${coverScale(bdRot)})`, transformOrigin: "50% 50%" }}>
+            {bd.image && <img src={bd.image} alt="" draggable={false} className="absolute inset-0 size-full select-none object-fill" />}
+            {bd.deco &&
+              DECO_SPOTS.map(([l, tp, size], i) => (
+                <span key={i} className="absolute select-none opacity-30" style={{ left: `${l}%`, top: `${tp}%`, fontSize: size }}>
+                  {bd.deco}
+                </span>
+              ))}
+          </div>
+        )}
         {view.sprites.map((s) => (
           <SpriteEl key={s.key} s={s} onPointerDown={onSpriteDrag ? startDrag(s) : undefined} selected={selectedId === s.defId && !s.clone} />
         ))}
