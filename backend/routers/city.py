@@ -23,6 +23,7 @@ class SpeciesOut(BaseModel):
     pattern: str
     min_cm: float
     max_cm: float
+    difficulty: int
     name: Optional[str] = None
     description: Optional[str] = None
 
@@ -134,6 +135,7 @@ async def build_state(member: dict) -> CityState:
             pattern=s["pattern"],
             min_cm=s["min"],
             max_cm=s["max"],
+            difficulty=s["difficulty"],
             name=s["name"] if s["id"] in known else None,
             description=s["description"] if s["id"] in known else None,
         )
