@@ -220,7 +220,7 @@ async def kick_member(member_id: str, member: dict = Depends(current_member)):
     if target.get("role") == "admin":
         raise HTTPException(status_code=409, detail="Non puoi espellere un admin: togli prima il ruolo")
     await db.sessions.delete_many({"member_id": member_id})
-    for name in ("purchases", "member_pets", "point_events", "poll_votes", "game_plays", "game_claims", "homework_done", "study_sessions", "capsules", "member_badges", "member_rewards", "hunt"):
+    for name in ("purchases", "member_pets", "point_events", "poll_votes", "game_plays", "game_claims", "homework_done", "member_badges", "member_rewards", "hunt"):
         await db[name].delete_many({"member_id": member_id})
     await db.members.delete_one({"id": member_id})
     return {"ok": True}
