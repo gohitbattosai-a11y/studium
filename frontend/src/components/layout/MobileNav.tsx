@@ -35,7 +35,10 @@ export default function MobileNav({ items, tab, onGo }: { items: NavItem[]; tab:
               <button
                 key={n.id}
                 type="button"
-                onClick={() => onGo(n.id)}
+                onClick={() => {
+                  setMore(false);
+                  onGo(n.id);
+                }}
                 data-testid={`nav-tab-${n.id}`}
                 className={cn("flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm active:scale-[0.98]", tab === n.id ? "bg-[#388BFD]/15 text-[#F0F6FC]" : "text-[#C9D1D9]")}
               >
@@ -49,7 +52,10 @@ export default function MobileNav({ items, tab, onGo }: { items: NavItem[]; tab:
           {primary.map((n) => {
             const active = tab === n.id;
             return (
-              <button key={n.id} type="button" onClick={() => onGo(n.id)} data-testid={`nav-tab-${n.id}`} aria-current={active ? "page" : undefined} className="flex flex-col items-center justify-center gap-1 transition-transform duration-100 active:scale-95">
+              <button key={n.id} type="button" onClick={() => {
+                  setMore(false);
+                  onGo(n.id);
+                }} data-testid={`nav-tab-${n.id}`} aria-current={active ? "page" : undefined} className="flex flex-col items-center justify-center gap-1 transition-transform duration-100 active:scale-95">
                 <span className={pill(active)}>
                   <n.icon className="size-5" />
                 </span>
