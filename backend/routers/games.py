@@ -3,6 +3,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pymongo.errors import DuplicateKeyError
 
+from lib import push
 from lib.catalog import author_reward, game_points, next_tier
 from lib.scratch import ScratchError, clean_scratch, count_blocks
 from lib.db import db
@@ -234,6 +235,8 @@ async def submit_game(game_id: str, member: dict = Depends(current_member)):
         fields["published_at"] = now_iso()
     await db.games.update_one({"id": game_id}, {"$set": fields})
     game.update(fields)
+    if status == "published":
+        push.notify_group(game["group_id"], "Nuovo gioco disponibile", game["title"], exclude_member_id=member["id"], tag="game")
     plays, claims = await my_progress(member)
     return GameSummary(**summary_fields(game, member, plays, claims))
 
@@ -283,6 +286,10 @@ async def review_game(game_id: str, body: ReviewRequest, member: dict = Depends(
         reward = await grant_author_reward(game, member)
         if reward is not None:
             game["author_points"] = reward
+        push.notify_group(game["group_id"], "Nuovo gioco disponibile", game["title"], exclude_member_id=game["author_id"], tag="game")
+        push.notify_member(game["author_id"], "Il tuo gioco è stato approvato", game["title"], tag="game-review")
+    else:
+        push.notify_member(game["author_id"], "Il tuo gioco non è stato approvato", f"{game['title']} — {fields['review_note']}", tag="game-review")
     plays, claims = await my_progress(member)
     return GameSummary(**summary_fields(game, member, plays, claims))
 
