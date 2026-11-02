@@ -84,10 +84,15 @@ class Homework(BaseModel):
     created_at: str
 
 
+Day = Annotated[str, StringConstraints(pattern=r"^\d{4}-\d{2}-\d{2}$")]
+
+
 class PollCreate(BaseModel):
     question: Text(3, 200)
     options: List[Text(1, 100)] = Field(min_length=2, max_length=8)
     anonymous: bool
+    priority: Priority = "media"
+    expires_at: Optional[Day] = None
 
 
 class PollOption(BaseModel):
@@ -106,6 +111,9 @@ class Poll(BaseModel):
     options: List[PollOption]
     total_votes: int
     my_vote: Optional[str] = None
+    priority: Priority = "media"
+    expires_at: Optional[str] = None
+    expired: bool = False
 
 
 class VoteRequest(BaseModel):
@@ -150,6 +158,7 @@ class NoticeCreate(BaseModel):
     title: Text(2, 120)
     body: Text(1, 2000)
     tag: NoticeTag
+    expires_at: Optional[Day] = None
 
 
 class Notice(BaseModel):
@@ -159,6 +168,27 @@ class Notice(BaseModel):
     tag: NoticeTag
     author: str
     created_at: str
+    expires_at: Optional[str] = None
+    expired: bool = False
+
+
+class PushKeys(BaseModel):
+    p256dh: Text(1, 300)
+    auth: Text(1, 100)
+
+
+class PushSubscription(BaseModel):
+    endpoint: Text(10, 1000)
+    keys: PushKeys
+
+
+class PushEndpoint(BaseModel):
+    endpoint: Text(10, 1000)
+
+
+class PushState(BaseModel):
+    enabled: bool
+    public_key: Optional[str] = None
 
 
 class ShopItem(BaseModel):
