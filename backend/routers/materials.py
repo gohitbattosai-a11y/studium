@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import Response
 from pymongo.errors import DuplicateKeyError
 
+from lib import push
 from lib.db import db
 from lib.security import current_member, new_id, now_iso
 from models.schemas import Folder, FolderCreate, Material, MaterialCreate
@@ -83,6 +84,13 @@ async def create_material(body: MaterialCreate, member: dict = Depends(current_m
         "created_at": now_iso(),
     }
     await db.materials.insert_one(dict(doc))
+    push.notify_group(
+        member["group_id"],
+        "Nuovo materiale",
+        f"{member['nickname']} ha aggiunto «{doc['title']}»",
+        exclude_member_id=member["id"],
+        tag="material",
+    )
     return Material(**doc)
 
 
@@ -122,6 +130,13 @@ async def upload_material(
         "created_at": now_iso(),
     }
     await db.materials.insert_one(dict(doc))
+    push.notify_group(
+        member["group_id"],
+        "Nuovo materiale",
+        f"{member['nickname']} ha aggiunto «{doc['title']}»",
+        exclude_member_id=member["id"],
+        tag="material",
+    )
     return Material(**doc)
 
 
