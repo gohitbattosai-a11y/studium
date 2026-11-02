@@ -5,14 +5,14 @@ import { toast } from "sonner";
 import { apiDelete, apiPost } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
 import { usePolls } from "@/lib/queries";
-import { errMsg, relTime } from "@/lib/format";
-import type { Me, Poll, PollCreate } from "@/lib/types";
+import { errMsg, formatDay, relTime } from "@/lib/format";
+import type { Me, Poll, PollCreate, Priority } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Avatar, EmptyState, LoadError, SectionHeader, Segmented, SkeletonList } from "@/components/common";
+import { Avatar, EmptyState, LoadError, PRIORITY_STYLE, SectionHeader, Segmented, SkeletonList } from "@/components/common";
 
 function PollCard({ poll, isAdmin }: { poll: Poll; isAdmin: boolean }) {
   const [selected, setSelected] = useState<string | null>(null);
@@ -36,7 +36,7 @@ function PollCard({ poll, isAdmin }: { poll: Poll; isAdmin: boolean }) {
   });
 
   return (
-    <article className="rounded-xl border border-[#30363D] bg-[#161B22] p-5" data-testid={`poll-card-${poll.id}`}>
+    <article className={cn("rounded-xl border border-[#30363D] bg-[#161B22] p-5", poll.expired && "opacity-60")} data-testid={`poll-card-${poll.id}`}>
       <div className="flex flex-wrap items-center gap-2 text-xs">
         {poll.anonymous ? (
           <span className="flex items-center gap-1 rounded border border-[#BC8CFF]/25 bg-[#BC8CFF]/12 px-1.5 py-0.5 text-[#D2A8FF]" data-testid={`poll-mode-${poll.id}`}>
@@ -48,6 +48,14 @@ function PollCard({ poll, isAdmin }: { poll: Poll; isAdmin: boolean }) {
           </span>
         )}
         <span className="text-[#8B949E]">di <b className="font-medium text-[#C9D1D9]">{poll.author}</b> · {relTime(poll.created_at)}</span>
+        <span className={cn("rounded border px-1.5 py-0.5", PRIORITY_STYLE[poll.priority].cls)} data-testid={`poll-priority-${poll.id}`}>
+          Priorità {PRIORITY_STYLE[poll.priority].label.toLowerCase()}
+        </span>
+        {poll.expired ? (
+          <span className="rounded border border-[#FF7B72]/25 bg-[#3D1316] px-1.5 py-0.5 text-[#FFA198]" data-testid={`poll-expired-${poll.id}`}>Scaduto</span>
+        ) : poll.expires_at ? (
+          <span className="text-[#8B949E]" data-testid={`poll-expires-${poll.id}`}>scade {formatDay(poll.expires_at)}</span>
+        ) : null}
         {isAdmin && (
           <Button
             type="button"
@@ -76,7 +84,7 @@ function PollCard({ poll, isAdmin }: { poll: Poll; isAdmin: boolean }) {
                 type="button"
                 role="radio"
                 aria-checked={isSel}
-                disabled={vote.isPending}
+                disabled={vote.isPending || poll.expired}
                 onClick={() => setSelected(o.id)}
                 data-testid={`poll-option-${o.id}`}
                 className={cn(
@@ -115,13 +123,13 @@ function PollCard({ poll, isAdmin }: { poll: Poll; isAdmin: boolean }) {
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <span className="text-xs text-[#8B949E]" data-testid={`poll-total-${poll.id}`}>{poll.total_votes} {poll.total_votes === 1 ? "voto" : "voti"} totali</span>
-        {selected && selected !== poll.my_vote ? (
+        {!poll.expired && selected && selected !== poll.my_vote ? (
           <Button size="sm" disabled={vote.isPending} onClick={() => vote.mutate(selected)} data-testid={`poll-vote-button-${poll.id}`}>
             {vote.isPending ? "Invio…" : voted ? "Cambia voto" : "Conferma voto"}
           </Button>
         ) : voted ? (
           <span className="flex items-center gap-1.5 text-xs text-[#8B949E]" data-testid={`poll-locked-${poll.id}`}>
-            <Check className="size-3.5" /> Hai votato · puoi cambiare voto
+            <Check className="size-3.5" /> {poll.expired ? "Hai votato · votazione chiusa" : "Hai votato · puoi cambiare voto"}
           </span>
         ) : null}
       </div>
@@ -135,6 +143,8 @@ export default function PollsPanel({ me }: { me: Me }) {
   const [question, setQuestion] = useState("");
   const [options, setOptions] = useState<string[]>(["", ""]);
   const [visibility, setVisibility] = useState<"palese" | "anonimo">("palese");
+  const [priority, setPriority] = useState<Priority>("media");
+  const [expiresAt, setExpiresAt] = useState("");
 
   const create = useMutation({
     mutationFn: (body: PollCreate) => apiPost<Poll>("/polls", body),
@@ -144,6 +154,8 @@ export default function PollsPanel({ me }: { me: Me }) {
       setQuestion("");
       setOptions(["", ""]);
       setVisibility("palese");
+      setPriority("media");
+      setExpiresAt("");
       setOpen(false);
     },
     onError: (e) => toast.error(errMsg(e)),
@@ -156,7 +168,7 @@ export default function PollsPanel({ me }: { me: Me }) {
       toast.error("Servono almeno due opzioni");
       return;
     }
-    create.mutate({ question: question.trim(), options: clean, anonymous: visibility === "anonimo" });
+    create.mutate({ question: question.trim(), options: clean, anonymous: visibility === "anonimo", priority, expires_at: expiresAt || null });
   };
 
   const list = polls.data ?? [];
@@ -239,6 +251,24 @@ export default function PollsPanel({ me }: { me: Me }) {
                   ]}
                 />
                 <p className="text-xs text-[#8B949E]">{visibility === "palese" ? "Tutti vedranno chi ha scelto cosa." : "Si vedranno solo i totali, mai i nomi."}</p>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Priorità</Label>
+                <Segmented
+                  value={priority}
+                  onChange={setPriority}
+                  testId="poll-priority"
+                  className="w-full"
+                  options={[
+                    { value: "bassa", label: "Bassa", activeClass: PRIORITY_STYLE.bassa.cls },
+                    { value: "media", label: "Media", activeClass: PRIORITY_STYLE.media.cls },
+                    { value: "alta", label: "Alta", activeClass: PRIORITY_STYLE.alta.cls },
+                  ]}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="poll-expires">Scadenza (facoltativa)</Label>
+                <Input id="poll-expires" type="date" min={me.today} value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} data-testid="poll-expires-input" />
               </div>
             </div>
             <DialogFooter>
