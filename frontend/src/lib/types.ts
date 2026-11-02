@@ -63,6 +63,8 @@ export interface PollCreate {
   question: string;
   options: string[];
   anonymous: boolean;
+  priority: Priority;
+  expires_at: string | null;
 }
 
 export interface PollOption {
@@ -81,6 +83,9 @@ export interface Poll {
   options: PollOption[];
   total_votes: number;
   my_vote: string | null;
+  priority: Priority;
+  expires_at: string | null;
+  expired: boolean;
 }
 
 export interface VoteRequest {
@@ -125,6 +130,7 @@ export interface NoticeCreate {
   title: string;
   body: string;
   tag: NoticeTag;
+  expires_at: string | null;
 }
 
 export interface Notice {
@@ -134,6 +140,13 @@ export interface Notice {
   tag: NoticeTag;
   author: string;
   created_at: string;
+  expires_at: string | null;
+  expired: boolean;
+}
+
+export interface PushState {
+  enabled: boolean;
+  public_key: string | null;
 }
 
 export interface ShopItem {
