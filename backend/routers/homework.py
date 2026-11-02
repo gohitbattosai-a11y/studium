@@ -2,12 +2,16 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from lib import push
+from lib.dates import today_iso
 from lib.db import db
-from lib.security import current_member, new_id, now_iso
+from lib.security import TZ, current_member, new_id, now_iso
 from models.schemas import Homework, HomeworkCreate
 from routers.shop import require_admin
 
 router = APIRouter()
+
+RANK = {"alta": 0, "media": 1, "bassa": 2}
 
 
 def personal(doc: dict, member: dict, mark: Optional[dict]) -> Homework:
@@ -26,7 +30,8 @@ async def list_homework(member: dict = Depends(current_member)):
     docs = await db.homework.find({"group_id": member["group_id"]}, {"_id": 0}).to_list(2000)
     marks = {d["homework_id"]: d async for d in db.homework_done.find({"member_id": member["id"]}, {"_id": 0})}
     out = [personal(d, member, marks.get(d["id"])) for d in docs]
-    out.sort(key=lambda h: (h.completed, h.due_date, h.created_at))
+    today = today_iso(TZ)
+    out.sort(key=lambda h: (h.completed, h.due_date < today, RANK[h.priority], h.due_date, h.created_at))
     return out
 
 
@@ -43,6 +48,14 @@ async def create_homework(body: HomeworkCreate, member: dict = Depends(current_m
         "created_at": now_iso(),
     }
     await db.homework.insert_one(dict(doc))
+    flag = {"alta": "Priorità alta · ", "media": "", "bassa": ""}[body.priority]
+    push.notify_group(
+        member["group_id"],
+        f"Nuovo compito · {body.subject}",
+        f"{flag}Scadenza {body.due_date[8:10]}/{body.due_date[5:7]} — {body.description}",
+        exclude_member_id=member["id"],
+        tag="homework",
+    )
     return Homework(**doc)
 
 
