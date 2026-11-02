@@ -1,0 +1,105 @@
+@keyframes ct-swim {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(var(--travel, 200px), 0, 0); }
+}
+@keyframes ct-flip {
+  0% { transform: scaleX(1); }
+  50% { transform: scaleX(-1); }
+}
+@keyframes ct-bob {
+  from { transform: translateY(-7px); }
+  to { transform: translateY(7px); }
+}
+@keyframes ct-bubble {
+  0% { transform: translateY(0) scale(0.6); opacity: 0; }
+  15% { opacity: 0.8; }
+  100% { transform: translateY(-190px) scale(1); opacity: 0; }
+}
+@keyframes ct-sway {
+  from { transform: rotate(-1.6deg); }
+  to { transform: rotate(1.6deg); }
+}
+@keyframes ct-swing {
+  from { transform: rotate(-2.4deg); }
+  to { transform: rotate(2.4deg); }
+}
+@keyframes ct-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+@keyframes ct-float {
+  from { transform: translateY(-4px) rotate(-2deg); }
+  to { transform: translateY(4px) rotate(2deg); }
+}
+@keyframes ct-tailwag {
+  from { transform: rotate(-9deg) scaleY(0.94); }
+  to { transform: rotate(9deg) scaleY(1.04); }
+}
+@keyframes ct-finflap {
+  from { transform: rotate(-10deg); }
+  to { transform: rotate(14deg); }
+}
+@keyframes ct-blink {
+  0%, 90%, 100% { transform: scaleY(1); }
+  94% { transform: scaleY(0.08); }
+}
+@keyframes ct-mote {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  20% { opacity: 0.9; }
+  100% { transform: translateY(-120px) translateX(12px); opacity: 0; }
+}
+@keyframes ct-flow {
+  to { stroke-dashoffset: -60; }
+}
+@keyframes ct-beam {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.7; }
+}
+@keyframes ct-twinkle {
+  0%, 100% { opacity: 0.25; transform: scale(0.7); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+.ct-swim { position: absolute; left: 0; width: var(--fw); animation: ct-swim var(--dur, 9s) ease-in-out infinite alternate; animation-delay: var(--delay, 0s); will-change: transform; }
+.ct-flip { animation: ct-flip calc(var(--dur, 9s) * 2) step-end infinite; animation-delay: var(--delay, 0s); }
+.ct-bob { animation: ct-bob var(--bobd, 3.2s) ease-in-out infinite alternate; }
+.ct-bubble { position: absolute; bottom: 12%; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.7); background: rgba(255, 255, 255, 0.18); animation: ct-bubble var(--bd, 4s) ease-in infinite; animation-delay: var(--bdelay, 0s); }
+.ct-hang { transform-origin: 50% 0; animation: ct-sway 5s ease-in-out infinite alternate; }
+.ct-swing { transform-origin: 50% 0; animation: ct-swing 5.5s ease-in-out infinite alternate; }
+.ct-glow { animation: ct-pulse 2.8s ease-in-out infinite; }
+.ct-float { animation: ct-float 3.6s ease-in-out infinite alternate; }
+.ct-tail { transform-box: fill-box; transform-origin: 100% 50%; animation: ct-tailwag 0.6s ease-in-out infinite alternate; }
+.ct-fin { transform-box: fill-box; transform-origin: 90% 10%; animation: ct-finflap 1.1s ease-in-out infinite alternate; }
+.ct-blink { transform-box: fill-box; transform-origin: 50% 50%; animation: ct-blink 5s infinite; }
+.ct-mote { position: absolute; border-radius: 9999px; animation: ct-mote var(--bd, 5s) ease-in-out infinite; animation-delay: var(--bdelay, 0s); }
+.ct-flow { stroke-dasharray: 14 46; animation: ct-flow 2.4s linear infinite; }
+.ct-beam { animation: ct-beam 6s ease-in-out infinite; }
+.ct-twinkle { transform-box: fill-box; transform-origin: 50% 50%; animation: ct-twinkle 2.6s ease-in-out infinite; }
+.ct-wall {
+  background-color: #e8dcc3;
+  background-image: repeating-linear-gradient(90deg, rgba(120, 90, 50, 0.07) 0 2px, transparent 2px 46px), linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(0, 0, 0, 0.06));
+}
+.ct-floor {
+  background-color: #8a5a34;
+  background-image: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.18) 0 2px, transparent 2px 70px), linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(0, 0, 0, 0.25));
+}
+.ct-checker {
+  background: repeating-conic-gradient(#d9c9a3 0 25%, #bda676 0 50%) 0 0 / 64px 64px;
+}
+.ct-marble {
+  background: repeating-conic-gradient(#efe9db 0 25%, #cfc6b0 0 50%) 0 0 / 72px 72px;
+}
+.ct-scroll { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.3) transparent; }
+@media (prefers-reduced-motion: reduce) {
+  .ct-swim, .ct-flip, .ct-bob, .ct-bubble, .ct-hang, .ct-swing, .ct-glow, .ct-float, .ct-tail, .ct-fin, .ct-blink, .ct-mote, .ct-flow, .ct-beam, .ct-twinkle { animation: none; }
+  .ct-swim { transform: translate3d(calc(var(--travel, 200px) * 0.3), 0, 0); }
+}
+@keyframes ct-dolly {
+  from { transform: scale(1.07); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.ct-dolly { animation: ct-dolly 0.9s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .ct-dolly { animation: none; }
+}
+.ct-hot { fill: transparent; stroke: transparent; stroke-width: 3; stroke-linejoin: round; transition: fill 0.15s, stroke 0.15s; }
+.ct-hot:hover, .ct-hot:focus-visible { fill: color-mix(in srgb, var(--tone) 14%, transparent); stroke: var(--tone); }
