@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { apiDelete, apiPost } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
 import { useNotices } from "@/lib/queries";
-import { errMsg, relTime } from "@/lib/format";
+import { errMsg, formatDay, relTime } from "@/lib/format";
 import type { Me, Notice, NoticeCreate, NoticeTag } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ export default function NoticesPanel({ me }: { me: Me }) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [tag, setTag] = useState<NoticeTag>("avviso");
+  const [expiresAt, setExpiresAt] = useState("");
 
   const create = useMutation({
     mutationFn: (b: NoticeCreate) => apiPost<Notice>("/notices", b),
@@ -30,6 +31,7 @@ export default function NoticesPanel({ me }: { me: Me }) {
       setTitle("");
       setBody("");
       setTag("avviso");
+      setExpiresAt("");
       setOpen(false);
     },
     onError: (e) => toast.error(errMsg(e)),
@@ -46,7 +48,7 @@ export default function NoticesPanel({ me }: { me: Me }) {
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    create.mutate({ title: title.trim(), body: body.trim(), tag });
+    create.mutate({ title: title.trim(), body: body.trim(), tag, expires_at: expiresAt || null });
   };
 
   const list = notices.data ?? [];
@@ -75,13 +77,19 @@ export default function NoticesPanel({ me }: { me: Me }) {
           {list.map((n) => (
             <li key={n.id} className="relative" data-testid={`notice-card-${n.id}`}>
               <span className={cn("absolute top-5 -left-[25px] size-2.5 rounded-full ring-4 ring-[#0D1117] md:-left-[33px]", n.tag === "urgente" ? "bg-[#FF7B72]" : n.tag === "info" ? "bg-[#BC8CFF]" : "bg-[#388BFD]")} />
-              <article className="rounded-lg border border-[#30363D] bg-[#161B22] p-4 md:p-5">
+              <article className={cn("rounded-lg border border-[#30363D] bg-[#161B22] p-4 md:p-5", n.expired && "opacity-60")}>
                 <div className="flex items-center gap-2.5">
                   <Avatar name={n.author} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium" data-testid={`notice-author-${n.id}`}>{n.author}</p>
-                    <p className="text-xs text-[#8B949E]">{relTime(n.created_at)}</p>
+                    <p className="text-xs text-[#8B949E]">
+                      {relTime(n.created_at)}
+                      {!n.expired && n.expires_at ? ` · scade ${formatDay(n.expires_at)}` : ""}
+                    </p>
                   </div>
+                  {n.expired && (
+                    <span className="rounded border border-[#FF7B72]/25 bg-[#3D1316] px-1.5 py-0.5 text-xs text-[#FFA198]" data-testid={`notice-expired-${n.id}`}>Scaduto</span>
+                  )}
                   <span className={cn("rounded border px-1.5 py-0.5 text-xs", NOTICE_TAG_STYLE[n.tag].cls)}>{NOTICE_TAG_STYLE[n.tag].label}</span>
                   {me.role === "admin" && (
                     <Button
@@ -134,6 +142,10 @@ export default function NoticesPanel({ me }: { me: Me }) {
               <div className="space-y-1.5">
                 <Label htmlFor="notice-body">Messaggio</Label>
                 <Textarea id="notice-body" value={body} onChange={(e) => setBody(e.target.value)} required rows={4} maxLength={2000} placeholder="Scrivi il messaggio per la classe…" data-testid="notice-body-input" />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="notice-expires">Scadenza (facoltativa)</Label>
+                <Input id="notice-expires" type="date" min={me.today} value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} data-testid="notice-expires-input" />
               </div>
             </div>
             <DialogFooter>
