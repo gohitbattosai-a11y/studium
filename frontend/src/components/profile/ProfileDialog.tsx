@@ -1,4 +1,6 @@
 import { useState, type FormEvent, type ReactNode } from "react";
+import { toast } from "sonner";
+import { usePush } from "@/lib/push";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -142,6 +144,46 @@ function GroupPasswordSection() {
   );
 }
 
+function NotificationsSection() {
+  const { status, enable, disable } = usePush();
+  const [busy, setBusy] = useState(false);
+
+  const run = async (action: () => Promise<void>, done: string) => {
+    setBusy(true);
+    try {
+      await action();
+      toast.success(done);
+    } catch {
+      toast.error("Impossibile aggiornare le notifiche, riprova");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const hint =
+    status === "unsupported"
+      ? "Questo browser non supporta le notifiche. Su iPhone e iPad aggiungi prima Studium alla schermata Home."
+      : status === "unavailable"
+        ? "Le notifiche non sono ancora attive sul server."
+        : status === "denied"
+          ? "Le notifiche sono bloccate: abilitale dalle impostazioni del browser per questo sito."
+          : "Ricevi compiti, sondaggi, avvisi, materiali e giochi su questo dispositivo, anche ad app chiusa.";
+
+  return (
+    <Section title="Notifiche" hint={hint}>
+      {status === "on" ? (
+        <Button type="button" variant="outline" disabled={busy} onClick={() => void run(disable, "Notifiche disattivate")} data-testid="profile-push-disable">
+          Disattiva su questo dispositivo
+        </Button>
+      ) : (
+        <Button type="button" disabled={busy || status === "loading" || status === "unsupported" || status === "unavailable" || status === "denied"} onClick={() => void run(enable, "Notifiche attivate")} data-testid="profile-push-enable">
+          Attiva notifiche
+        </Button>
+      )}
+    </Section>
+  );
+}
+
 export default function ProfileDialog({ me, className, testId, children }: { me: Me; className?: string; testId: string; children: ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
@@ -159,6 +201,7 @@ export default function ProfileDialog({ me, className, testId, children }: { me:
           </DialogHeader>
           <div className="space-y-4">
             <BadgesSection nickname={me.nickname} />
+            <NotificationsSection />
             <NameSection me={me} />
             <PinSection />
             {me.is_owner && <GroupPasswordSection />}
