@@ -63,6 +63,11 @@ INDEXES: dict[str, list[IndexModel]] = {
         IndexModel([("member_id", ASCENDING)], name="member"),
     ],
     "fish_casts": [IndexModel([("member_id", ASCENDING)], name="member", unique=True)],
+    "push_subs": [
+        IndexModel([("endpoint", ASCENDING)], name="endpoint", unique=True),
+        IndexModel([("member_id", ASCENDING)], name="member"),
+        IndexModel([("group_id", ASCENDING)], name="group"),
+    ],
     "museum": [IndexModel([("group_id", ASCENDING), ("species_id", ASCENDING)], name="group_species", unique=True)],
 }
 
