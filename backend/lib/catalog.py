@@ -285,6 +285,9 @@ ITEMS: list[dict] = [
 
 ITEMS.extend(load_items({i["id"] for i in ITEMS}))
 
+for _i in ITEMS:
+    _i["price"] = (_i["price"] * 3 + 1) // 2
+
 ITEMS.sort(key=lambda i: i["price"])
 
 ITEMS_BY_ID: dict[str, dict] = {i["id"]: i for i in ITEMS}
