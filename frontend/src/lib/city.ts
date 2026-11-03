@@ -1,8 +1,9 @@
+import { useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiGet, apiPost } from "./api";
 import { errMsg } from "./format";
-import { queryClient } from "./queryClient";
+import { FISH_LIMIT, addFish, donateFish, getSandbox, releaseFish, useSandbox, type Sandbox } from "./sandbox";
 import type { Rarity } from "./types";
 
 export type FishShape = "fusi" | "tondo" | "lungo" | "anguilla" | "piatto" | "siluro" | "drago";
@@ -36,6 +37,7 @@ export interface CatchInfo {
   caught_at: string;
   donated_by: string | null;
   donated_at: string | null;
+  description?: string | null;
 }
 
 export interface Donation {
@@ -66,37 +68,56 @@ export interface ReelResult {
   fish: CatchInfo | null;
 }
 
-export const useCity = (enabled: boolean) =>
-  useQuery({ queryKey: ["city"], queryFn: () => apiGet<CityState>("/city"), enabled, refetchInterval: 30_000 });
+function mergeState(server: CityState, sb: Sandbox): CityState {
+  const donated = new Map(sb.fishMuseum.map((d) => [d.species_id, d]));
+  const known = new Set([...donated.keys(), ...sb.fishBucket.map((c) => c.species_id)]);
+  const species = server.species.map((s) => {
+    const k = sb.known[s.id];
+    return known.has(s.id) && k ? { ...s, name: k.name, description: k.description } : { ...s, name: null, description: null };
+  });
+  const bucket = sb.fishBucket.map((c) => {
+    const g = donated.get(c.species_id);
+    return { ...c, donated_by: g?.donor ?? null, donated_at: g?.donated_at ?? null };
+  });
+  return { ...server, species, museum: sb.fishMuseum, bucket, bucket_limit: FISH_LIMIT };
+}
 
-const refresh = () => void queryClient.invalidateQueries({ queryKey: ["city"] });
+export function useCity(enabled: boolean) {
+  const query = useQuery({ queryKey: ["city"], queryFn: () => apiGet<CityState>("/city"), enabled, refetchInterval: 30_000 });
+  const sb = useSandbox();
+  const data = useMemo(() => (query.data ? mergeState(query.data, sb) : undefined), [query.data, sb]);
+  return { ...query, data };
+}
+
 const fail = (e: unknown) => toast.error(errMsg(e));
 
 export function useCityActions() {
   return {
     cast: useMutation({
-      mutationFn: (bait: string) => apiPost<CastInfo>("/fishing/cast", { bait }),
+      mutationFn: (bait: string) => {
+        if (getSandbox().fishBucket.length >= FISH_LIMIT) return Promise.reject(new Error("Il secchio è pieno: dona o rilascia qualche pesce"));
+        return apiPost<CastInfo>("/fishing/cast", { bait });
+      },
       onError: fail,
     }),
     reel: useMutation({
-      mutationFn: (v: { cast_id: string; success: boolean }) => apiPost<ReelResult>("/fishing/reel", v),
-      onSuccess: refresh,
+      mutationFn: async (v: { cast_id: string; success: boolean }) => {
+        const res = await apiPost<ReelResult>("/fishing/reel", v);
+        if (res.caught && res.fish) {
+          if (getSandbox().fishBucket.length >= FISH_LIMIT) throw new Error("Il secchio è pieno: dona o rilascia qualche pesce");
+          addFish(res.fish);
+        }
+        return res;
+      },
       onError: fail,
     }),
     donate: useMutation({
-      mutationFn: (catch_id: string) => apiPost<Donation>("/museum/donate", { catch_id }),
-      onSuccess: () => {
-        toast.success("Pesce donato al museo!");
-        refresh();
-      },
-      onError: (e: unknown) => {
-        fail(e);
-        refresh();
-      },
+      mutationFn: async (catch_id: string) => donateFish(catch_id),
+      onSuccess: () => toast.success("Pesce donato al museo!"),
+      onError: fail,
     }),
     release: useMutation({
-      mutationFn: (catch_id: string) => apiPost<{ ok: boolean }>("/fishing/release", { catch_id }),
-      onSuccess: refresh,
+      mutationFn: async (catch_id: string) => releaseFish(catch_id),
       onError: fail,
     }),
   };
