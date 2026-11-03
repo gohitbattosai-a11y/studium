@@ -43,6 +43,7 @@ class CatchOut(BaseModel):
     caught_at: str
     donated_by: Optional[str] = None
     donated_at: Optional[str] = None
+    description: Optional[str] = None
 
 
 class DonationOut(BaseModel):
@@ -114,6 +115,7 @@ def catch_out(doc: dict, donated: dict[str, DonationOut]) -> CatchOut:
         caught_at=doc["caught_at"],
         donated_by=gift.donor if gift else None,
         donated_at=gift.donated_at if gift else None,
+        description=species["description"],
     )
 
 
@@ -160,8 +162,6 @@ async def cast_line(body: CastRequest, member: dict = Depends(city_member)):
     bait = BAITS_BY_ID.get(body.bait)
     if not bait:
         raise HTTPException(status_code=400, detail="Esca non valida")
-    if await db.fish_catches.count_documents({"member_id": member["id"]}) >= BUCKET_LIMIT:
-        raise HTTPException(status_code=409, detail="Il secchio è pieno: dona o rilascia qualche pesce")
     species, length = pick_fish(bait)
     wait = bite_delay(bait)
     doc = {
@@ -186,19 +186,13 @@ async def reel_in(body: ReelRequest, member: dict = Depends(city_member)):
         return ReelOut(caught=False)
     if time.time() - cast["created"] < cast["bite_in"] * 0.5 + 2:
         raise HTTPException(status_code=409, detail="Il pesce non aveva ancora abboccato")
-    if await db.fish_catches.count_documents({"member_id": member["id"]}) >= BUCKET_LIMIT:
-        raise HTTPException(status_code=409, detail="Il secchio è pieno: dona o rilascia qualche pesce")
     doc = {
         "id": new_id(),
-        "group_id": member["group_id"],
-        "member_id": member["id"],
         "species_id": cast["species_id"],
         "length": cast["length"],
         "caught_at": now_iso(),
     }
-    await db.fish_catches.insert_one(dict(doc))
-    donated = {d.species_id: d for d in await load_donations(member["group_id"])}
-    return ReelOut(caught=True, fish=catch_out(doc, donated))
+    return ReelOut(caught=True, fish=catch_out(doc, {}))
 
 
 @router.post("/museum/donate", response_model=DonationOut)
