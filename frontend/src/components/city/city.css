@@ -88,7 +88,6 @@
 .ct-marble {
   background: repeating-conic-gradient(#efe9db 0 25%, #cfc6b0 0 50%) 0 0 / 72px 72px;
 }
-.ct-scroll { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.3) transparent; }
 @media (prefers-reduced-motion: reduce) {
   .ct-swim, .ct-flip, .ct-bob, .ct-bubble, .ct-hang, .ct-swing, .ct-glow, .ct-float, .ct-tail, .ct-fin, .ct-blink, .ct-mote, .ct-flow, .ct-beam, .ct-twinkle { animation: none; }
   .ct-swim { transform: translate3d(calc(var(--travel, 200px) * 0.3), 0, 0); }
