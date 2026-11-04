@@ -15,6 +15,7 @@ export interface Player {
   stats: Stats;
   goals: number;
   trained: number;
+  training: { kind: TrainKind; end: number } | null;
 }
 
 export interface Team {
@@ -140,6 +141,7 @@ export const priceOf = (ovr: number) => round1(Math.pow(ovr / 50, 6) * 0.8);
 export const sellPrice = (p: Player) => round1(priceOf(p.ovr) * 0.7);
 export const teamPrice = (t: Team) => round1(t.players.reduce((s, p) => s + priceOf(p.ovr), 0) * 0.85);
 export const trainCost = (p: Player) => round1(0.2 + p.ovr / 100);
+export const trainSeconds = (p: Player) => 25 + Math.round(p.ovr / 3);
 
 function mkStats(pos: Pos, ovr: number): Stats {
   const raw = {} as Stats;
@@ -153,7 +155,7 @@ function mkStats(pos: Pos, ovr: number): Stats {
 function mkPlayer(pos: Pos, ovr: number): Player {
   const stats = mkStats(pos, clamp(ovr, 40, 92));
   const o = calcOvr(pos, stats);
-  return { id: uid("p"), name: `${pick(FIRST)} ${pick(LAST)}`, pos, ovr: o, pot: clamp(o + rnd(2, 14), o, 99), stats, goals: 0, trained: -1 };
+  return { id: uid("p"), name: `${pick(FIRST)} ${pick(LAST)}`, pos, ovr: o, pot: clamp(o + rnd(2, 14), o, 99), stats, goals: 0, trained: -1, training: null };
 }
 
 function mkSquad(base: number): Player[] {
@@ -510,12 +512,13 @@ export function train(pid: string, kind: TrainKind): string | null {
   const t = myTeam(s);
   const p = t?.players.find((x) => x.id === pid);
   if (!t || !p) return "Giocatore non trovato";
+  if (p.training) return "Si sta già allenando";
   if (p.trained === s.day) return "Si è già allenato in questa giornata";
   const cost = trainCost(p);
   if (s.budget < cost) return `Budget insufficiente: servono €${cost.toFixed(1)}M`;
   s.budget = round1(s.budget - cost);
   p.trained = s.day;
-  applyTrain(p, kind);
+  p.training = { kind, end: Date.now() + trainSeconds(p) * 1000 };
   commit(s);
   return null;
 }
@@ -524,17 +527,36 @@ export function trainTeam(kind: TrainKind): string | null {
   const s = structuredClone(state);
   const t = myTeam(s);
   if (!t) return "Prima crea o compra una squadra";
-  const list = t.players.filter((p) => p.trained !== s.day);
+  const list = t.players.filter((p) => p.trained !== s.day && !p.training);
   if (!list.length) return "Tutta la squadra si è già allenata in questa giornata";
   const cost = round1(list.reduce((sum, p) => sum + trainCost(p), 0));
   if (s.budget < cost) return `Budget insufficiente: servono €${cost.toFixed(1)}M`;
   s.budget = round1(s.budget - cost);
+  const now = Date.now();
   list.forEach((p) => {
     p.trained = s.day;
-    applyTrain(p, kind);
+    p.training = { kind, end: now + trainSeconds(p) * 1000 };
   });
   commit(s);
   return null;
+}
+
+export function collectTraining(now = Date.now()): { name: string; d: number }[] {
+  const t = myTeam(state);
+  if (!t || !t.players.some((p) => p.training && p.training.end <= now)) return [];
+  const s = structuredClone(state);
+  const tt = myTeam(s) as Team;
+  const out: { name: string; d: number }[] = [];
+  tt.players.forEach((p) => {
+    if (p.training && p.training.end <= now) {
+      const before = p.ovr;
+      applyTrain(p, p.training.kind);
+      out.push({ name: p.name, d: p.ovr - before });
+      p.training = null;
+    }
+  });
+  commit(s);
+  return out;
 }
 
 export function resetTraining() {
@@ -595,6 +617,7 @@ export function newSeason(): string | null {
       p.pot = Math.max(p.pot, p.ovr);
       p.goals = 0;
       p.trained = -1;
+      p.training = null;
     }),
   );
   s.fixtures = schedule(s.teams.map((t) => t.id));
