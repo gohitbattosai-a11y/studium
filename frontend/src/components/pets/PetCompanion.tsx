@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useGames, useHomework, useLeaderboard, useNotices, usePolls } from "@/lib/queries";
 import type { Me } from "@/lib/types";
 import { ADVICE, GENERIC_LINES, greeting, LOOK_LINES, PET_LINES } from "./petLines";
+import { isPaused } from "@/lib/activity";
 import { usePetSettings } from "./petSettings";
 import { PetSprite, type PetState } from "./PetSprite";
 
@@ -290,6 +291,10 @@ export default function PetCompanion({ petId, me }: { petId: string; me: Me }) {
     const frame = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
+      if (isPaused()) {
+        raf = requestAnimationFrame(frame);
+        return;
+      }
       const b = bounds();
       const paused = now < pausedUntil.current || modeRef.current === "sleep";
       if (!paused) {
