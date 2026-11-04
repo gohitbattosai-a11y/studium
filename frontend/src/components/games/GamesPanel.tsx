@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { apiGet } from "@/lib/api";
 import { useGameActions } from "@/lib/gameActions";
+import { useOverlay } from "@/lib/activity";
 import { errMsg } from "@/lib/format";
 import { templateOf } from "@/lib/games";
 import { useGames, usePointsTable, useReviewQueue } from "@/lib/queries";
@@ -54,6 +55,7 @@ function MineRow({ game, onPlay, onEdit }: { game: GameSummary; onPlay: () => vo
   const meta = templateOf(game.template);
   const status = STATUS[game.status];
   const editable = game.status === "draft" || game.status === "rejected";
+  const updatable = editable || game.status === "published";
   return (
     <li className="rounded-xl border border-[#30363D] bg-[#161B22] p-4" data-testid={`mine-${game.id}`}>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -72,7 +74,7 @@ function MineRow({ game, onPlay, onEdit }: { game: GameSummary; onPlay: () => vo
           <Button variant="outline" className="h-9" onClick={onPlay}>
             <Play className="size-4" /> Gioca
           </Button>
-          {editable && (
+          {updatable && (
             <Button variant="outline" className="h-9" onClick={onEdit} data-testid={`mine-edit-${game.id}`}>
               <Pencil className="size-4" /> Modifica
             </Button>
@@ -98,6 +100,7 @@ export default function GamesPanel({ me }: { me: Me }) {
   const table = usePointsTable();
   const [view, setView] = useState<View>("tutti");
   const [screen, setScreen] = useState<Screen>({ name: "hub" });
+  useOverlay(screen.name !== "hub");
 
   const load = async (id: string, preview = false) => {
     try {
