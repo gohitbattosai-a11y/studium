@@ -216,6 +216,8 @@ export default function GameEditor({ me, initial, onDone, onCancel }: { me: Me; 
     setContent(starter(t));
   };
 
+  const live = initial?.status === "published";
+
   const save = (submit: boolean) => {
     if (problem) {
       toast.error(problem);
@@ -225,7 +227,7 @@ export default function GameEditor({ me, initial, onDone, onCancel }: { me: Me; 
       { id: initial?.id, input, submit },
       {
         onSuccess: () => {
-          toast.success(submit ? (isAdmin ? "Gioco pubblicato" : "Inviato agli admin per la revisione") : "Bozza salvata");
+          toast.success(live ? "Gioco aggiornato" : submit ? (isAdmin ? "Gioco pubblicato" : "Inviato agli admin per la revisione") : "Bozza salvata");
           onDone();
         },
       },
@@ -320,12 +322,14 @@ export default function GameEditor({ me, initial, onDone, onCancel }: { me: Me; 
           <Button variant="outline" className="h-9" disabled={!!problem} onClick={() => setPreviewing(true)} data-testid="game-preview">
             <Eye className="size-4" /> Anteprima
           </Button>
-          <Button variant="outline" className="h-9" disabled={actions.save.isPending} onClick={() => save(false)} data-testid="game-save">
-            <Save className="size-4" /> Salva bozza
+          <Button variant={live ? "default" : "outline"} className="h-9" disabled={actions.save.isPending} onClick={() => save(false)} data-testid="game-save">
+            <Save className="size-4" /> {live ? "Salva modifiche" : "Salva bozza"}
           </Button>
-          <Button className="h-9" disabled={actions.save.isPending} onClick={() => save(true)} data-testid="game-submit">
-            <Send className="size-4" /> {isAdmin ? "Pubblica" : "Invia in revisione"}
-          </Button>
+          {!live && (
+            <Button className="h-9" disabled={actions.save.isPending} onClick={() => save(true)} data-testid="game-submit">
+              <Send className="size-4" /> {isAdmin ? "Pubblica" : "Invia in revisione"}
+            </Button>
+          )}
         </div>
       </div>
 
