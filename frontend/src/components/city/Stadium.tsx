@@ -14,7 +14,7 @@ import "./stadium.css";
 
 type Tab = "table" | "matches" | "squad" | "market" | "train" | "teams";
 
-const TABS: [Tab, string][] = [["table", "Classifica"], ["matches", "Partite"], ["squad", "Rosa"], ["market", "Mercato"], ["train", "Allenamento"], ["teams", "Squadre"]];
+const TABS: [Tab, string, string][] = [["table", "Classifica", "🏆"], ["matches", "Calendario", "📅"], ["squad", "Rosa", "👕"], ["market", "Mercato", "💶"], ["train", "Allenamento", "🏃"], ["teams", "Squadre", "🛡"]];
 const PANEL = "border border-[#30363D] bg-[#0D1117]/80 backdrop-blur-sm";
 const eur = (n: number) => `€${n.toFixed(1)}M`;
 const run = (fn: () => string | null, ok?: string) => {
@@ -190,47 +190,11 @@ function TableView({ s }: { s: StadiumState }) {
 
 function MatchesView({ s, onWatch }: { s: StadiumState; onWatch: (f: Fixture) => void }) {
   const [view, setView] = useState<number | null>(null);
-  const [watch, setWatch] = useState(true);
   const day = view ?? Math.min(s.day + 1, TOTAL_DAYS);
   const list = s.fixtures.filter((f) => f.day === day);
-  const mine = myTeam(s);
-  const finished = s.day >= TOTAL_DAYS;
-  const ready = isReady(mine);
-
-  const play = () => {
-    const d = s.day + 1;
-    const err = playDay();
-    if (err) {
-      toast.error(err);
-      return;
-    }
-    setView(null);
-    if (watch) {
-      const now = getStadium();
-      const fx = now.fixtures.find((f) => f.day === d && (f.home === now.myId || f.away === now.myId));
-      if (fx) onWatch(fx);
-    }
-  };
 
   return (
     <div>
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <Button disabled={finished} onClick={play}>
-          <Play /> Gioca giornata
-        </Button>
-        <Button variant="secondary" disabled={finished} onClick={() => run(playSeason, "Campionato concluso!")}>
-          <FastForward /> Simula campionato
-        </Button>
-        {finished && (
-          <Button variant="outline" onClick={() => run(newSeason, "Nuova stagione!")}>
-            <RefreshCw /> Nuova stagione
-          </Button>
-        )}
-        <label className="ml-auto flex items-center gap-1.5 text-xs text-[#C9D1D9]">
-          <input type="checkbox" checked={watch} onChange={(e) => setWatch(e.target.checked)} /> Guarda la mia partita
-        </label>
-      </div>
-      {!ready && <p className="mb-3 rounded-lg border border-[#F85149]/40 bg-[#2a1214]/90 px-3 py-2 text-xs text-[#FFA198]">Formazione incompleta: servono 11 titolari in campo. Compra giocatori dal mercato e sistemali in Rosa.</p>}
       <div className="mb-2 flex items-center justify-between">
         <Button size="icon-lg" variant="ghost" disabled={day <= 1} onClick={() => setView(day - 1)} aria-label="Giornata precedente">
           <ChevronLeft />
@@ -265,7 +229,7 @@ function MatchesView({ s, onWatch }: { s: StadiumState; onWatch: (f: Fixture) =>
           );
         })}
       </ul>
-      <p className="mt-2 text-center text-[11px] text-[#8B949E]">Tocca una partita giocata per rivederla o leggere la cronaca.</p>
+      <p className="mt-2 text-center text-[11px] text-[#8B949E]">Tocca una partita giocata per rivederla.</p>
     </div>
   );
 }
@@ -414,15 +378,96 @@ function TeamsView({ s }: { s: StadiumState }) {
   );
 }
 
+function Hub({ s, mine, onOpen, onPlay }: { s: StadiumState; mine: Team; onOpen: (t: Tab) => void; onPlay: (f: Fixture) => void }) {
+  const finished = s.day >= TOTAL_DAYS;
+  const ready = isReady(mine);
+  const next = s.fixtures.find((f) => f.day === s.day + 1 && (f.home === s.myId || f.away === s.myId));
+  const h = next ? (s.teams.find((t) => t.id === next.home) as Team) : null;
+  const a = next ? (s.teams.find((t) => t.id === next.away) as Team) : null;
+  const rank = table(s).findIndex((r) => r.team.mine) + 1;
+
+  const play = () => {
+    const d = s.day + 1;
+    const err = playDay();
+    if (err) {
+      toast.error(err);
+      return;
+    }
+    const now = getStadium();
+    const fx = now.fixtures.find((f) => f.day === d && (f.home === now.myId || f.away === now.myId));
+    if (fx) onPlay(fx);
+  };
+
+  return (
+    <div className="grid gap-4 md:grid-cols-[1.2fr_1fr]">
+      <div className="flex flex-col gap-3">
+        <div className={cn("rounded-2xl p-5", PANEL)}>
+          <div className="flex items-center gap-2">
+            <Dot color={mine.color} />
+            <h2 className="min-w-0 flex-1 truncate text-lg font-bold">{mine.name}</h2>
+            <span className="text-xs text-[#8B949E]">
+              Stagione {s.season} · {rank}° posto
+            </span>
+          </div>
+          {finished ? (
+            <div className="mt-4 text-center">
+              <Trophy className="mx-auto size-8 text-[#E3B341]" />
+              <p className="mt-2 text-sm text-[#C9D1D9]">Campionato concluso</p>
+              <Button size="lg" className="mt-3 h-12 w-full text-base" onClick={() => run(newSeason, "Nuova stagione!")}>
+                <RefreshCw /> Nuova stagione
+              </Button>
+            </div>
+          ) : (
+            <>
+              <p className="mt-4 text-center text-[11px] tracking-widest text-[#8B949E] uppercase">
+                Prossima partita · Giornata {s.day + 1}/{TOTAL_DAYS}
+              </p>
+              {h && a && (
+                <div className="mt-2 flex items-center justify-center gap-3">
+                  <div className="flex min-w-0 flex-1 flex-col items-center gap-1 text-center">
+                    <span className="size-10 rounded-full border-2 border-white/80" style={{ background: h.color }} />
+                    <span className="max-w-full truncate text-sm font-semibold">{h.name}</span>
+                  </div>
+                  <span className="text-xl font-black text-[#E3B341]">VS</span>
+                  <div className="flex min-w-0 flex-1 flex-col items-center gap-1 text-center">
+                    <span className="size-10 rounded-full border-2 border-white/80" style={{ background: a.color }} />
+                    <span className="max-w-full truncate text-sm font-semibold">{a.name}</span>
+                  </div>
+                </div>
+              )}
+              {!ready && <p className="mt-3 rounded-lg border border-[#F85149]/40 bg-[#2a1214]/90 px-3 py-2 text-xs text-[#FFA198]">Formazione incompleta: servono 11 titolari. Vai in Rosa e Mercato.</p>}
+              <Button size="lg" className="mt-4 h-14 w-full text-lg font-black tracking-wider" disabled={!ready} onClick={play} data-testid="stadium-play">
+                <Play /> GIOCA
+              </Button>
+              <Button variant="secondary" className="mt-2 w-full" disabled={!ready} onClick={() => run(playSeason, "Campionato concluso!")}>
+                <FastForward /> Simula tutto il campionato
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2.5">
+        {TABS.map(([id, label, icon]) => (
+          <button key={id} type="button" onClick={() => onOpen(id)} className={cn("flex min-h-24 flex-col items-center justify-center gap-1.5 rounded-2xl p-3 outline-none transition hover:brightness-125 active:scale-[0.97]", PANEL)}>
+            <span className="text-3xl">{icon}</span>
+            <span className="text-sm font-semibold">{label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Stadium() {
   const s = useStadium();
-  const [tab, setTab] = useState<Tab>("table");
+  const [tab, setTab] = useState<Tab | null>(null);
   const [live, setLive] = useState<Fixture | null>(null);
   const mine = myTeam(s);
   useEffect(() => {
     const id = window.setInterval(() => report(collectTraining()), 1000);
     return () => window.clearInterval(id);
   }, []);
+  const label = TABS.find((t) => t[0] === tab)?.[1];
   return (
     <div className="absolute inset-0 bg-[#05080d]" data-testid="stadium">
       <StadiumBack />
@@ -431,18 +476,15 @@ export default function Stadium() {
           <TestBar s={s} />
           {!mine ? (
             <Setup s={s} />
+          ) : !tab ? (
+            <Hub s={s} mine={mine} onOpen={setTab} onPlay={setLive} />
           ) : (
             <>
               <div className="mb-3 flex items-center gap-2">
-                <Dot color={mine.color} />
-                <h2 className="text-base font-semibold drop-shadow">{mine.name}</h2>
-              </div>
-              <div className="mb-3 flex gap-1 overflow-x-auto">
-                {TABS.map(([id, label]) => (
-                  <button key={id} type="button" onClick={() => setTab(id)} className={cn("rounded-full border px-3.5 py-1.5 text-sm whitespace-nowrap backdrop-blur-sm", tab === id ? "border-[#58A6FF] bg-[#58A6FF]/20 text-white" : "border-[#30363D] bg-[#0D1117]/70 text-[#C9D1D9]")}>
-                    {label}
-                  </button>
-                ))}
+                <Button size="sm" variant="outline" onClick={() => setTab(null)}>
+                  <ChevronLeft /> Menu
+                </Button>
+                <h2 className="text-base font-semibold drop-shadow">{label}</h2>
               </div>
               {tab === "table" && <TableView s={s} />}
               {tab === "matches" && <MatchesView s={s} onWatch={setLive} />}
