@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { KeyRound } from "lucide-react";
+import { BarChart3, BookOpen, FolderOpen, Gamepad2, KeyRound, LayoutGrid, Megaphone, ShoppingBag, X } from "lucide-react";
 import { apiGet } from "@/lib/api";
 import { useHuntActions } from "@/lib/extraActions";
 import { queryClient } from "@/lib/queryClient";
@@ -11,6 +11,7 @@ import { SvgArt } from "@/components/art/SvgArt";
 import { BackgroundPreview } from "@/components/theme/ThemeBackground";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { OBS_SEQUENCE, OBS_WINDOW } from "../obs/entry";
 import { SCENES } from "./scenes";
 import "./hunt.css";
 
@@ -37,8 +38,11 @@ export function SecretLogo({ onOpen, children }: { onOpen: () => void; children:
   );
 }
 
+const ROUTE_ICONS = { home: LayoutGrid, compiti: BookOpen, sondaggi: BarChart3, materiali: FolderOpen, bacheca: Megaphone, giochi: Gamepad2, shop: ShoppingBag } as const;
+
 function Finale({ me, rewards }: { me: Me; rewards: ExclusiveInfo[] }) {
   const { equip } = useHuntActions();
+  const [route, setRoute] = useState(false);
   const deco = rewards.find((r) => r.kind === "decoration");
   const bg = rewards.find((r) => r.kind === "background");
   const toggle = (r: ExclusiveInfo) => {
@@ -62,8 +66,36 @@ function Finale({ me, rewards }: { me: Me; rewards: ExclusiveInfo[] }) {
             <Avatar name={me.nickname} decoration={deco?.id ?? null} />
           </div>
         </div>
+        <button type="button" onClick={() => setRoute(true)} className="hx-twinkle absolute top-[7%] right-[9%] grid size-7 place-items-center rounded-full text-[#e0f2fe] opacity-40 outline-none hover:opacity-100 focus-visible:opacity-100" aria-label="Una stella diversa dalle altre" data-testid="secret-route-star">
+          <span className="block size-1.5 rotate-45 bg-current shadow-[0_0_10px_2px_rgba(186,230,253,0.8)]" />
+        </button>
+        {route && (
+          <div className="absolute inset-0 z-10 grid place-items-center bg-[#020611]/85 p-4 backdrop-blur-sm" data-testid="secret-route">
+            <div className="relative w-full max-w-md rounded-xl border border-sky-200/30 bg-[#06101f] p-4 text-center">
+              <button type="button" onClick={() => setRoute(false)} className="absolute top-2 right-2 grid size-7 place-items-center rounded-full text-sky-100/70 hover:bg-white/10" aria-label="Chiudi">
+                <X className="size-4" />
+              </button>
+              <p className="text-[11px] tracking-[0.3em] text-sky-200/80 uppercase">Rotta verso il fondo</p>
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-x-1 gap-y-2">
+                {OBS_SEQUENCE.map((id, i) => {
+                  const Icon = ROUTE_ICONS[id];
+                  return (
+                    <span key={i} className="flex items-center gap-1">
+                      <span className="grid size-9 place-items-center rounded-lg border border-sky-200/30 bg-sky-200/10 text-sky-100">
+                        <Icon className="size-4" />
+                      </span>
+                      {i < OBS_SEQUENCE.length - 1 && <span className="text-xs text-sky-200/40">›</span>}
+                    </span>
+                  );
+                })}
+              </div>
+              <p className="mt-3 text-xs leading-relaxed text-sky-100/70 italic">Otto porte, una dopo l'altra, senza fermarti. Hai {Math.round(OBS_WINDOW / 1000)} secondi prima che il mare si richiuda.</p>
+            </div>
+          </div>
+        )}
         <div className="absolute inset-x-0 bottom-3 text-center">
           <p className="hx-glow-text font-serif text-lg tracking-[0.35em] text-[#fde68a] uppercase sm:text-2xl">Custode del segreto</p>
+          <p className="mt-1 text-[10px] tracking-[0.25em] text-white/45 uppercase">Una stella, in alto, non brilla come le altre</p>
         </div>
       </div>
       <div className="space-y-2 bg-[#07050f] p-4">
