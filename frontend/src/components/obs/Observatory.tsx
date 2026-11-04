@@ -9,6 +9,7 @@ import { useHuntActions } from "@/lib/extraActions";
 import { useObsActions } from "@/lib/obsActions";
 import { queryClient } from "@/lib/queryClient";
 import { sfx } from "@/lib/sfx";
+import { useOverlay } from "@/lib/activity";
 import type { ExclusiveInfo, Me, ObsState } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/common";
@@ -99,6 +100,7 @@ function Finale({ me, state }: { me: Me; state: ObsState }) {
 
 export default function Observatory({ me, open, onClose }: { me: Me; open: boolean; onClose: () => void }) {
   const { open: openDoor, solve } = useObsActions();
+  useOverlay(open);
   const state = useQuery({ queryKey: ["obs"], queryFn: () => apiGet<ObsState>("/obs"), enabled: false }).data;
   const [view, setView] = useState(0);
   const [notes, setNotes] = useState(false);
