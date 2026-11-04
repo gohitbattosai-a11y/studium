@@ -6,6 +6,7 @@ import { useCity } from "@/lib/city";
 import { Button } from "@/components/ui/button";
 import { LoadError, SkeletonList } from "@/components/common";
 import { setSandboxUser } from "@/lib/sandbox";
+import { useOverlay } from "@/lib/activity";
 import AnimalRoom from "./AnimalRoom";
 import Bucket from "./Bucket";
 import CityMap from "./CityMap";
@@ -27,6 +28,7 @@ export default function CityPanel({ me, onClose }: { me: Me; onClose: () => void
   const [roomId, setRoomId] = useState(ROOMS[0].id);
   const [bucketOpen, setBucketOpen] = useState(false);
   const city = useCity(true);
+  useOverlay(true);
 
   useEffect(() => {
     setSandboxUser(me.member_id, me.nickname);
