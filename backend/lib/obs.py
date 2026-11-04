@@ -1,3 +1,4 @@
+import math
 import random
 import secrets
 import time
@@ -9,55 +10,86 @@ from lib.exclusive import OBS_ITEMS, OBS_PET, grant, grant_pet
 from lib.pets import BOXES_BY_ID, PETS, RARITIES
 from lib.security import now_iso
 
-WORD = "ZODIACO"
+WORD = "CORALLO"
 COOLDOWN = 1.2
 ENTRY_BADGE = "lente-curiosa"
 HALFWAY_BADGE = "tra-gli-ingranaggi"
 FINAL_BADGE = "astronomo-d-ottone"
-RINGS = 4
-MOD = 6
-WORDS = ["COMETA", "NEBULOSA", "PIANETA", "ECLISSE", "GALASSIA", "ORBITA", "TELESCOPIO", "SOLSTIZIO", "SATELLITE", "ZENIT"]
+RINGS = 6
+MOD = 5
+GRID = 5
+SIZE = 7
+WORDS = ["NAUFRAGIO", "SCOGLIERA", "PROFONDITA", "BUSSOLA", "ANCORA", "TEMPESTA", "CORRENTE", "MAREGGIATA", "TIMONIERE", "SOMMERSO", "PERISCOPIO", "BATISCAFO"]
 
 ROOMS: list[dict] = [
-    {"id": "atrio", "title": "L'Atrio", "puzzles": ["stelle", "lanterne"], "reveal": "Due lettere aprono ogni parola scritta nei libri."},
-    {"id": "biblioteca", "title": "La Biblioteca delle Mappe", "puzzles": ["registro", "cifrario"], "reveal": "Il tempo si muove solo se qualcuno lo spinge. Poi ascolta ciò che ritorna."},
-    {"id": "torre", "title": "La Torre dell'Orologio", "puzzles": ["ingranaggi", "successione", "eco"], "reveal": "Sette lettere, un solo anello di case. Rimettile dove il cielo le vuole."},
-    {"id": "cupola", "title": "La Cupola", "puzzles": ["meridiana"], "reveal": ""},
+    {"id": "ponte", "title": "Il Ponte", "puzzles": ["maree", "fanali"], "reveal": "Le lettere salvate sono la chiave, e le prime tre aprono ogni parola scritta sul giornale. Ma i marinai leggono dall'ultimo segno al primo."},
+    {"id": "cabina", "title": "La Cabina del Capitano", "puzzles": ["giornale", "segnali"], "reveal": "Ciò che torna indietro nel buio è capovolto, e ogni voce sale di un colore lungo l'arcobaleno."},
+    {"id": "macchine", "title": "La Sala Macchine", "puzzles": ["turbine", "manometro", "periscopio", "sonar"], "reveal": "Sul fondo cresce un albero che è un animale. Sette lettere lo scrivono."},
+    {"id": "campana", "title": "La Campana", "puzzles": ["corallo"], "reveal": ""},
 ]
 
 PUZZLES: dict[str, dict] = {
-    "stelle": {"title": "Le Costellazioni", "letter": "O"},
-    "lanterne": {"title": "Le Lanterne", "letter": "C"},
-    "registro": {"title": "Il Registro", "letter": "Z"},
-    "cifrario": {"title": "Il Cifrario", "letter": "A"},
-    "ingranaggi": {"title": "Gli Ingranaggi", "letter": "I"},
-    "successione": {"title": "Il Quadrante", "letter": "D"},
-    "eco": {"title": "L'Eco", "letter": "O"},
-    "meridiana": {"title": "La Meridiana", "letter": None},
+    "maree": {"title": "Le Maree", "letter": "C"},
+    "fanali": {"title": "I Fanali", "letter": "O"},
+    "giornale": {"title": "Il Giornale di Bordo", "letter": "R"},
+    "segnali": {"title": "I Segnali", "letter": "A"},
+    "turbine": {"title": "Le Turbine", "letter": "L"},
+    "manometro": {"title": "Il Manometro", "letter": "L"},
+    "periscopio": {"title": "Il Periscopio", "letter": None},
+    "sonar": {"title": "Il Sonar", "letter": "O"},
+    "corallo": {"title": "La Campana", "letter": None},
 }
 
 ROOM_OF: dict[str, int] = {pid: i for i, room in enumerate(ROOMS) for pid in room["puzzles"]}
 LETTERED: list[str] = [pid for room in ROOMS for pid in room["puzzles"] if PUZZLES[pid]["letter"]]
-KEY = "".join(PUZZLES[pid]["letter"] for pid in ROOMS[0]["puzzles"])
+KEY = "".join(PUZZLES[pid]["letter"] for pid in LETTERED[:3])
+
+PERIODS = [(4, 5, 7), (3, 5, 8), (5, 7, 9), (4, 7, 9), (5, 6, 7), (3, 7, 10)]
 
 
-def _neighbors(cell: int) -> list[int]:
-    r, c = divmod(cell, 3)
-    out = [cell]
-    if r > 0:
-        out.append(cell - 3)
-    if r < 2:
-        out.append(cell + 3)
-    if c > 0:
-        out.append(cell - 1)
-    if c < 2:
-        out.append(cell + 1)
-    return out
+def _maree(rng: random.Random) -> tuple[dict, Optional[list[str]]]:
+    periods = list(rng.choice(PERIODS))
+    rng.shuffle(periods)
+    while True:
+        rings = []
+        for p in periods:
+            step = rng.choice([k for k in range(1, p) if math.gcd(k, p) == 1])
+            rings.append({"p": p, "a": rng.randrange(1, p), "s": step})
+        span = math.prod(periods)
+        day = next((t for t in range(1, span + 1) if all((r["a"] + r["s"] * t) % r["p"] == 0 for r in rings)), 0)
+        if day >= 12:
+            return {"rings": rings, "span": span}, [str(day)]
 
 
 def _press(board: list[bool], cell: int) -> None:
-    for c in _neighbors(cell):
-        board[c] = not board[c]
+    r, c = divmod(cell, GRID)
+    for rr, cc in ((r, c), (r - 1, c), (r + 1, c), (r, c - 1), (r, c + 1)):
+        if 0 <= rr < GRID and 0 <= cc < GRID:
+            board[rr * GRID + cc] = not board[rr * GRID + cc]
+
+
+def _fanali(rng: random.Random) -> tuple[dict, Optional[list[str]]]:
+    while True:
+        board = [False] * (GRID * GRID)
+        for cell in rng.sample(range(GRID * GRID), rng.randint(9, 15)):
+            _press(board, cell)
+        if sum(board) >= 7:
+            return {"board": board}, None
+
+
+def _giornale(rng: random.Random) -> tuple[dict, Optional[list[str]]]:
+    base = BOXES_BY_ID["base"]["price"]
+    rara = BOXES_BY_ID["rara"]["price"]
+    return {}, [str(len(PETS)), str(len(RARITIES)), str(rara), str(base + rara)]
+
+
+def _vigenere(plain: str, key: str) -> str:
+    return "".join(chr((ord(p) - 65 + ord(key[i % len(key)]) - 65) % 26 + 65) for i, p in enumerate(plain))
+
+
+def _segnali(rng: random.Random) -> tuple[dict, Optional[list[str]]]:
+    word = rng.choice(WORDS)
+    return {"cipher": _vigenere(word[::-1], KEY), "key_length": len(KEY)}, [word.casefold()]
 
 
 def _turn(state: list[int], counts: list[int]) -> list[int]:
@@ -68,88 +100,124 @@ def _turn(state: list[int], counts: list[int]) -> list[int]:
     return out
 
 
-def _stelle(rng: random.Random) -> tuple[dict, Optional[list[str]]]:
-    bright = rng.sample(range(2, 8), 3)
-    faint = [rng.randint(2, 6) for _ in range(3)]
-    return {"panels": [[b, f] for b, f in zip(bright, faint)]}, [str(b) for b in bright]
-
-
-def _lanterne(rng: random.Random) -> tuple[dict, Optional[list[str]]]:
-    while True:
-        board = [False] * 9
-        for cell in rng.sample(range(9), rng.randint(4, 7)):
-            _press(board, cell)
-        if any(board):
-            return {"board": board}, None
-
-
-def _registro(rng: random.Random) -> tuple[dict, Optional[list[str]]]:
-    return {}, [str(len(PETS)), str(len(RARITIES)), str(BOXES_BY_ID["rara"]["price"])]
-
-
-def _vigenere(plain: str, key: str) -> str:
-    return "".join(chr((ord(p) - 65 + ord(key[i % len(key)]) - 65) % 26 + 65) for i, p in enumerate(plain))
-
-
-def _cifrario(rng: random.Random) -> tuple[dict, Optional[list[str]]]:
-    word = rng.choice(WORDS)
-    return {"cipher": _vigenere(word, KEY), "key_length": len(KEY)}, [word.casefold()]
-
-
-def _ingranaggi(rng: random.Random) -> tuple[dict, Optional[list[str]]]:
+def _turbine(rng: random.Random) -> tuple[dict, Optional[list[str]]]:
     while True:
         counts = [rng.randrange(MOD) for _ in range(RINGS)]
         state = _turn([0] * RINGS, counts)
-        if sum(1 for s in state if s) >= 3:
+        if sum(1 for s in state if s) >= 4:
             return {"state": state, "mod": MOD}, None
 
 
-def _successione(rng: random.Random) -> tuple[dict, Optional[list[str]]]:
-    kind = rng.randrange(5)
-    a = rng.randint(2, 9)
-    terms: list[int] = []
+def _digits(n: int) -> int:
+    return sum(int(d) for d in str(n))
+
+
+def _primes(count: int) -> list[int]:
+    out: list[int] = []
+    n = 2
+    while len(out) < count:
+        if all(n % p for p in out):
+            out.append(n)
+        n += 1
+    return out
+
+
+def _manometro(rng: random.Random) -> tuple[dict, Optional[list[str]]]:
+    kind = rng.randrange(7)
+    a = rng.randint(2, 7)
+    t: list[int] = []
     if kind == 0:
-        terms = [a, rng.randint(2, 9)]
-        while len(terms) < 7:
-            terms.append(terms[-1] + terms[-2])
+        t = [a, rng.randint(3, 8)]
+        while len(t) < 8:
+            t.append(t[-1] + t[-2] + len(t))
     elif kind == 1:
-        terms = [a]
-        while len(terms) < 7:
-            terms.append(terms[-1] * 2 + 1)
+        c = rng.randint(1, 9)
+        t = [(n + a) ** 3 - c * n for n in range(1, 9)]
     elif kind == 2:
-        d = rng.randint(1, 3)
-        terms, step = [a], d
-        while len(terms) < 7:
-            terms.append(terms[-1] + step)
-            step += d
+        y = rng.randint(40, 80)
+        d = rng.randint(3, 6)
+        t = [a * (2 ** (i // 2)) if i % 2 == 0 else y - d * (i // 2) for i in range(8)]
     elif kind == 3:
-        b, c, e = rng.randint(2, 5), rng.randint(14, 30), rng.randint(2, 5)
-        terms = [a + b * (i // 2) if i % 2 == 0 else c - e * (i // 2) for i in range(7)]
+        t = [a * 3]
+        while len(t) < 8:
+            t.append(t[-1] + _digits(t[-1]) * 2)
+    elif kind == 4:
+        t = [a]
+        ops = [lambda v: v + 5, lambda v: v * 2, lambda v: v - 3]
+        while len(t) < 8:
+            t.append(ops[(len(t) - 1) % 3](t[-1]))
+    elif kind == 5:
+        pr = _primes(8)
+        t = [pr[i] * (i + 1) + a for i in range(8)]
     else:
-        terms = [a]
-        while len(terms) < 7:
-            terms.append(terms[-1] + a if len(terms) % 2 else terms[-1] * 2)
-    return {"terms": terms[:6]}, [str(terms[6])]
+        t = [a, rng.randint(2, 6), rng.randint(3, 9)]
+        while len(t) < 8:
+            t.append(t[-1] + t[-2] + t[-3])
+    return {"terms": t[:6]}, [str(t[6]), str(t[7])]
 
 
-def _eco(rng: random.Random) -> tuple[dict, Optional[list[str]]]:
-    seq = [f"orb-{rng.randrange(5)}" for _ in range(7)]
-    return {"sequence": seq}, seq
+def _beam(cells: list[str], row: int) -> tuple[str, int, int]:
+    r, c, dr, dc = row, -1, 0, 1
+    hits = 0
+    jumps = 0
+    ports = {ch: [i for i, x in enumerate(cells) if x == ch] for ch in "ab"}
+    for _ in range(600):
+        r, c = r + dr, c + dc
+        if r < 0:
+            return f"t{c + 1}", hits, jumps
+        if r >= SIZE:
+            return f"b{c + 1}", hits, jumps
+        if c < 0:
+            return f"l{r + 1}", hits, jumps
+        if c >= SIZE:
+            return f"r{r + 1}", hits, jumps
+        ch = cells[r * SIZE + c]
+        if ch == "/":
+            dr, dc = -dc, -dr
+            hits += 1
+        elif ch == "\\":
+            dr, dc = dc, dr
+            hits += 1
+        elif ch in "ab":
+            other = ports["b" if ch == "a" else "a"][0]
+            r, c = divmod(other, SIZE)
+            jumps += 1
+    return "x0", hits, jumps
 
 
-def _meridiana(rng: random.Random) -> tuple[dict, Optional[list[str]]]:
+def _periscopio(rng: random.Random) -> tuple[dict, Optional[list[str]]]:
+    while True:
+        cells = ["."] * (SIZE * SIZE)
+        spots = rng.sample(range(SIZE * SIZE), 12)
+        for i in spots[:10]:
+            cells[i] = rng.choice(["/", "\\"])
+        cells[spots[10]] = "a"
+        cells[spots[11]] = "b"
+        row = rng.randrange(SIZE)
+        port, hits, jumps = _beam(cells, row)
+        if port != "x0" and hits >= 4 and jumps >= 1 and not port.startswith("l"):
+            return {"size": SIZE, "cells": cells, "row": row + 1}, [port, str(hits)]
+
+
+def _sonar(rng: random.Random) -> tuple[dict, Optional[list[str]]]:
+    seq = [rng.randrange(5) for _ in range(7)]
+    return {"sequence": [f"orb-{i}" for i in seq]}, [f"orb-{(i + 1) % 5}" for i in reversed(seq)]
+
+
+def _corallo(rng: random.Random) -> tuple[dict, Optional[list[str]]]:
     return {}, None
 
 
 MAKERS = {
-    "stelle": _stelle,
-    "lanterne": _lanterne,
-    "registro": _registro,
-    "cifrario": _cifrario,
-    "ingranaggi": _ingranaggi,
-    "successione": _successione,
-    "eco": _eco,
-    "meridiana": _meridiana,
+    "maree": _maree,
+    "fanali": _fanali,
+    "giornale": _giornale,
+    "segnali": _segnali,
+    "turbine": _turbine,
+    "manometro": _manometro,
+    "periscopio": _periscopio,
+    "sonar": _sonar,
+    "corallo": _corallo,
 }
 
 
@@ -169,21 +237,19 @@ def _ints(got: list[str], size: int, limit: int) -> Optional[list[int]]:
 
 def verify(doc: dict, pid: str, got: list[str]) -> bool:
     params, answer = make(doc, pid)
-    if pid == "lanterne":
-        try:
-            cells = [int(t) for t in got]
-        except ValueError:
-            return False
-        if len(set(cells)) != len(cells) or any(c < 0 or c > 8 for c in cells):
+    if pid == "fanali":
+        mask = got[0] if len(got) == 1 else ""
+        if len(mask) != GRID * GRID or set(mask) - {"0", "1"}:
             return False
         board = list(params["board"])
-        for cell in cells:
-            _press(board, cell)
+        for cell, bit in enumerate(mask):
+            if bit == "1":
+                _press(board, cell)
         return not any(board)
-    if pid == "ingranaggi":
+    if pid == "turbine":
         counts = _ints(got, RINGS, MOD)
         return counts is not None and not any(_turn(params["state"], counts))
-    if pid == "meridiana":
+    if pid == "corallo":
         if len(got) != len(LETTERED) or sorted(got) != sorted(LETTERED):
             return False
         return "".join(PUZZLES[g]["letter"] for g in got) == WORD
@@ -242,7 +308,7 @@ async def solve(member: dict, pid: str, taps: list[str]) -> str:
     if now - float(doc.get("last_attempt_ts", 0.0)) < COOLDOWN:
         return "wait"
     await db.obs.update_one({"member_id": member["id"]}, {"$set": {"last_attempt_ts": now}})
-    got = [t.strip().casefold() if pid not in ("eco", "meridiana") else t.strip() for t in taps]
+    got = [t.strip().casefold() for t in taps]
     if not verify(doc, pid, got):
         return "wrong"
     moved = await db.obs.update_one({"member_id": member["id"], "solved": {"$ne": pid}}, {"$push": {"solved": pid}})
