@@ -1,7 +1,56 @@
 {
-  "items": [],
+  "items": [
+    {
+      "id": "postazione-notturna",
+      "kind": "background",
+      "name": "Postazione notturna",
+      "description": "Scrivania gaming al buio con led blu, ventole che girano e città dalla finestra.",
+      "price": 72,
+      "window": null
+    },
+    {
+      "id": "via-lattea",
+      "kind": "background",
+      "name": "Via Lattea",
+      "description": "Cielo stellato sopra le montagne, stelle cadenti e una tenda illuminata.",
+      "price": 72,
+      "window": null
+    },
+    {
+      "id": "oblo-abissale",
+      "kind": "background",
+      "name": "Oblò abissale",
+      "description": "Studio di un sommergibile con lampada, sonar e un sottomarino fuori dall'oblò.",
+      "price": 80,
+      "window": null
+    },
+    {
+      "id": "lago-alpino",
+      "kind": "background",
+      "name": "Lago alpino",
+      "description": "Montagne al crepuscolo che si specchiano in un lago con onde e nebbia.",
+      "price": 72,
+      "window": null
+    },
+    {
+      "id": "aurora-glaciale",
+      "kind": "background",
+      "name": "Aurora glaciale",
+      "description": "Aurora che danza su montagne innevate, lago ghiacciato, pini e neve che cade.",
+      "price": 76,
+      "window": null
+    }
+  ],
   "pets": [
-    {"id": "squalo", "name": "Squalo", "rarity": "epico"},
-    {"id": "drago-cinese", "name": "Drago Cinese", "rarity": "mitico"}
+    {
+      "id": "squalo",
+      "name": "Squalo",
+      "rarity": "epico"
+    },
+    {
+      "id": "drago-cinese",
+      "name": "Drago Cinese",
+      "rarity": "mitico"
+    }
   ]
 }
