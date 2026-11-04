@@ -20,20 +20,20 @@ EXCLUSIVE_ITEMS: list[dict] = [
 
 OBS_ITEMS: list[dict] = [
     {
-        "id": "astrolabio-ottone",
+        "id": "anello-abissale",
         "kind": "decoration",
-        "name": "Astrolabio d'Ottone",
-        "description": "Anelli di ottone che ruotano attorno all'avatar. Non si compra: si merita.",
+        "name": "Corona di Meduse",
+        "description": "Meduse luminose che fluttuano attorno all'avatar, tra bolle e luce del fondale. Non si compra: si merita.",
     },
     {
-        "id": "osservatorio-stellare",
+        "id": "abisso-luminoso",
         "kind": "background",
-        "name": "Osservatorio Stellare",
-        "description": "Una cupola aperta sul cielo, tra ingranaggi e telescopio. Sfondo esclusivo.",
+        "name": "Abisso Luminoso",
+        "description": "Un relitto addormentato nel buio, tra meduse, coralli accesi e raggi dalla superficie. Sfondo esclusivo.",
     },
 ]
 
-OBS_PET: dict = {"id": "volpe-ottone", "name": "Volpe d'Ottone", "rarity": "mitico"}
+OBS_PET: dict = {"id": "paguro-lanterna", "name": "Paguro Lanterna", "rarity": "mitico"}
 
 ALL_EXCLUSIVE: list[dict] = EXCLUSIVE_ITEMS + OBS_ITEMS
 
