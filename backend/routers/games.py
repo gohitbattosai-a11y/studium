@@ -206,8 +206,8 @@ async def update_game(game_id: str, body: GameInput, member: dict = Depends(curr
     is_admin = member.get("role") == "admin"
     if game["author_id"] != member["id"] and not is_admin:
         raise HTTPException(status_code=403, detail="Puoi modificare solo i tuoi giochi")
-    if not is_admin and game["status"] not in ("draft", "rejected"):
-        raise HTTPException(status_code=409, detail="Un gioco in revisione o pubblicato non si può modificare")
+    if not is_admin and game["status"] not in ("draft", "rejected", "published"):
+        raise HTTPException(status_code=409, detail="Un gioco in revisione non si può modificare")
     validate_content(body)
     fields = {
         "title": body.title,
