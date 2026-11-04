@@ -111,3 +111,25 @@
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
+
+html, body, * {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+*::-webkit-scrollbar,
+*::-webkit-scrollbar-thumb,
+*::-webkit-scrollbar-track {
+  display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
+html[data-paused] .bgx {
+  visibility: hidden;
+}
+html[data-paused] .bgx *,
+html[data-paused] .pet,
+html[data-paused] .pet * {
+  animation-play-state: paused !important;
+}
