@@ -72,6 +72,7 @@ interface World {
   lastRipple: number;
   phase: Phase;
   biteAt: number;
+  biteWindow: number;
 }
 
 const BITE_WINDOW = 2400;
@@ -96,7 +97,7 @@ export default function Pond({ city, onBucket }: { city: CityState; onBucket: ()
   const [phase, setPhaseState] = useState<Phase>("idle");
   const [bait, setBait] = useState("pane");
   const [caught, setCaught] = useState<CatchInfo | null>(null);
-  const [difficulty, setDifficulty] = useState(1);
+  const [fight, setFight] = useState({ difficulty: 1, strength: 0.5, dash: 0.5, head: 0 });
   const { cast, reel } = useCityActions();
   const cityRef = useRef(city);
   const baitRef = useRef(bait);
@@ -132,6 +133,7 @@ export default function Pond({ city, onBucket }: { city: CityState; onBucket: ()
     lastRipple: 0,
     phase: "idle",
     biteAt: 0,
+    biteWindow: BITE_WINDOW,
   });
 
   useEffect(() => {
@@ -302,7 +304,7 @@ export default function Pond({ city, onBucket }: { city: CityState; onBucket: ()
           w.lastRipple = now;
           addRipple(w.bob.x, w.bob.y, 34, 900);
         }
-        if (now - w.biteAt > BITE_WINDOW) {
+        if (now - w.biteAt > w.biteWindow) {
           const c = w.cast;
           w.cast = null;
           w.bob.dip = 0;
@@ -356,8 +358,9 @@ export default function Pond({ city, onBucket }: { city: CityState; onBucket: ()
               s.x += Math.cos(s.a) * sp * dt;
               s.y += Math.sin(s.a) * sp * dt;
             } else {
-              s.x += Math.sin(now * 0.004 + s.ph) * 6 * dt;
-              s.y += Math.cos(now * 0.0035 + s.ph) * 6 * dt;
+              const thrash = w.phase === "reel" ? 26 : 6;
+              s.x += Math.sin(now * (w.phase === "reel" ? 0.02 : 0.004) + s.ph) * thrash * dt;
+              s.y += Math.cos(now * (w.phase === "reel" ? 0.017 : 0.0035) + s.ph) * thrash * dt;
             }
           }
           continue;
@@ -857,20 +860,20 @@ export default function Pond({ city, onBucket }: { city: CityState; onBucket: ()
     w.bob.dip = 0;
     try {
       const info = await cast.mutateAsync(baitRef.current);
-      const spec = cityRef.current.species.filter((s) => info.length >= s.min_cm && info.length <= s.max_cm);
-      const pool = spec.length ? spec : cityRef.current.species;
-      const pick = pool[Math.floor(Math.random() * pool.length)];
       const far = randomWater();
       w.shadows = w.shadows.filter((s) => !s.target);
       w.shadows.forEach((s) => (s.interest = 0));
-      w.shadows.push(makeShadow(info.length, pick.shape, far.x, far.y, true));
+      w.shadows.push(makeShadow(info.length, info.shape as keyof typeof SHAPES, far.x, far.y, true));
       w.cast = info;
       w.t0 = performance.now();
       w.reduction = 0;
       w.lastJig = performance.now();
       w.lastRipple = performance.now();
-      setDifficulty(info.difficulty);
+      w.biteWindow = info.bite_window * 1000;
+      setFight({ difficulty: info.difficulty, strength: info.strength, dash: info.dash, head: 0 });
       addRipple(x, y, 50, 1200);
+      window.setTimeout(() => addRipple(x, y, 30, 900), 180);
+      window.setTimeout(() => addRipple(x, y, 18, 700), 360);
       setPhase("waiting");
     } catch {
       setPhase("idle");
@@ -899,6 +902,10 @@ export default function Pond({ city, onBucket }: { city: CityState; onBucket: ()
     const w = world.current;
     if (w.phase !== "bite") return;
     navigator.vibrate?.(40);
+    const react = performance.now() - w.biteAt;
+    const head = react < 450 ? 0.3 : react < 1000 ? 0.18 : 0.06;
+    if (react < 450) toast("Reazione fulminea!");
+    setFight((f) => ({ ...f, head }));
     setPhase("reel");
   };
 
@@ -957,7 +964,7 @@ export default function Pond({ city, onBucket }: { city: CityState; onBucket: ()
     idle: "Scegli l'esca e tocca un punto dell'acqua per lanciare.",
     casting: "Lancio in corso…",
     waiting: "Aspetta che abbocchi. Tocca un altro punto per muovere l'esca e attirare i pesci (ogni tanto).",
-    bite: "Abbocca! Tocca per tirare!",
+    bite: "Abbocca! Tocca subito per tirare: più sei veloce, più vantaggio hai!",
     reel: "Recupera il pesce!",
     result: "",
   };
@@ -973,7 +980,7 @@ export default function Pond({ city, onBucket }: { city: CityState; onBucket: ()
             </p>
           </div>
         )}
-        {phase === "reel" && <ReelGame difficulty={difficulty} onEnd={onReelEnd} />}
+        {phase === "reel" && <ReelGame difficulty={fight.difficulty} strength={fight.strength} dash={fight.dash} head={fight.head} onEnd={onReelEnd} />}
       </div>
 
       <div className="border-t border-[#30363D] bg-[#161B22] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
