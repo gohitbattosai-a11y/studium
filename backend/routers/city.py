@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from pymongo.errors import DuplicateKeyError
 
 from lib.db import db
-from lib.fish import BAITS, BAITS_BY_ID, BUCKET_LIMIT, SPECIES, SPECIES_BY_ID, bite_delay, pick_fish
+from lib.fish import BAITS, BAITS_BY_ID, BUCKET_LIMIT, SPECIES, SPECIES_BY_ID, bite_delay, fight_profile, pick_fish
 from lib.gate import feature_gate
 from lib.security import new_id, now_iso
 
@@ -71,6 +71,10 @@ class CastOut(BaseModel):
     bite_in: float
     difficulty: int
     length: float
+    shape: str
+    strength: float
+    dash: float
+    bite_window: float
 
 
 class ReelRequest(BaseModel):
@@ -174,7 +178,8 @@ async def cast_line(body: CastRequest, member: dict = Depends(city_member)):
         "created": time.time(),
     }
     await db.fish_casts.replace_one({"member_id": member["id"]}, doc, upsert=True)
-    return CastOut(cast_id=doc["id"], bite_in=wait, difficulty=species["difficulty"], length=length)
+    fight = fight_profile(species, length)
+    return CastOut(cast_id=doc["id"], bite_in=wait, difficulty=species["difficulty"], length=length, shape=species["shape"], **fight)
 
 
 @router.post("/fishing/reel", response_model=ReelOut)
