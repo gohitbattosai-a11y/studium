@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils/cn";
 import { useNow } from "@/lib/runtime/useNow";
 import { FORMATIONS, FORMATION_LIST, SQUAD_MAX, STAT_KEYS, STAT_LABEL, TRAIN, autoLineup, lineup, sellPlayer, sellPrice, setFormation, setSlot, strength, train, trainCost, trainSeconds, type Player, type StadiumState, type Team, type TrainKind } from "@/lib/domain/football";
 import PlayerCard, { tierName } from "./PlayerCard";
+import { stadiumArt } from "@/lib/art/stadiumAssets";
 
 const eur = (n: number) => `€${n.toFixed(1)}M`;
 const run = (fn: () => string | null, ok?: string) => {
@@ -145,20 +146,7 @@ export default function Squad({ s, team }: { s: StadiumState; team: Team }) {
         </Button>
       </div>
       <div className="relative mx-auto w-full max-w-md overflow-hidden rounded-2xl border border-[#30363D]" style={{ aspectRatio: "3 / 4" }}>
-        <svg viewBox="0 0 300 400" className="absolute inset-0 size-full" preserveAspectRatio="none" aria-hidden>
-          {Array.from({ length: 8 }, (_, i) => (
-            <rect key={i} y={i * 50} width="300" height="50" fill={i % 2 ? "#33a04f" : "#2c9246"} />
-          ))}
-          <g fill="none" stroke="#ffffff" strokeWidth="1.6" opacity="0.7">
-            <rect x="10" y="10" width="280" height="380" />
-            <path d="M10 200 H290" />
-            <circle cx="150" cy="200" r="38" />
-            <rect x="75" y="10" width="150" height="62" />
-            <rect x="75" y="328" width="150" height="62" />
-            <rect x="115" y="10" width="70" height="24" />
-            <rect x="115" y="366" width="70" height="24" />
-          </g>
-        </svg>
+        <span className="absolute inset-0 block [&>svg]:size-full" aria-hidden dangerouslySetInnerHTML={{ __html: stadiumArt("lineup-pitch") }} />
         {f.map(([pos, x, y], i) => {
           const slot = slots[i];
           return (
