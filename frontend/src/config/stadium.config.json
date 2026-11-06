@@ -1,0 +1,52 @@
+{
+  "economy": {
+    "startBudget": 100,
+    "squadMax": 24,
+    "squadMin": 11,
+    "sellRatio": 0.7,
+    "teamPriceRatio": 0.85,
+    "prizes": [20, 12, 8, 5, 3, 3, 2, 2]
+  },
+  "price": {
+    "base": 0.8,
+    "pivot": 50,
+    "exponent": 6
+  },
+  "training": {
+    "costBase": 0.2,
+    "costPerOvr": 0.01,
+    "secondsBase": 25,
+    "secondsPerOvr": 0.3333
+  },
+  "tiers": [
+    { "id": "bronzo", "name": "Bronzo", "min": 0 },
+    { "id": "argento", "name": "Argento", "min": 65 },
+    { "id": "oro", "name": "Oro", "min": 75 },
+    { "id": "elite", "name": "Élite", "min": 85 }
+  ],
+  "random": {
+    "enabled": true,
+    "market": { "POR": 12, "DIF": 38, "CEN": 40, "ATT": 30 },
+    "marketOvrMin": 44,
+    "marketOvrSpread": 46,
+    "botOvrMin": 58,
+    "botOvrMax": 72
+  },
+  "teamColors": ["#E11D48", "#2563EB", "#16A34A", "#F59E0B", "#8B5CF6", "#0EA5E9", "#F97316", "#14B8A6"],
+  "match": {
+    "secondsPerMinute": 3,
+    "speeds": [1, 2, 4, 8],
+    "defaultSpeed": 2,
+    "playerSpeed": 8.4,
+    "gkSpeed": 7.2,
+    "dribbleSpeed": 6,
+    "passSpeed": 17,
+    "shotSpeed": 27,
+    "minSeparation": 3.3,
+    "intervalSeconds": 7,
+    "celebrationSeconds": 2.6,
+    "gkColors": ["#F59E0B", "#A3E635"],
+    "awayAlt": "#F8FAFC",
+    "clashDistance": 90
+  }
+}

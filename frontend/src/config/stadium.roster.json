@@ -1,0 +1,30 @@
+[
+  {
+    "id": "fenomeno",
+    "name": "Mattia Fenomeno",
+    "pos": "ATT",
+    "ovr": 91,
+    "pot": 97,
+    "price": 38,
+    "card": "fenomeno",
+    "skin": "#e0a97f",
+    "hair": "#c9a24b",
+    "hairStyle": 1
+  },
+  {
+    "id": "muro",
+    "name": "Diego Muro",
+    "pos": "DIF",
+    "ovr": 86,
+    "pot": 90,
+    "team": "market"
+  },
+  {
+    "id": "gatto",
+    "name": "Hugo Gatto",
+    "pos": "POR",
+    "ovr": 88,
+    "pot": 93,
+    "stats": { "dif": 93 }
+  }
+]
