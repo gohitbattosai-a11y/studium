@@ -114,3 +114,11 @@ def pick_fish(bait: dict) -> tuple[dict, float]:
 def bite_delay(bait: dict) -> float:
     low, high = bait["wait"]
     return round(_rng.uniform(low, high), 1)
+
+
+def fight_profile(species: dict, length: float) -> dict:
+    span = max(species["max"] - species["min"], 1)
+    strength = round(min(1.0, max(0.0, (length - species["min"]) / span)), 2)
+    dash = round(min(1.0, 0.15 + species["difficulty"] * 0.08 + strength * 0.2), 2)
+    window = round(min(3.0, max(1.6, 3.2 - species["difficulty"] * 0.15)), 1)
+    return {"strength": strength, "dash": dash, "bite_window": window}
