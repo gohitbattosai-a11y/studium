@@ -1,0 +1,160 @@
+import { useState, type FormEvent } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { Megaphone, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { apiDelete, apiPost } from "@/lib/api/client";
+import { queryClient } from "@/lib/api/queryClient";
+import { useNotices } from "@/lib/api/queries";
+import { errMsg, formatDay, relTime } from "@/lib/utils/format";
+import type { Me, Notice, NoticeCreate, NoticeTag } from "@/lib/api/types";
+import { cn } from "@/lib/utils/cn";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Avatar, EmptyState, LoadError, NOTICE_TAG_STYLE, SectionHeader, Segmented, SkeletonList } from "@/components/common";
+
+export default function NoticesPanel({ me }: { me: Me }) {
+  const notices = useNotices();
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [tag, setTag] = useState<NoticeTag>("avviso");
+  const [expiresAt, setExpiresAt] = useState("");
+
+  const create = useMutation({
+    mutationFn: (b: NoticeCreate) => apiPost<Notice>("/notices", b),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["notices"] });
+      toast.success("Avviso pubblicato in bacheca");
+      setTitle("");
+      setBody("");
+      setTag("avviso");
+      setExpiresAt("");
+      setOpen(false);
+    },
+    onError: (e) => toast.error(errMsg(e)),
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => apiDelete<{ ok: boolean }>(`/notices/${id}`),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["notices"] });
+      toast.success("Avviso eliminato");
+    },
+    onError: (e) => toast.error(errMsg(e)),
+  });
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    create.mutate({ title: title.trim(), body: body.trim(), tag, expires_at: expiresAt || null });
+  };
+
+  const list = notices.data ?? [];
+
+  return (
+    <div className="max-w-3xl">
+      <SectionHeader
+        title="Bacheca avvisi"
+        subtitle="Comunicazioni trasparenti per tutta la classe."
+        testId="notices"
+        action={
+          <Button onClick={() => setOpen(true)} className="h-9 gap-1.5" data-testid="add-notice-button">
+            <Plus className="size-4" /> <span className="hidden sm:inline">Nuovo avviso</span><span className="sm:hidden">Nuovo</span>
+          </Button>
+        }
+      />
+
+      {notices.isPending ? (
+        <SkeletonList />
+      ) : notices.isError ? (
+        <LoadError testId="notices-error" />
+      ) : list.length === 0 ? (
+        <EmptyState icon={<Megaphone className="size-5" />} title="Bacheca vuota" hint="Pubblica il primo avviso." testId="notices-empty" />
+      ) : (
+        <ol className="relative space-y-4 border-l border-[#30363D] pl-5 md:pl-7" data-testid="notices-list">
+          {list.map((n) => (
+            <li key={n.id} className="relative" data-testid={`notice-card-${n.id}`}>
+              <span className={cn("absolute top-5 -left-[25px] size-2.5 rounded-full ring-4 ring-[#0D1117] md:-left-[33px]", n.tag === "urgente" ? "bg-[#FF7B72]" : n.tag === "info" ? "bg-[#BC8CFF]" : "bg-[#388BFD]")} />
+              <article className={cn("rounded-lg border border-[#30363D] bg-[#161B22] p-4 md:p-5", n.expired && "opacity-60")}>
+                <div className="flex items-center gap-2.5">
+                  <Avatar name={n.author} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium" data-testid={`notice-author-${n.id}`}>{n.author}</p>
+                    <p className="text-xs text-[#8B949E]">
+                      {relTime(n.created_at)}
+                      {!n.expired && n.expires_at ? ` · scade ${formatDay(n.expires_at)}` : ""}
+                    </p>
+                  </div>
+                  {n.expired && (
+                    <span className="rounded border border-[#FF7B72]/25 bg-[#3D1316] px-1.5 py-0.5 text-xs text-[#FFA198]" data-testid={`notice-expired-${n.id}`}>Scaduto</span>
+                  )}
+                  <span className={cn("rounded border px-1.5 py-0.5 text-xs", NOTICE_TAG_STYLE[n.tag].cls)}>{NOTICE_TAG_STYLE[n.tag].label}</span>
+                  {me.role === "admin" && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label="Elimina avviso"
+                      disabled={remove.isPending}
+                      onClick={() => window.confirm("Eliminare questo avviso?") && remove.mutate(n.id)}
+                      data-testid={`notice-delete-${n.id}`}
+                    >
+                      <Trash2 className="size-4 text-[#8B949E]" />
+                    </Button>
+                  )}
+                </div>
+                <h3 className="mt-3 text-[16px] font-semibold tracking-tight" data-testid={`notice-title-${n.id}`}>{n.title}</h3>
+                <p className="mt-1.5 text-[15px] leading-relaxed whitespace-pre-wrap text-[#C9D1D9]">{n.body}</p>
+              </article>
+            </li>
+          ))}
+        </ol>
+      )}
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-md" data-testid="notice-dialog">
+          <form onSubmit={submit}>
+            <DialogHeader>
+              <DialogTitle>Nuovo avviso</DialogTitle>
+              <DialogDescription>Resterà in bacheca, visibile a tutti, con il tuo nome.</DialogDescription>
+            </DialogHeader>
+            <div className="my-5 space-y-4">
+              <div className="space-y-1.5">
+                <Label>Tipo</Label>
+                <Segmented
+                  value={tag}
+                  onChange={setTag}
+                  testId="notice-tag"
+                  className="w-full"
+                  options={[
+                    { value: "avviso", label: "Avviso", activeClass: NOTICE_TAG_STYLE.avviso.cls },
+                    { value: "urgente", label: "Urgente", activeClass: NOTICE_TAG_STYLE.urgente.cls },
+                    { value: "info", label: "Info", activeClass: NOTICE_TAG_STYLE.info.cls },
+                  ]}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="notice-title">Titolo</Label>
+                <Input id="notice-title" value={title} onChange={(e) => setTitle(e.target.value)} required minLength={2} maxLength={120} placeholder="es. Cambio aula" data-testid="notice-title-input" />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="notice-body">Messaggio</Label>
+                <Textarea id="notice-body" value={body} onChange={(e) => setBody(e.target.value)} required rows={4} maxLength={2000} placeholder="Scrivi il messaggio per la classe…" data-testid="notice-body-input" />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="notice-expires">Scadenza (facoltativa)</Label>
+                <Input id="notice-expires" type="date" min={me.today} value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} data-testid="notice-expires-input" />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)} data-testid="notice-cancel-button">Chiudi</Button>
+              <Button type="submit" disabled={create.isPending} data-testid="notice-submit-button">{create.isPending ? "Pubblico…" : "Pubblica"}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

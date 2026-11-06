@@ -1,0 +1,28 @@
+.sc-road { animation: sc-road 0.7s linear infinite; }
+.sc-wheel { animation: sc-spin 0.5s linear infinite; transform-box: fill-box; transform-origin: center; }
+.sc-flame { animation: sc-flame 0.18s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: right center; }
+.sc-rflame { animation: sc-rflame 0.16s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center top; }
+.sc-shake { animation: sc-shake 0.45s ease-in-out; }
+.sc-boost { animation: sc-boost 0.6s ease-out; }
+.sc-bob { animation: sc-bob 0.6s ease-in-out infinite alternate; }
+.sc-hit { animation: sc-hit 0.5s ease-in-out; transform-box: fill-box; transform-origin: center; }
+.sc-twinkle { animation: sc-twinkle 2.4s ease-in-out infinite; }
+.sc-sun { animation: sc-spin 18s linear infinite; transform-box: fill-box; transform-origin: center; }
+.sc-bloom { animation: sc-bloom 1.4s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center; }
+.sc-drop { animation: sc-drop 0.8s ease-in; }
+
+@keyframes sc-road { to { stroke-dashoffset: -40; } }
+@keyframes sc-spin { to { transform: rotate(360deg); } }
+@keyframes sc-flame { from { transform: scaleX(0.7); opacity: 0.7; } to { transform: scaleX(1.25); opacity: 1; } }
+@keyframes sc-rflame { from { transform: scaleY(0.7); } to { transform: scaleY(1.3); } }
+@keyframes sc-shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-5px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+@keyframes sc-boost { 0% { transform: translateX(-6px); } 50% { transform: translateX(6px); } 100% { transform: translateX(0); } }
+@keyframes sc-bob { from { transform: translateY(0); } to { transform: translateY(-3px); } }
+@keyframes sc-hit { 0%, 100% { transform: scale(1); filter: none; } 30% { transform: scale(1.12) rotate(4deg); filter: brightness(2); } 60% { transform: scale(0.94) rotate(-4deg); } }
+@keyframes sc-twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+@keyframes sc-bloom { from { transform: scale(0.9); } to { transform: scale(1.1); } }
+@keyframes sc-drop { from { transform: translateY(-30px); opacity: 1; } to { transform: translateY(30px); opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .sc-road, .sc-wheel, .sc-flame, .sc-rflame, .sc-shake, .sc-boost, .sc-bob, .sc-hit, .sc-twinkle, .sc-sun, .sc-bloom, .sc-drop { animation: none; }
+}
