@@ -1,0 +1,166 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <radialGradient id="sh" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#000000" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="velvet" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7c3fc0"/>
+      <stop offset="0.55" stop-color="#4a2184"/>
+      <stop offset="1" stop-color="#2a1052"/>
+    </linearGradient>
+    <linearGradient id="velvetlid" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9457d8"/>
+      <stop offset="1" stop-color="#4f2590"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff3b0"/>
+      <stop offset="0.35" stop-color="#fcd34d"/>
+      <stop offset="0.75" stop-color="#e29a12"/>
+      <stop offset="1" stop-color="#a8590c"/>
+    </linearGradient>
+    <linearGradient id="goldv" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fff3b0"/>
+      <stop offset="0.3" stop-color="#fcd34d"/>
+      <stop offset="0.75" stop-color="#e29a12"/>
+      <stop offset="1" stop-color="#a8590c"/>
+    </linearGradient>
+    <linearGradient id="shade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#12052a" stop-opacity="0.35"/>
+      <stop offset="0.3" stop-color="#12052a" stop-opacity="0"/>
+      <stop offset="0.75" stop-color="#12052a" stop-opacity="0"/>
+      <stop offset="1" stop-color="#12052a" stop-opacity="0.45"/>
+    </linearGradient>
+    <radialGradient id="ruby" cx="0.35" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#fecdd3"/>
+      <stop offset="0.35" stop-color="#fb4b6a"/>
+      <stop offset="1" stop-color="#8c0f2c"/>
+    </radialGradient>
+    <radialGradient id="sapph" cx="0.35" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#e0f2fe"/>
+      <stop offset="0.35" stop-color="#38b6f8"/>
+      <stop offset="1" stop-color="#12408f"/>
+    </radialGradient>
+    <radialGradient id="emer" cx="0.35" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#dcfce7"/>
+      <stop offset="0.35" stop-color="#34d37a"/>
+      <stop offset="1" stop-color="#0d6a36"/>
+    </radialGradient>
+    <radialGradient id="pearl" cx="0.35" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#d9d6ee"/>
+    </radialGradient>
+    <linearGradient id="beam" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" style="stop-color:var(--gc-color,#ffffff)" stop-opacity="0.95"/>
+      <stop offset="1" style="stop-color:var(--gc-color,#ffffff)" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" style="stop-color:var(--gc-color,#ffffff)" stop-opacity="0.95"/>
+      <stop offset="0.45" style="stop-color:var(--gc-color,#ffffff)" stop-opacity="0.45"/>
+      <stop offset="1" style="stop-color:var(--gc-color,#ffffff)" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="lidclip">
+      <path d="M30 110 V94 C30 62 60 44 100 44 C140 44 170 62 170 94 V110 Z"/>
+    </clipPath>
+    <clipPath id="sil">
+      <path d="M30 110 V94 C30 62 60 44 100 44 C140 44 170 62 170 94 V110 Z"/>
+      <path d="M34 108 H166 V166 Q166 178 154 178 H46 Q34 178 34 166 Z"/>
+    </clipPath>
+  </defs>
+
+  <ellipse cx="100" cy="180" rx="74" ry="9" fill="url(#sh)"/>
+
+  <g class="gc-body">
+    <rect x="30" y="170" width="140" height="9" rx="4.5" fill="url(#gold)" stroke="#a8590c" stroke-width="0.8"/>
+    <path d="M36 108 H164 V164 Q164 173 155 173 H45 Q36 173 36 164 Z" fill="url(#velvet)"/>
+    <path d="M36 108 H164 V164 Q164 173 155 173 H45 Q36 173 36 164 Z" fill="url(#shade)"/>
+    <rect x="58" y="118" width="84" height="46" rx="7" fill="#1d0a3d" opacity="0.5" stroke="url(#gold)" stroke-width="2.4"/>
+    <g fill="none" stroke="#fde68a" stroke-width="1.6" stroke-linecap="round" opacity="0.9">
+      <path d="M67 148 C65 134 83 133 83 142 C83 149 74 149 75 143"/>
+      <path d="M133 148 C135 134 117 133 117 142 C117 149 126 149 125 143"/>
+      <path d="M68 158 H82 M118 158 H132"/>
+    </g>
+    <g fill="#fde68a">
+      <path d="M62 128 l2.4 -3.4 l2.4 3.4 l-2.4 3.4 Z"/>
+      <path d="M133.2 128 l2.4 -3.4 l2.4 3.4 l-2.4 3.4 Z"/>
+    </g>
+    <path d="M100 119 Q119 123 119 135 Q119 152 100 162 Q81 152 81 135 Q81 123 100 119 Z" fill="url(#gold)" stroke="#a8590c" stroke-width="1.2"/>
+    <path d="M100 124 Q113 127 113 136 Q113 148 100 156 Q87 148 87 136 Q87 127 100 124 Z" fill="none" stroke="#fff3b0" stroke-width="0.9" opacity="0.8"/>
+    <circle cx="100" cy="139" r="8" fill="url(#ruby)" stroke="#8c4a0a" stroke-width="1.2"/>
+    <ellipse cx="97.4" cy="136" rx="2.6" ry="1.6" fill="#ffffff" opacity="0.8"/>
+    <path d="M100 150 l3 -4 l-3 -3 l-3 3 Z" fill="#fff3b0" opacity="0.9"/>
+    <rect x="36" y="108" width="15" height="65" rx="3" fill="url(#goldv)" stroke="#a8590c" stroke-width="0.8"/>
+    <rect x="149" y="108" width="15" height="65" rx="3" fill="url(#goldv)" stroke="#a8590c" stroke-width="0.8"/>
+    <rect x="38.2" y="110" width="2.2" height="61" rx="1.1" fill="#ffffff" opacity="0.6"/>
+    <rect x="151.2" y="110" width="2.2" height="61" rx="1.1" fill="#ffffff" opacity="0.45"/>
+    <g fill="#fff7c2" stroke="#a8590c" stroke-width="0.7">
+      <circle cx="43.5" cy="121" r="2.8"/><circle cx="43.5" cy="142" r="2.8"/><circle cx="43.5" cy="162" r="2.8"/>
+      <circle cx="156.5" cy="121" r="2.8"/><circle cx="156.5" cy="142" r="2.8"/><circle cx="156.5" cy="162" r="2.8"/>
+    </g>
+  </g>
+
+  <ellipse class="gc-mouth" cx="100" cy="108" rx="62" ry="9" fill="url(#glow)"/>
+  <path class="gc-beam" d="M40 108 L160 108 L218 -130 L-18 -130 Z" fill="url(#beam)"/>
+
+  <g class="gc-lid">
+    <path d="M30 110 V94 C30 62 60 44 100 44 C140 44 170 62 170 94 V110 Z" fill="url(#velvetlid)"/>
+    <g clip-path="url(#lidclip)">
+      <rect x="30" y="40" width="17" height="72" fill="url(#goldv)"/>
+      <rect x="153" y="40" width="17" height="72" fill="url(#goldv)"/>
+      <rect x="90" y="40" width="20" height="72" fill="url(#goldv)"/>
+      <rect x="32.4" y="40" width="2.4" height="72" fill="#ffffff" opacity="0.6"/>
+      <rect x="155.4" y="40" width="2.4" height="72" fill="#ffffff" opacity="0.45"/>
+      <rect x="92.4" y="40" width="2.4" height="72" fill="#ffffff" opacity="0.6"/>
+      <path d="M48 98 C54 74 74 58 100 56" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.28"/>
+      <path d="M30 44 H170 V60 C150 50 126 44 100 44 C74 44 50 50 30 60 Z" fill="#ffffff" opacity="0.1"/>
+    </g>
+    <path d="M30 110 V94 C30 62 60 44 100 44 C140 44 170 62 170 94 V110" fill="none" stroke="#a8590c" stroke-width="1.2" opacity="0.9"/>
+    <rect x="27" y="100" width="146" height="12" rx="5.5" fill="url(#gold)" stroke="#a8590c" stroke-width="0.9"/>
+    <rect x="30" y="101.6" width="140" height="2" rx="1" fill="#ffffff" opacity="0.5"/>
+    <g fill="#fff7c2" stroke="#a8590c" stroke-width="0.6">
+      <circle cx="40" cy="106.4" r="2.3"/><circle cx="56" cy="106.4" r="2.3"/><circle cx="72" cy="106.4" r="2.3"/>
+      <circle cx="128" cy="106.4" r="2.3"/><circle cx="144" cy="106.4" r="2.3"/><circle cx="160" cy="106.4" r="2.3"/>
+    </g>
+    <circle cx="100" cy="76" r="12.4" fill="url(#gold)" stroke="#a8590c" stroke-width="1.2"/>
+    <circle cx="100" cy="76" r="9" fill="url(#sapph)" stroke="#0d2f73" stroke-width="0.9"/>
+    <path d="M100 68 L106 76 L100 84 L94 76 Z" fill="#ffffff" opacity="0.22"/>
+    <ellipse cx="97" cy="72.2" rx="3" ry="1.8" fill="#ffffff" opacity="0.85"/>
+    <circle cx="38.5" cy="82" r="6.8" fill="url(#gold)" stroke="#a8590c" stroke-width="0.9"/>
+    <circle cx="38.5" cy="82" r="4.8" fill="url(#ruby)"/>
+    <ellipse cx="36.8" cy="80.2" rx="1.6" ry="1" fill="#ffffff" opacity="0.8"/>
+    <circle cx="161.5" cy="82" r="6.8" fill="url(#gold)" stroke="#a8590c" stroke-width="0.9"/>
+    <circle cx="161.5" cy="82" r="4.8" fill="url(#emer)"/>
+    <ellipse cx="159.8" cy="80.2" rx="1.6" ry="1" fill="#ffffff" opacity="0.8"/>
+    <circle cx="68" cy="92" r="3.6" fill="url(#pearl)" stroke="#b9b3dc" stroke-width="0.6"/>
+    <circle cx="132" cy="92" r="3.6" fill="url(#pearl)" stroke="#b9b3dc" stroke-width="0.6"/>
+    <circle cx="80" cy="74" r="2.6" fill="url(#pearl)" stroke="#b9b3dc" stroke-width="0.5"/>
+    <circle cx="120" cy="74" r="2.6" fill="url(#pearl)" stroke="#b9b3dc" stroke-width="0.5"/>
+    <g>
+      <path d="M88 108 H112 V121 Q112 126 107 126 H93 Q88 126 88 121 Z" fill="url(#gold)" stroke="#a8590c" stroke-width="1"/>
+      <circle cx="100" cy="114" r="3.6" fill="#3b1a06"/>
+      <path d="M98.6 115 H101.4 L102.2 120.4 H97.8 Z" fill="#3b1a06"/>
+    </g>
+  </g>
+
+  <ellipse class="gc-glow" cx="100" cy="110" rx="82" ry="18" fill="url(#glow)"/>
+  <rect class="gc-seam" x="38" y="108" width="124" height="3.6" rx="1.8" fill="#ffffff"/>
+
+  <g clip-path="url(#sil)">
+    <g transform="skewX(-20)">
+      <rect class="gc-shine" x="-30" y="30" width="26" height="170" fill="url(#shine)"/>
+    </g>
+  </g>
+
+  <g fill="#fff3c4">
+    <path class="gc-sparkle" style="animation-delay:-0.1s" d="M0 -7 L1.8 -1.8 L7 0 L1.8 1.8 L0 7 L-1.8 1.8 L-7 0 L-1.8 -1.8 Z" transform="translate(20 62)"/>
+    <path class="gc-sparkle" style="animation-delay:-0.7s" d="M0 -5.5 L1.4 -1.4 L5.5 0 L1.4 1.4 L0 5.5 L-1.4 1.4 L-5.5 0 L-1.4 -1.4 Z" transform="translate(182 70)"/>
+    <path class="gc-sparkle" style="animation-delay:-1.2s" d="M0 -6 L1.6 -1.6 L6 0 L1.6 1.6 L0 6 L-1.6 1.6 L-6 0 L-1.6 -1.6 Z" transform="translate(178 146)"/>
+    <path class="gc-sparkle" style="animation-delay:-1.8s" d="M0 -4.5 L1.1 -1.1 L4.5 0 L1.1 1.1 L0 4.5 L-1.1 1.1 L-4.5 0 L-1.1 -1.1 Z" transform="translate(14 140)"/>
+    <path class="gc-sparkle" style="animation-delay:-0.4s" d="M0 -4 L1 -1 L4 0 L1 1 L0 4 L-1 1 L-4 0 L-1 -1 Z" transform="translate(100 30)"/>
+  </g>
+</svg>
