@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { CFG, ROSTER, type RosterEntry } from "@/lib/domain/stadiumConfig";
 
 export type Pos = "POR" | "DIF" | "CEN" | "ATT";
 export type StatKey = "rit" | "tir" | "pas" | "dri" | "dif" | "fis";
@@ -16,6 +17,10 @@ export interface Player {
   goals: number;
   trained: number;
   training: { kind: TrainKind; end: number } | null;
+  price?: number;
+  priceAt?: number;
+  card?: string;
+  look?: { skin?: string; hair?: string; style?: number };
 }
 
 export interface Team {
@@ -41,6 +46,7 @@ export interface LogEntry {
   teamId: string;
   player: string;
   text: string;
+  variant?: string;
 }
 
 export interface Fixture {
@@ -83,13 +89,13 @@ export interface Slot {
   pos: Pos;
 }
 
-export const START_BUDGET = 100;
-export const SQUAD_MAX = 24;
-export const SQUAD_MIN = 11;
+export const START_BUDGET = CFG.economy.startBudget;
+export const SQUAD_MAX = CFG.economy.squadMax;
+export const SQUAD_MIN = CFG.economy.squadMin;
 export const TEAMS = 8;
 export const TOTAL_DAYS = (TEAMS - 1) * 2;
 export const MARKET_SIZE = 120;
-export const COLORS = ["#E11D48", "#2563EB", "#16A34A", "#F59E0B", "#8B5CF6", "#0EA5E9", "#F97316", "#14B8A6"];
+export const COLORS = CFG.teamColors;
 export const POS_LABEL: Record<Pos, string> = { POR: "Portiere", DIF: "Difensore", CEN: "Centrocampista", ATT: "Attaccante" };
 export const POS_ORDER: Pos[] = ["POR", "DIF", "CEN", "ATT"];
 export const STAT_KEYS: StatKey[] = ["rit", "tir", "pas", "dri", "dif", "fis"];
@@ -124,7 +130,7 @@ const OFFSETS: Record<Pos, Stats> = {
 const AW: Record<Pos, number> = { ATT: 1, CEN: 0.5, DIF: 0.1, POR: 0 };
 const DW: Record<Pos, number> = { POR: 1.5, DIF: 1, CEN: 0.5, ATT: 0.05 };
 const GW: Record<Pos, number> = { ATT: 6, CEN: 2.5, DIF: 0.8, POR: 0 };
-const PRIZES = [20, 12, 8, 5, 3, 3, 2, 2];
+const PRIZES = CFG.economy.prizes;
 const FIRST = ["Luca", "Marco", "Matteo", "Andrea", "Davide", "Simone", "Federico", "Alessio", "Giorgio", "Riccardo", "Tommaso", "Nicolò", "Edoardo", "Filippo", "Samuele", "Lorenzo", "Gabriele", "Emanuele", "Stefano", "Diego", "Pietro", "Jacopo", "Mattia", "Leonardo", "Carlos", "Mateo", "Hugo", "Lucas", "Noah", "Kylian", "Jules", "Thomas", "Yannick", "Joshua", "Emre", "Karim", "Omar", "Sven", "Jonas", "Rafael"];
 const LAST = ["Rossi", "Bianchi", "Ferrari", "Esposito", "Romano", "Colombo", "Ricci", "Marino", "Greco", "Bruno", "Gallo", "Conti", "De Luca", "Costa", "Giordano", "Mancini", "Rizzo", "Lombardi", "Moretti", "Barbieri", "Fontana", "Santoro", "Mariani", "Rinaldi", "Caruso", "Ferraro", "Galli", "Martini", "Leone", "Longo", "Silva", "Garcia", "Lopez", "Dubois", "Martin", "Müller", "Schmidt", "Kovač", "Nowak", "Haddad", "Yilmaz", "Santos", "Oliveira", "Costa Lima", "Moreau", "Bernard", "Fischer", "Novak", "Petrov", "Jansen"];
 const BOT_NAMES = ["Real Studium", "Atletico Banco", "Inter Compiti", "Dinamo Cattedra", "Juve Lavagna", "Sporting Quaderno", "Borussia Zaino", "Milan Ricreazione", "Olimpia Interrogati", "Torino Verifica", "Napoli Appunti", "Roma Merenda"];
@@ -137,11 +143,12 @@ let seq = 0;
 const uid = (p: string) => `${p}${++seq}${Math.random().toString(36).slice(2, 6)}`;
 
 export const calcOvr = (pos: Pos, st: Stats) => Math.round(STAT_KEYS.reduce((s, k) => s + WEIGHTS[pos][k] * st[k], 0));
-export const priceOf = (ovr: number) => round1(Math.pow(ovr / 50, 6) * 0.8);
-export const sellPrice = (p: Player) => round1(priceOf(p.ovr) * 0.7);
-export const teamPrice = (t: Team) => round1(t.players.reduce((s, p) => s + priceOf(p.ovr), 0) * 0.85);
-export const trainCost = (p: Player) => round1(0.2 + p.ovr / 100);
-export const trainSeconds = (p: Player) => 25 + Math.round(p.ovr / 3);
+export const priceOf = (ovr: number) => round1(Math.pow(ovr / CFG.price.pivot, CFG.price.exponent) * CFG.price.base);
+export const playerPrice = (p: Player) => (p.price !== undefined && p.priceAt === p.ovr ? p.price : priceOf(p.ovr));
+export const sellPrice = (p: Player) => round1(playerPrice(p) * CFG.economy.sellRatio);
+export const teamPrice = (t: Team) => round1(t.players.reduce((s, p) => s + playerPrice(p), 0) * CFG.economy.teamPriceRatio);
+export const trainCost = (p: Player) => round1(CFG.training.costBase + p.ovr * CFG.training.costPerOvr);
+export const trainSeconds = (p: Player) => CFG.training.secondsBase + Math.round(p.ovr * CFG.training.secondsPerOvr);
 
 function mkStats(pos: Pos, ovr: number): Stats {
   const raw = {} as Stats;
@@ -156,6 +163,30 @@ function mkPlayer(pos: Pos, ovr: number): Player {
   const stats = mkStats(pos, clamp(ovr, 40, 92));
   const o = calcOvr(pos, stats);
   return { id: uid("p"), name: `${pick(FIRST)} ${pick(LAST)}`, pos, ovr: o, pot: clamp(o + rnd(2, 14), o, 99), stats, goals: 0, trained: -1, training: null };
+}
+
+function fromRoster(r: RosterEntry): Player {
+  const ovr = clamp(Math.round(r.ovr), 30, 99);
+  const stats = mkStats(r.pos, clamp(ovr, 40, 92));
+  (Object.keys(r.stats ?? {}) as StatKey[]).forEach((k) => {
+    const v = r.stats?.[k];
+    if (typeof v === "number") stats[k] = clamp(Math.round(v), 20, 99);
+  });
+  return {
+    id: r.id,
+    name: r.name,
+    pos: r.pos,
+    ovr,
+    pot: clamp(Math.round(r.pot ?? ovr + rnd(2, 8)), ovr, 99),
+    stats,
+    goals: 0,
+    trained: -1,
+    training: null,
+    price: r.price,
+    priceAt: r.price !== undefined ? ovr : undefined,
+    card: r.card,
+    look: r.skin || r.hair || r.hairStyle !== undefined ? { skin: r.skin, hair: r.hair, style: r.hairStyle } : undefined,
+  };
 }
 
 function mkSquad(base: number): Player[] {
@@ -199,15 +230,24 @@ function fillEmpty(t: Team) {
 }
 
 function mkBot(name: string): Team {
-  const players = mkSquad(rnd(58, 72));
+  const players = mkSquad(rnd(CFG.random.botOvrMin, CFG.random.botOvrMax));
+  ROSTER.filter((r) => r.team === name).forEach((r) => {
+    const worst = players.filter((p) => p.pos === r.pos).sort((a, b) => a.ovr - b.ovr)[0];
+    const at = worst ? players.indexOf(worst) : -1;
+    if (at >= 0) players[at] = fromRoster(r);
+    else players.push(fromRoster(r));
+  });
   return { id: uid("t"), name, color: pick(COLORS), players, mine: false, formation: "4-3-3", xi: autoXI(players, "4-3-3") };
 }
 
-function mkMarket(): Player[] {
-  const plan: [Pos, number][] = [["POR", 12], ["DIF", 38], ["CEN", 40], ["ATT", 30]];
-  const list = plan.flatMap(([pos, n]) => Array.from({ length: n }, () => mkPlayer(pos, Math.round(44 + Math.pow(Math.random(), 2.3) * 46))));
-  return list.sort((a, b) => b.ovr - a.ovr);
+function mkMarket(owned: Set<string> = new Set()): Player[] {
+  const plan = (Object.entries(CFG.random.market) as [Pos, number][]).filter(() => CFG.random.enabled);
+  const list = plan.flatMap(([pos, n]) => Array.from({ length: n }, () => mkPlayer(pos, Math.round(CFG.random.marketOvrMin + Math.pow(Math.random(), 2.3) * CFG.random.marketOvrSpread))));
+  const fixed = ROSTER.filter((r) => !owned.has(r.id)).map(fromRoster);
+  return [...list, ...fixed].sort((a, b) => b.ovr - a.ovr);
 }
+
+const ownedIds = (s: StadiumState) => new Set(s.teams.flatMap((t) => t.players.map((p) => p.id)));
 
 function schedule(ids: string[]): Fixture[] {
   const n = ids.length;
@@ -231,7 +271,9 @@ function schedule(ids: string[]): Fixture[] {
 
 function fresh(): StadiumState {
   const names = [...BOT_NAMES].sort(() => Math.random() - 0.5).slice(0, TEAMS - 1);
-  return { budget: START_BUDGET, myId: null, teams: names.map(mkBot), market: mkMarket(), fixtures: [], day: 0, season: 1, champion: null, rewarded: false, prize: 0 };
+  const s: StadiumState = { budget: START_BUDGET, myId: null, teams: names.map(mkBot), market: [], fixtures: [], day: 0, season: 1, champion: null, rewarded: false, prize: 0 };
+  s.market = mkMarket(ownedIds(s));
+  return s;
 }
 
 export function lineup(team: Team): Slot[] {
@@ -275,15 +317,38 @@ const shooter = (team: Team) => {
   };
 };
 
-const anyPlayer = (team: Team) => pick(lineup(team).filter((s) => s.player)).player as Player;
+const anyPlayer = (team: Team) => {
+  const field = lineup(team).filter((s) => s.player && s.pos !== "POR");
+  return pick(field.length ? field : lineup(team).filter((s) => s.player)).player as Player;
+};
 
 const GOAL_T = [
   (p: string, t: string) => `GOL! ${p} la mette dentro per ${t}!`,
   (p: string, t: string) => `Rete di ${p}! ${t} colpisce!`,
   (p: string, t: string) => `${p} non sbaglia: gol per ${t}!`,
 ];
-const SAVE_T = [(p: string) => `${p} calcia forte, ma il portiere si salva!`, (p: string) => `Tiro di ${p}: grande parata!`];
-const OFF_T = [(p: string) => `${p} ci prova, palla fuori di poco.`, (p: string) => `Conclusione di ${p} che sorvola la traversa.`];
+const SAVE_T = [
+  { v: "parry", t: (p: string) => `${p} calcia forte, ma il portiere respinge!` },
+  { v: "parry", t: (p: string) => `Tiro di ${p}: grande parata!` },
+  { v: "caught", t: (p: string) => `Tiro di ${p}: presa sicura del portiere.` },
+];
+const OFF_T = [
+  { v: "wide", t: (p: string) => `${p} ci prova, palla fuori di poco.` },
+  { v: "over", t: (p: string) => `Conclusione di ${p} che sorvola la traversa.` },
+];
+const MINUTE_ZONES: [number, number][] = [[4, 40], [50, 85]];
+const MIN_GAP = 4;
+
+function takeMinute(taken: number[], gap: number): number | null {
+  const pool: number[] = [];
+  MINUTE_ZONES.forEach(([a, b]) => {
+    for (let m = a; m <= b; m++) if (taken.every((x) => Math.abs(x - m) >= gap)) pool.push(m);
+  });
+  if (!pool.length) return null;
+  const m = pick(pool);
+  taken.push(m);
+  return m;
+}
 
 function simulate(f: Fixture, teams: Map<string, Team>) {
   const h = teams.get(f.home) as Team;
@@ -296,32 +361,45 @@ function simulate(f: Fixture, teams: Map<string, Team>) {
   f.ag = poisson(la);
   const goals: MatchEvent[] = [];
   const raw: Omit<LogEntry, "id">[] = [];
-  const side = (team: Team, g: number, lam: number) => {
+  const taken: number[] = [];
+  const sides: [Team, number, number][] = [[h, f.hg, lh], [a, f.ag, la]];
+  sides.forEach(([team, g]) => {
     const shoot = shooter(team);
     for (let i = 0; i < g; i++) {
       const p = shoot();
       if (p) p.goals += 1;
-      const min = rnd(1, 90);
+      const min = takeMinute(taken, MIN_GAP) ?? takeMinute(taken, 2) ?? takeMinute(taken, 1) ?? rnd(4, 40);
       const name = p?.name ?? "Sconosciuto";
       goals.push({ min, teamId: team.id, player: name });
       raw.push({ min, type: "goal", teamId: team.id, player: name, text: pick(GOAL_T)(name, team.name) });
     }
-    const chances = clamp(Math.round(lam * 2.2 + rnd(1, 3)), 2, 9);
+  });
+  sides.forEach(([team, , lam]) => {
+    const shoot = shooter(team);
+    const chances = clamp(Math.round(lam * 1.3 + rnd(0, 2)), 1, 5);
     for (let i = 0; i < chances; i++) {
       const p = shoot();
-      if (!p) continue;
+      const min = takeMinute(taken, MIN_GAP);
+      if (!p || min === null) continue;
       const r = Math.random();
-      const type: LogType = r < 0.5 ? "save" : r < 0.65 ? "post" : "off";
-      const text = type === "save" ? pick(SAVE_T)(p.name) : type === "post" ? `Palo clamoroso di ${p.name}!` : pick(OFF_T)(p.name);
-      raw.push({ min: rnd(2, 89), type, teamId: team.id, player: p.name, text });
+      if (r < 0.5) {
+        const v = pick(SAVE_T);
+        raw.push({ min, type: "save", teamId: team.id, player: p.name, text: v.t(p.name), variant: v.v });
+      } else if (r < 0.65) raw.push({ min, type: "post", teamId: team.id, player: p.name, text: `Palo clamoroso di ${p.name}!` });
+      else {
+        const v = pick(OFF_T);
+        raw.push({ min, type: "off", teamId: team.id, player: p.name, text: v.t(p.name), variant: v.v });
+      }
     }
+  });
+  sides.forEach(([team]) => {
     for (let i = rnd(0, 2); i > 0; i--) {
+      const min = takeMinute(taken, MIN_GAP);
+      if (min === null) break;
       const p = anyPlayer(team);
-      raw.push({ min: rnd(5, 88), type: "yellow", teamId: team.id, player: p.name, text: `Cartellino giallo per ${p.name} (${team.name}).` });
+      raw.push({ min, type: "yellow", teamId: team.id, player: p.name, text: `Cartellino giallo per ${p.name} (${team.name}).` });
     }
-  };
-  side(h, f.hg, lh);
-  side(a, f.ag, la);
+  });
   const h1 = goals.filter((g) => g.min <= 45 && g.teamId === h.id).length;
   const a1 = goals.filter((g) => g.min <= 45 && g.teamId === a.id).length;
   const order = (e: Omit<LogEntry, "id">) => (e.type === "kickoff" ? -1 : e.type === "half" || e.type === "end" ? 1 : 0);
@@ -431,7 +509,7 @@ export function buyPlayer(pid: string): string | null {
   const p = state.market.find((x) => x.id === pid);
   if (!p) return "Giocatore non disponibile";
   if (mine.players.length >= SQUAD_MAX) return `Rosa piena (massimo ${SQUAD_MAX} giocatori)`;
-  const price = priceOf(p.ovr);
+  const price = playerPrice(p);
   if (state.budget < price) return `Budget insufficiente: servono €${price.toFixed(1)}M`;
   const s = structuredClone(state);
   const t = myTeam(s) as Team;
@@ -459,7 +537,7 @@ export function sellPlayer(pid: string): string | null {
 }
 
 export function refreshMarket(): string | null {
-  commit({ ...state, market: mkMarket() });
+  commit({ ...state, market: mkMarket(ownedIds(state)) });
   return null;
 }
 
@@ -626,7 +704,7 @@ export function newSeason(): string | null {
   s.champion = null;
   s.rewarded = false;
   s.prize = 0;
-  s.market = mkMarket();
+  s.market = mkMarket(ownedIds(s));
   commit(s);
   return null;
 }
