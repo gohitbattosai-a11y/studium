@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils/cn";
 import { useNow } from "@/lib/runtime/useNow";
-import { COLORS, POS_ORDER, SQUAD_MAX, SQUAD_MIN, TOTAL_DAYS, TRAIN, addBudget, collectTraining, getStadium, buyPlayer, buyTeam, createTeam, isReady, myTeam, newSeason, playDay, playSeason, priceOf, refreshMarket, resetStadium, resetTraining, strength, table, teamPrice, train, trainCost, trainSeconds, trainTeam, useStadium, type Fixture, type Player, type Pos, type StadiumState, type Team, type TrainKind } from "@/lib/domain/football";
+import { COLORS, POS_ORDER, SQUAD_MAX, SQUAD_MIN, TOTAL_DAYS, TRAIN, addBudget, collectTraining, getStadium, buyPlayer, buyTeam, createTeam, isReady, myTeam, newSeason, playDay, playSeason, playerPrice, refreshMarket, resetStadium, resetTraining, strength, table, teamPrice, train, trainCost, trainSeconds, trainTeam, useStadium, type Fixture, type Player, type Pos, type StadiumState, type Team, type TrainKind } from "@/lib/domain/football";
 import { StadiumBack } from "./Landmarks";
 import LiveMatch from "./LiveMatch";
 import PlayerCard from "./PlayerCard";
@@ -241,7 +241,7 @@ function MarketView({ s, team }: { s: StadiumState; team: Team }) {
   const [limit, setLimit] = useState(24);
   const list = useMemo(() => {
     const l = s.market.filter((p) => (f === "ALL" || p.pos === f) && p.name.toLowerCase().includes(q.trim().toLowerCase()));
-    return order === "ovr" ? l : [...l].sort((a, b) => priceOf(a.ovr) - priceOf(b.ovr));
+    return order === "ovr" ? l : [...l].sort((a, b) => playerPrice(a) - playerPrice(b));
   }, [s.market, f, q, order]);
   return (
     <div>
@@ -268,8 +268,8 @@ function MarketView({ s, team }: { s: StadiumState; team: Team }) {
         {list.slice(0, limit).map((p) => (
           <div key={p.id} className="flex flex-col items-center gap-1">
             <PlayerCard p={p} size={0.9} color={team.color} />
-            <Button size="sm" className="w-full max-w-[90px]" disabled={s.budget < priceOf(p.ovr) || team.players.length >= SQUAD_MAX} onClick={() => run(() => buyPlayer(p.id))}>
-              {eur(priceOf(p.ovr))}
+            <Button size="sm" className="w-full max-w-[90px]" disabled={s.budget < playerPrice(p) || team.players.length >= SQUAD_MAX} onClick={() => run(() => buyPlayer(p.id))}>
+              {eur(playerPrice(p))}
             </Button>
           </div>
         ))}
