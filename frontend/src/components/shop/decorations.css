@@ -1,0 +1,263 @@
+.dc-spin {
+  animation: dc-spin 9s linear infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.dc-spin-slow {
+  animation: dc-spin 16s linear infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.dc-spin-fast {
+  animation: dc-spin 4s linear infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.dc-spin-rev {
+  animation: dc-spin 22s linear infinite reverse;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.dc-flame {
+  animation: dc-flame 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite alternate;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+.dc-flicker {
+  animation: dc-flicker 2.2s ease-in-out infinite;
+}
+
+.dc-twinkle {
+  animation: dc-twinkle 2s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.dc-blink {
+  animation: dc-blink 1.2s ease-in-out infinite;
+}
+
+.dc-flap {
+  animation: dc-flap 0.4s ease-in-out infinite alternate;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.dc-cyber-glitch-layer {
+  animation: dc-cyber-glitch 2s steps(2, jump-none) infinite;
+}
+
+.dc-pulse-slow {
+  animation: dc-pulse-slow 3.5s ease-in-out infinite alternate;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.dc-comet-path {
+  animation: dc-comet 2.5s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes dc-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dc-flame {
+  0% {
+    transform: scale(1, 1);
+    opacity: 0.85;
+    filter: drop-shadow(0 0 2px rgba(249, 115, 22, 0.5));
+  }
+  100% {
+    transform: scale(1.12, 1.25);
+    opacity: 1;
+    filter: drop-shadow(0 0 12px rgba(251, 146, 60, 0.95));
+  }
+}
+
+@keyframes dc-flicker {
+  0%, 100% {
+    opacity: 1;
+  }
+  25% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 0.95;
+  }
+  75% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes dc-twinkle {
+  0%, 100% {
+    transform: scale(0.4);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 1;
+    filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.9));
+  }
+}
+
+@keyframes dc-blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+@keyframes dc-flap {
+  0% {
+    transform: scaleY(1);
+  }
+  100% {
+    transform: scaleY(0.45);
+  }
+}
+
+@keyframes dc-cyber-glitch {
+  0% {
+    transform: translate(0, 0) skewX(0deg);
+    opacity: 1;
+  }
+  20% {
+    transform: translate(-3px, 1px) skewX(5deg);
+    opacity: 0.85;
+  }
+  40% {
+    transform: translate(3px, -2px) skewX(-5deg);
+    opacity: 0.9;
+  }
+  60% {
+    transform: translate(-2px, 2px) skewX(2deg);
+    opacity: 0.95;
+  }
+  80% {
+    transform: translate(1px, -1px) skewX(-2deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(0, 0) skewX(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes dc-pulse-slow {
+  0% {
+    transform: scale(0.94);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1.06);
+    opacity: 0.85;
+  }
+}
+
+@keyframes dc-comet {
+  0% {
+    transform: scale(0.5) rotate(-15deg);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.8));
+  }
+  100% {
+    transform: scale(1.15) rotate(20deg);
+    opacity: 0;
+  }
+}
+
+.dc-star { transform-box: fill-box; transform-origin: center; animation: dc-star 2s ease-in-out infinite; }
+.dc-grow { transform-box: fill-box; transform-origin: 50% 100%; animation: dc-grow 2.6s ease-in-out infinite alternate; }
+.dc-flash { animation: dc-flash 2.8s steps(1, end) infinite; opacity: 0; }
+.dc-crackle { animation: dc-crackle 0.5s steps(1, end) infinite; }
+.dc-fall { transform-box: fill-box; transform-origin: center; animation: dc-fall 4.4s ease-in infinite; }
+.dc-rise { transform-box: fill-box; transform-origin: center; animation: dc-rise 3.4s ease-out infinite; }
+.dc-beat { transform-box: fill-box; transform-origin: center; animation: dc-beat 1.6s ease-in-out infinite; }
+.dc-wave { animation: dc-wave 3s linear infinite; }
+.dc-sway { transform-box: fill-box; transform-origin: 50% 100%; animation: dc-sway 3s ease-in-out infinite alternate; }
+.dc-drip { transform-box: fill-box; transform-origin: 50% 0; animation: dc-drip 3.2s ease-in infinite; }
+.dc-pop { transform-box: fill-box; transform-origin: center; animation: dc-pop 3s ease-out infinite; }
+.dc-shoot { animation: dc-shoot 3.8s ease-in infinite; }
+.dc-glow { transform-box: fill-box; transform-origin: center; animation: dc-pulse-slow 3.5s ease-in-out infinite alternate; }
+.dc-eye { transform-box: fill-box; transform-origin: center; animation: dc-eye 5s ease-in-out infinite; }
+.dc-leaf { transform-box: fill-box; transform-origin: 50% 100%; animation: dc-leaf 6s ease-in-out infinite; transform: scale(0); }
+.dc-fly { animation: dc-fly 10s ease-in-out infinite; }
+.dc-wing { transform-box: fill-box; transform-origin: center; animation: dc-wing 0.28s ease-in-out infinite alternate; }
+.dc-lava { animation: dc-lava 1.8s ease-in-out infinite alternate; }
+.dc-dash { animation: dc-dash 3s linear infinite; }
+
+@keyframes dc-star { 0%, 100% { transform: scale(0.4); opacity: 0.3; } 50% { transform: scale(1.2); opacity: 1; } }
+@keyframes dc-grow { from { transform: scale(1, 0.55); opacity: 0.7; } to { transform: scale(1, 1.15); opacity: 1; } }
+@keyframes dc-flash { 0%, 100% { opacity: 0; } 4% { opacity: 1; } 8% { opacity: 0; } 12% { opacity: 0.9; } 16% { opacity: 0; } }
+@keyframes dc-crackle { 0% { opacity: 1; } 33% { opacity: 0.15; } 66% { opacity: 0.7; } }
+@keyframes dc-fall { 0% { transform: translate(0, 0) rotate(0deg); opacity: 0; } 15% { opacity: 1; } 100% { transform: translate(var(--dx, 6px), 28px) rotate(170deg); opacity: 0; } }
+@keyframes dc-rise { 0% { transform: translate(0, 4px) scale(0.4); opacity: 0; } 20% { opacity: 1; } 100% { transform: translate(var(--dx, 0px), -18px) scale(1.15); opacity: 0; } }
+@keyframes dc-beat { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.07); } 28% { transform: scale(1); } 42% { transform: scale(1.045); } }
+@keyframes dc-wave { from { transform: translateX(0); } to { transform: translateX(-20px); } }
+@keyframes dc-sway { from { transform: rotate(-9deg); } to { transform: rotate(9deg); } }
+@keyframes dc-drip { 0% { transform: scaleY(0.2); opacity: 1; } 60% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(1) translateY(9px); opacity: 0; } }
+@keyframes dc-pop { 0% { transform: scale(0.3); opacity: 0; } 60% { transform: scale(1); opacity: 1; } 75% { transform: scale(1.3); opacity: 0; } 100% { transform: scale(1.3); opacity: 0; } }
+@keyframes dc-shoot { 0% { transform: translate(-6px, -4px); opacity: 0; } 8% { opacity: 1; } 35% { transform: translate(52px, 32px); opacity: 0; } 100% { transform: translate(52px, 32px); opacity: 0; } }
+@keyframes dc-eye { 0%, 86%, 100% { transform: scaleY(1); } 92% { transform: scaleY(0.08); } }
+@keyframes dc-leaf { 0% { transform: scale(0); } 12%, 80% { transform: scale(1); } 92%, 100% { transform: scale(0); } }
+@keyframes dc-fly { 0%, 100% { transform: translate(-34px, -30px) rotate(20deg); } 25% { transform: translate(34px, -22px) rotate(100deg); } 50% { transform: translate(40px, 26px) rotate(170deg); } 75% { transform: translate(-30px, 34px) rotate(250deg); } }
+@keyframes dc-wing { from { transform: scaleX(1); } to { transform: scaleX(0.3); } }
+@keyframes dc-lava { from { opacity: 0.55; } to { opacity: 1; } }
+@keyframes dc-dash { from { stroke-dashoffset: 160; } to { stroke-dashoffset: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .dc *, .dc {
+    animation: none !important;
+  }
+}
+
+.dc,
+.dc * {
+  animation-play-state: paused !important;
+}
+
+.dc-host:not(:hover):not(:active):not(:focus-within) .dc,
+.dc-host:not(:hover):not(:active):not(:focus-within) .dc * {
+  animation-delay: -1.2s !important;
+}
+
+.dc-host:hover .dc,
+.dc-host:hover .dc *,
+.dc-host:active .dc,
+.dc-host:active .dc *,
+.dc-host:focus-within .dc,
+.dc-host:focus-within .dc * {
+  animation-play-state: running !important;
+}
+
+.bgx-still * {
+  animation-play-state: paused !important;
+}
+
+.dc-host:hover .bgx-still *,
+.dc-host:active .bgx-still *,
+.dc-host:focus-within .bgx-still * {
+  animation-play-state: running !important;
+}
+
+article.dc-host:focus {
+  outline: none;
+}
