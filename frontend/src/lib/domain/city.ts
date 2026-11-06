@@ -62,6 +62,10 @@ export interface CastInfo {
   bite_in: number;
   difficulty: number;
   length: number;
+  shape: FishShape;
+  strength: number;
+  dash: number;
+  bite_window: number;
 }
 
 export interface ReelResult {
