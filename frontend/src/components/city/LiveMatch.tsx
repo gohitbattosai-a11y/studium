@@ -1,149 +1,136 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { FastForward, ListOrdered, Pause, Play, X } from "lucide-react";
-import { FORMATIONS, lineup, type Fixture, type StadiumState, type Team } from "@/lib/domain/football";
+import type { Fixture, StadiumState, Team } from "@/lib/domain/football";
+import { Match } from "@/lib/domain/matchEngine";
+import { CFG } from "@/lib/domain/stadiumConfig";
+import { stadiumInner } from "@/lib/art/stadiumAssets";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils/cn";
 import { StadiumBack } from "./Landmarks";
 import "./stadium.css";
 
 const ICON: Record<string, string> = { kickoff: "🟢", goal: "⚽", save: "🧤", post: "💥", off: "💨", yellow: "🟨", half: "⏸", end: "🏁" };
-const ATTACK = ["goal", "save", "post", "off"];
-const TICKS = 180;
 
-interface Dot {
-  x: number;
-  y: number;
-  depth: number;
-  name: string;
-  n: number;
+const rgb = (hex: string) => {
+  const v = parseInt(hex.replace("#", "").padEnd(6, "0").slice(0, 6), 16);
+  return [(v >> 16) & 255, (v >> 8) & 255, v & 255];
+};
+const clash = (a: string, b: string) => {
+  const x = rgb(a);
+  const y = rgb(b);
+  return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]) < CFG.match.clashDistance;
+};
+
+interface Snap {
+  version: number;
+  minute: number;
+  phase: string;
+  holder: string;
+  goalId: number | null;
+  hg: number;
+  ag: number;
 }
 
-function base(team: Team, home: boolean): Dot[] {
-  const f = FORMATIONS[team.formation];
-  return lineup(team).map((s, i) => {
-    const depth = (90 - f[i][2]) / 72;
-    return { x: home ? 5 + depth * 42 : 95 - depth * 42, y: f[i][1], depth, name: s.player?.name ?? "", n: i + 1 };
-  });
-}
+const snapOf = (m: Match): Snap => ({
+  version: m.version,
+  minute: m.minute,
+  phase: m.phase,
+  holder: m.holderName,
+  goalId: m.t - m.goalAt < 3.2 && m.goalItem ? m.goalItem.id : null,
+  hg: m.score[0],
+  ag: m.score[1],
+});
+
+const same = (a: Snap, b: Snap) => a.version === b.version && a.minute === b.minute && a.phase === b.phase && a.holder === b.holder && a.goalId === b.goalId && a.hg === b.hg && a.ag === b.ag;
 
 export default function LiveMatch({ fx, s, onClose }: { fx: Fixture; s: StadiumState; onClose: () => void }) {
   const h = s.teams.find((t) => t.id === fx.home) as Team;
   const a = s.teams.find((t) => t.id === fx.away) as Team;
-  const [tick, setTick] = useState(0);
+  const [run, setRun] = useState(0);
   const [playing, setPlaying] = useState(true);
-  const [speed, setSpeed] = useState(3);
+  const [speed, setSpeed] = useState(CFG.match.defaultSpeed);
   const [started, setStarted] = useState(false);
   const [log, setLog] = useState(false);
-  const sides = useMemo(() => [base(h, true), base(a, false)], [h, a]);
-  const seed = fx.day * 7.31 + fx.log.length;
-  const rand = (n: number) => {
-    const x = Math.sin(n * 12.9898 + seed * 78.233) * 43758.5453;
-    return x - Math.floor(x);
+  const sim = useMemo(() => new Match(fx, h, a), [fx, h, a, run]);
+  const [ui, setUi] = useState<Snap>(() => snapOf(sim));
+  const uiRef = useRef(ui);
+  const gs = useRef<(SVGGElement | null)[]>([]);
+  const us = useRef<(SVGUseElement | null)[]>([]);
+  const rings = useRef<(SVGCircleElement | null)[]>([]);
+  const ballRef = useRef<SVGUseElement | null>(null);
+  const shadowRef = useRef<SVGEllipseElement | null>(null);
+  const cardRef = useRef<SVGRectElement | null>(null);
+  const awayColor = clash(h.color, a.color) ? CFG.match.awayAlt : a.color;
+  const kit = [h.color, awayColor];
+  const trim = [clash(h.color, "#ffffff") ? "#111827" : "#ffffff", clash(awayColor, "#ffffff") ? "#111827" : "#ffffff"];
+  const defs = useMemo(() => `<g id="lm-token">${stadiumInner("token")}</g><g id="lm-ball">${stadiumInner("ball")}</g>`, []);
+  const pitch = useMemo(() => stadiumInner("pitch"), []);
+
+  const paint = () => {
+    for (let side = 0; side < 2; side++)
+      for (let i = 0; i < 11; i++) {
+        const k = side * 11 + i;
+        const p = sim.P[side][i];
+        gs.current[k]?.setAttribute("transform", `translate(${p.x.toFixed(2)} ${p.y.toFixed(2)})`);
+        us.current[k]?.setAttribute("transform", `rotate(${((p.h * 180) / Math.PI).toFixed(1)})`);
+        rings.current[k]?.setAttribute("opacity", sim.owner && sim.owner.s === side && sim.owner.i === i ? "1" : "0");
+      }
+    const b = sim.ball;
+    ballRef.current?.setAttribute("transform", `translate(${b.x.toFixed(2)} ${(b.y - 0.5 - b.z * 0.5).toFixed(2)}) scale(${(1 + b.z * 0.12).toFixed(3)})`);
+    shadowRef.current?.setAttribute("transform", `translate(${b.x.toFixed(2)} ${(b.y + 0.4).toFixed(2)}) scale(${(1 + b.z * 0.1).toFixed(3)})`);
+    shadowRef.current?.setAttribute("opacity", String(Math.max(0.12, 0.35 - b.z * 0.06)));
+    const c = sim.card;
+    const r = cardRef.current;
+    if (r) {
+      if (c && sim.t < c.until) {
+        const p = sim.P[c.s][c.i];
+        r.setAttribute("x", (p.x + 1.2).toFixed(2));
+        r.setAttribute("y", (p.y - 5).toFixed(2));
+        r.setAttribute("visibility", "visible");
+      } else r.setAttribute("visibility", "hidden");
+    }
+  };
+
+  const sync = () => {
+    const next = snapOf(sim);
+    if (!same(next, uiRef.current)) {
+      uiRef.current = next;
+      setUi(next);
+    }
   };
 
   useEffect(() => {
-    if (!started || !playing || tick >= TICKS) return;
-    const id = window.setInterval(() => setTick((v) => Math.min(TICKS, v + 1)), 480 / speed);
-    return () => window.clearInterval(id);
-  }, [started, playing, speed, tick]);
+    uiRef.current = snapOf(sim);
+    setUi(uiRef.current);
+    paint();
+  }, [sim]);
 
-  const minute = Math.min(90, Math.floor(tick / 2));
-  const seen = fx.log.filter((e) => e.min <= minute);
-  const last = seen[seen.length - 1];
-  const hg = fx.events.filter((e) => e.min <= minute && e.teamId === h.id).length;
-  const ag = fx.events.filter((e) => e.min <= minute && e.teamId === a.id).length;
-  const done = tick >= TICKS;
+  useEffect(() => {
+    if (!started) return;
+    let raf = 0;
+    let last = performance.now();
+    const loop = (now: number) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      if (playing) sim.advance(dt * speed);
+      paint();
+      sync();
+      if (!sim.ended) raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [sim, started, playing, speed]);
 
-  const frame = useMemo(() => {
-    const attacks = fx.log.filter((e) => ATTACK.includes(e.type));
-    const upcoming = attacks.find((e) => e.min * 2 >= tick && e.min * 2 - tick <= 8);
-    const just = attacks.find((e) => e.min * 2 + 1 === tick);
-    const strike = attacks.find((e) => e.min * 2 === tick);
-    const sideOf = (id: string) => (id === h.id ? 0 : 1);
-    const byName = (side: number, name: string) => sides[side].findIndex((d) => d.name === name);
-    let ball = { x: 50, y: 50 };
-    let holder: { side: number; i: number } | null = null;
-
-    if (tick === 0) return { ball, holder, poss: 0 };
-
-    if (strike) {
-      const side = sideOf(strike.teamId);
-      const gx = side === 0 ? 97 : 3;
-      const i = byName(side, strike.player);
-      if (strike.type === "goal") ball = { x: gx, y: 50 + (rand(strike.id) - 0.5) * 8 };
-      else if (strike.type === "save") ball = { x: side === 0 ? 93 : 7, y: 50 + (rand(strike.id) - 0.5) * 22 };
-      else if (strike.type === "post") ball = { x: side === 0 ? 98 : 2, y: rand(strike.id) < 0.5 ? 41 : 59 };
-      else ball = { x: side === 0 ? 99 : 1, y: rand(strike.id) < 0.5 ? 30 : 70 };
-      return { ball, holder: i >= 0 ? { side, i } : null, poss: side };
-    }
-
-    if (just) {
-      const side = sideOf(just.teamId);
-      if (just.type === "goal") return { ball: { x: 50, y: 50 }, holder: null, poss: 1 - side };
-      const def = 1 - side;
-      return { ball: { x: def === 0 ? 6 : 94, y: 50 }, holder: { side: def, i: 0 }, poss: def };
-    }
-
-    if (upcoming) {
-      const side = sideOf(upcoming.teamId);
-      const p = Math.min(1, Math.max(0, 1 - (upcoming.min * 2 - tick) / 8));
-      const shooter = byName(side, upcoming.player);
-      if (p > 0.7 && shooter >= 0) {
-        const d = sides[side][shooter];
-        return { ball: { x: d.x + (side === 0 ? 1.6 : -1.6), y: d.y }, holder: { side, i: shooter }, poss: side };
-      }
-      const want = 0.25 + p * 0.65 + (rand(tick * 3) - 0.5) * 0.2;
-      let best = 1;
-      sides[side].forEach((d, i) => {
-        if (i > 0 && Math.abs(d.depth - want) < Math.abs(sides[side][best].depth - want)) best = i;
-      });
-      const d = sides[side][best];
-      return { ball: { x: d.x + (side === 0 ? 1.6 : -1.6), y: d.y }, holder: { side, i: best }, poss: side };
-    }
-
-    const poss = rand(Math.floor(tick / 6)) < 0.5 ? 0 : 1;
-    const terr = 0.35 + 0.22 * Math.sin(tick / 9 + seed) + (poss === 0 ? 0.05 : -0.05);
-    const want = terr + (rand(tick * 5) - 0.5) * 0.4;
-    let best = 1;
-    sides[poss].forEach((d, i) => {
-      if (i > 0 && Math.abs(d.depth - want) < Math.abs(sides[poss][best].depth - want)) best = i;
-    });
-    const d = sides[poss][best];
-    ball = { x: d.x + (poss === 0 ? 1.6 : -1.6), y: d.y };
-    return { ball, holder: { side: poss, i: best }, poss };
-  }, [tick, fx.log, sides, h.id]);
-
-  const dots = useMemo(() => {
-    const press = [0, 1].map((side) => {
-      let best = -1;
-      let dist = 1e9;
-      sides[side].forEach((d, i) => {
-        if (i === 0 || (frame.holder && frame.holder.side === side && frame.holder.i === i)) return;
-        const dd = Math.hypot(d.x - frame.ball.x, (d.y - frame.ball.y) * 0.6);
-        if (dd < dist) {
-          dist = dd;
-          best = i;
-        }
-      });
-      return best;
-    });
-    return sides.map((list, side) =>
-      list.map((d, i) => {
-        if (frame.holder && frame.holder.side === side && frame.holder.i === i) return { x: frame.ball.x - (side === 0 ? 1.6 : -1.6), y: frame.ball.y, hold: true };
-        if (i === press[side]) return { x: frame.ball.x + (side === 0 ? -2.8 : 2.8), y: frame.ball.y + (side === 0 ? 2 : -2), hold: false };
-        const shift = (frame.ball.x - 50) * (i === 0 ? 0.08 : 0.22) + (frame.poss === side ? (side === 0 ? 3 : -3) : 0) * (i === 0 ? 0 : 1);
-        const wob = (rand(tick * 11 + d.n + side * 20) - 0.5) * 2.2;
-        return { x: Math.min(97, Math.max(3, d.x + shift + wob)), y: Math.min(94, Math.max(6, d.y + (frame.ball.y - d.y) * 0.08 + wob)), hold: false };
-      }),
-    );
-  }, [frame, sides, tick]);
-
-  const fresh = last && last.type === "goal" && minute - last.min <= 2;
-  const half = last && last.type === "half" && minute - last.min <= 1 && !done;
-  const holderName = frame.holder ? sides[frame.holder.side][frame.holder.i].name : "";
-  const recent = [...seen].reverse().slice(0, 3);
-  const scorers = (id: string) => fx.events.filter((e) => e.teamId === id).map((e) => `${e.player} ${e.min}'`);
+  const replay = () => {
+    setRun((v) => v + 1);
+    setPlaying(true);
+  };
+  const skip = () => {
+    sim.finish();
+    paint();
+    sync();
+  };
 
   useEffect(() => {
     const fn = (e: KeyboardEvent) => {
@@ -156,82 +143,63 @@ export default function LiveMatch({ fx, s, onClose }: { fx: Fixture; s: StadiumS
     return () => window.removeEventListener("keydown", fn, true);
   }, [onClose]);
 
-  const stage = { aspectRatio: "100 / 60", width: "min(100vw, calc(100dvh * 100 / 60))", containerType: "inline-size" } as const;
-
+  const done = ui.phase === "end";
+  const feed = sim.feed;
+  const recent = [...feed].reverse().slice(0, 3);
+  const goal = ui.goalId !== null ? feed[ui.goalId] : null;
+  const stage = { aspectRatio: "117 / 78", width: "min(100vw, calc(100dvh * 117 / 78))" } as const;
   return createPortal(
     <div className="fixed inset-0 z-[80] overflow-hidden bg-[#05080d] text-[#E6EDF3]" data-testid="live-match">
       <StadiumBack />
       <div className="absolute inset-0 bg-black/35" />
-
       <div className="absolute inset-0 grid place-items-center">
         <div className="relative overflow-hidden shadow-2xl" style={stage}>
-          <svg viewBox="0 0 100 60" className="absolute inset-0 size-full" preserveAspectRatio="none" aria-hidden>
-            <rect width="100" height="60" fill="#2f9a4a" />
-            {Array.from({ length: 10 }, (_, i) => (
-              <rect key={i} x={i * 10} width="10" height="60" fill={i % 2 ? "#359f50" : "#2c9246"} />
-            ))}
-            <g fill="none" stroke="#ffffff" strokeWidth="0.35" opacity="0.85">
-              <rect x="1.5" y="1.5" width="97" height="57" />
-              <path d="M50 1.5 V58.5" />
-              <ellipse cx="50" cy="30" rx="7" ry="7" />
-              <rect x="1.5" y="17" width="12" height="26" />
-              <rect x="86.5" y="17" width="12" height="26" />
-              <rect x="1.5" y="24" width="4.5" height="12" />
-              <rect x="94" y="24" width="4.5" height="12" />
-            </g>
+          <svg viewBox="-6 -5 117 78" className="absolute inset-0 size-full" aria-hidden>
+            <defs dangerouslySetInnerHTML={{ __html: defs }} />
+            <g dangerouslySetInnerHTML={{ __html: pitch }} />
+            {[0, 1].map((side) =>
+              Array.from({ length: 11 }, (_, i) => {
+                const k = side * 11 + i;
+                const col = i === 0 ? CFG.match.gkColors[side] : kit[side];
+                return (
+                  <g key={k} ref={(el) => void (gs.current[k] = el)}>
+                    <circle ref={(el) => void (rings.current[k] = el)} r="2.5" fill="none" stroke="#E3B341" strokeWidth="0.4" opacity="0" />
+                    <use ref={(el) => void (us.current[k] = el)} href="#lm-token" style={{ "--shirt": col, "--trim": trim[side] } as CSSProperties} />
+                    <text y="0.1" textAnchor="middle" dominantBaseline="central" fontSize="1.9" fontWeight="800" fill="#ffffff" stroke="#000000" strokeWidth="0.3" paintOrder="stroke" fontFamily="Inter,Arial,sans-serif">
+                      {i + 1}
+                    </text>
+                  </g>
+                );
+              }),
+            )}
+            <ellipse ref={shadowRef} rx="0.9" ry="0.45" fill="#000000" opacity="0.3" />
+            <use ref={ballRef} href="#lm-ball" />
+            <rect ref={cardRef} width="1.7" height="2.4" rx="0.25" fill="#facc15" stroke="#1f2937" strokeWidth="0.15" visibility="hidden" />
           </svg>
-          {dots.map((list, side) =>
-            list.map((d, i) => (
-              <div
-                key={`${side}-${i}`}
-                className="absolute grid place-items-center rounded-full font-bold text-white"
-                style={{
-                  left: `${d.x}%`,
-                  top: `${d.y}%`,
-                  width: "3.6cqw",
-                  height: "3.6cqw",
-                  fontSize: "1.7cqw",
-                  background: side === 0 ? h.color : a.color,
-                  border: d.hold ? "0.28cqw solid #E3B341" : "0.2cqw solid #ffffff",
-                  textShadow: "0 0 2px #000",
-                  transform: "translate(-50%, -50%)",
-                  transition: "left 0.42s linear, top 0.42s linear",
-                  zIndex: d.hold ? 3 : 2,
-                }}
-              >
-                {i + 1}
-              </div>
-            )),
-          )}
-          <div
-            className="absolute rounded-full bg-white"
-            style={{ left: `${frame.ball.x}%`, top: `${frame.ball.y}%`, width: "1.8cqw", height: "1.8cqw", border: "0.2cqw solid #111111", transform: "translate(-50%, -50%)", transition: "left 0.4s ease-out, top 0.4s ease-out", zIndex: 4 }}
-          />
-          {fresh && last && (
-            <div key={last.id} className="lm-pop pointer-events-none absolute inset-0 z-[5] grid place-items-center">
+          {goal && (
+            <div key={goal.id} className="lm-pop pointer-events-none absolute inset-0 z-[5] grid place-items-center">
               <div className="rounded-2xl bg-black/70 px-8 py-3 text-center">
                 <p className="text-4xl font-black tracking-widest text-[#E3B341] sm:text-6xl">GOL!</p>
-                <p className="text-sm font-semibold text-white sm:text-lg">{last.player}</p>
+                <p className="text-sm font-semibold text-white sm:text-lg">{goal.player}</p>
               </div>
             </div>
           )}
-          {half && (
+          {ui.phase === "interval" && (
             <div className="pointer-events-none absolute inset-0 z-[5] grid place-items-center">
               <p className="rounded-xl bg-black/70 px-6 py-2 text-2xl font-black tracking-widest text-white">INTERVALLO</p>
             </div>
           )}
         </div>
       </div>
-
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center px-3 pt-[max(0.5rem,env(safe-area-inset-top))]">
         <div className="pointer-events-auto flex items-stretch overflow-hidden rounded-xl border border-white/15 bg-[#0D1117]/90 shadow-xl backdrop-blur">
           <div className="flex min-w-0 items-center justify-end gap-2 px-3 py-1.5" style={{ borderBottom: `3px solid ${h.color}` }}>
             <span className="max-w-[28vw] truncate text-xs font-bold tracking-wide uppercase sm:max-w-48 sm:text-sm">{h.name}</span>
           </div>
           <div className="flex items-center gap-2 bg-[#161B22] px-3.5">
-            <span className="text-xl font-black tabular-nums sm:text-2xl">{hg}</span>
-            <span className="rounded bg-black/50 px-1.5 py-0.5 text-[10px] font-bold text-[#E3B341] tabular-nums">{done ? "FINE" : `${minute}'`}</span>
-            <span className="text-xl font-black tabular-nums sm:text-2xl">{ag}</span>
+            <span className="text-xl font-black tabular-nums sm:text-2xl">{ui.hg}</span>
+            <span className="rounded bg-black/50 px-1.5 py-0.5 text-[10px] font-bold text-[#E3B341] tabular-nums">{done ? "FINE" : `${ui.minute}'`}</span>
+            <span className="text-xl font-black tabular-nums sm:text-2xl">{ui.ag}</span>
           </div>
           <div className="flex min-w-0 items-center gap-2 px-3 py-1.5" style={{ borderBottom: `3px solid ${a.color}` }}>
             <span className="max-w-[28vw] truncate text-xs font-bold tracking-wide uppercase sm:max-w-48 sm:text-sm">{a.name}</span>
@@ -257,17 +225,17 @@ export default function LiveMatch({ fx, s, onClose }: { fx: Fixture; s: StadiumS
                 ))}
               </ul>
             )}
-            <p className="h-4 text-[11px] text-white/80 drop-shadow">{holderName && !done ? `Palla a ${holderName}` : ""}</p>
+            <p className="h-4 text-[11px] text-white/80 drop-shadow">{ui.holder && !done ? `Palla a ${ui.holder}` : ""}</p>
             <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-1.5 rounded-full border border-white/15 bg-[#0D1117]/85 px-2.5 py-1.5 backdrop-blur">
-              <Button size="sm" variant="secondary" onClick={() => (done ? (setTick(0), setPlaying(true)) : setPlaying((v) => !v))}>
+              <Button size="sm" variant="secondary" onClick={() => (done ? replay() : setPlaying((v) => !v))}>
                 {playing && !done ? <Pause /> : <Play />} {done ? "Rivedi" : playing ? "Pausa" : "Riprendi"}
               </Button>
-              {[1, 3, 10].map((v) => (
+              {CFG.match.speeds.map((v) => (
                 <button key={v} type="button" onClick={() => setSpeed(v)} className={cn("rounded-full border px-2.5 py-1 text-xs", speed === v ? "border-[#58A6FF] bg-[#58A6FF]/20 text-white" : "border-white/20 text-[#C9D1D9]")}>
                   {v}x
                 </button>
               ))}
-              <Button size="sm" variant="ghost" onClick={() => setTick(TICKS)}>
+              <Button size="sm" variant="ghost" onClick={skip}>
                 <FastForward /> Fine
               </Button>
               <Button size="sm" variant={log ? "secondary" : "ghost"} onClick={() => setLog((v) => !v)}>
@@ -279,7 +247,7 @@ export default function LiveMatch({ fx, s, onClose }: { fx: Fixture; s: StadiumS
           {log && (
             <div className="absolute inset-x-0 top-16 bottom-28 z-10 mx-auto w-full max-w-xl overflow-y-auto px-3">
               <ul className="flex flex-col gap-1">
-                {[...seen].reverse().map((e) => {
+                {[...feed].reverse().map((e) => {
                   const team = e.teamId === h.id ? h : a;
                   return (
                     <li key={e.id} className={cn("flex items-start gap-2 rounded-lg border px-2.5 py-1.5 text-sm backdrop-blur", e.type === "goal" ? "border-[#E3B341]/60 bg-[#2a2210]/90 font-semibold" : "border-white/10 bg-[#0D1117]/90")}>
@@ -325,24 +293,24 @@ export default function LiveMatch({ fx, s, onClose }: { fx: Fixture; s: StadiumS
             <div className="mt-3 flex items-center justify-center gap-3">
               <span className="min-w-0 flex-1 truncate text-right text-sm font-bold">{h.name}</span>
               <span className="text-4xl font-black tabular-nums">
-                {hg} - {ag}
+                {ui.hg} - {ui.ag}
               </span>
               <span className="min-w-0 flex-1 truncate text-left text-sm font-bold">{a.name}</span>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-3 text-[11px] text-[#C9D1D9]">
               <ul className="flex flex-col items-end gap-0.5">
-                {scorers(h.id).map((x, i) => (
+                {sim.scorers(h.id).map((x, i) => (
                   <li key={i}>⚽ {x}</li>
                 ))}
               </ul>
               <ul className="flex flex-col items-start gap-0.5">
-                {scorers(a.id).map((x, i) => (
+                {sim.scorers(a.id).map((x, i) => (
                   <li key={i}>⚽ {x}</li>
                 ))}
               </ul>
             </div>
             <div className="mt-5 flex gap-2">
-              <Button variant="secondary" className="flex-1" onClick={() => (setTick(0), setPlaying(true))}>
+              <Button variant="secondary" className="flex-1" onClick={replay}>
                 Rivedi
               </Button>
               <Button className="h-11 flex-1 font-bold" onClick={onClose}>
