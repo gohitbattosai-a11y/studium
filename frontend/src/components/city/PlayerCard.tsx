@@ -6,6 +6,8 @@ import { cardTemplate, customCardTemplate, stadiumArt } from "@/lib/art/stadiumA
 export const tierOf = (ovr: number) => tierFor(ovr).id;
 export const tierName = (ovr: number) => tierFor(ovr).name;
 export const surname = (name: string) => name.split(" ").slice(1).join(" ") || name;
+const firstName = (name: string) => (name.includes(" ") ? name.split(" ")[0] : "");
+const fit = (v: string, n: number) => (v.length > n ? `${v.slice(0, n - 1)}…` : v);
 
 const hash = (s: string) => {
   let h = 0;
@@ -25,13 +27,13 @@ const scopeIds = (svg: string, prefix: string) => {
 
 const avatarMarkup = (p: Player, shirt: string) => {
   const h = hash(p.id);
-  const style = p.look?.style ?? (h >> 6) % 3;
+  const style = p.look?.style ?? (h >> 6) % 5;
   let svg = fill(cardTemplate("avatar").replace(/^<svg[^>]*>/, "").replace(/<\/svg>$/, ""), {
     skin: p.look?.skin ?? SKIN[h % SKIN.length],
     hair: p.look?.hair ?? HAIR[(h >> 3) % HAIR.length],
     shirt,
   });
-  [0, 1, 2].filter((n) => n !== style).forEach((n) => (svg = svg.replace(new RegExp(`<g id="hair-${n}">[\\s\\S]*?</g>`), "")));
+  [0, 1, 2, 3, 4].filter((n) => n !== style).forEach((n) => (svg = svg.replace(new RegExp(`<g id="hair-${n}">[\\s\\S]*?</g>`), "")));
   return svg;
 };
 
@@ -53,26 +55,32 @@ export default function PlayerCard({ p, size = 1, color = "#2563eb", selected, d
       ovr: p.ovr,
       pos: p.pos,
       name: esc(p.name),
-      surname: esc(surname(p.name)),
+      surname: esc(fit(surname(p.name), 11)),
+      first: esc(fit(firstName(p.name), 9)),
+      pot: p.pot,
       tier: tier.name,
       shirt: color,
       avatar: avatarMarkup(p, color),
       price: p.price ?? "",
       ...Object.fromEntries(STAT_KEYS.map((k) => [k, p.stats[k]])),
+      ...Object.fromEntries(STAT_KEYS.map((k) => [`${k}_w`, Math.round((20 * Math.min(99, p.stats[k])) / 99 * 10) / 10])),
     });
     if (size < 0.8) out = out.replace(/<g id="[^"]*stats"[\s\S]*?<\/g>/, "");
     return scopeIds(out, `c${uid}`);
   }, [p, tier.id, tier.name, color, size, uid]);
   const box = { width: 100 * size, height: 136 * size };
-  const filter = selected ? "drop-shadow(0 0 3px #E3B341) drop-shadow(0 0 7px #E3B341)" : p.ovr >= 85 ? "drop-shadow(0 0 5px #67e8f9aa)" : "drop-shadow(0 2px 3px #0008)";
+  const filter = selected ? "drop-shadow(0 0 3px #E3B341) drop-shadow(0 0 7px #E3B341)" : p.ovr >= 91 ? "drop-shadow(0 0 6px #f0abfcaa) drop-shadow(0 0 10px #fbbf2488)" : p.ovr >= 85 ? "drop-shadow(0 0 5px #67e8f9aa)" : "drop-shadow(0 2px 3px #0008)";
+  const loaned = !!p.loan;
   const inner = <span className="block size-full [&>svg]:block [&>svg]:size-full" style={{ filter, opacity: dim ? 0.55 : 1 }} dangerouslySetInnerHTML={{ __html: svg }} />;
   return onClick ? (
-    <button type="button" onClick={onClick} className="relative block shrink-0 outline-none" style={box} aria-label={p.name}>
+    <button type="button" onClick={onClick} className="relative block shrink-0 outline-none transition-transform hover:-translate-y-0.5" style={box} aria-label={p.name}>
       {inner}
+      {loaned && <span className="st-loan-tag">PRESTITO</span>}
     </button>
   ) : (
     <div className="relative shrink-0" style={box}>
       {inner}
+      {loaned && <span className="st-loan-tag">PRESTITO</span>}
     </div>
   );
 }
