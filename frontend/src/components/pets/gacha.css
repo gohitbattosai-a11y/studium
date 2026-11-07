@@ -51,8 +51,6 @@
 .gc-stage[data-phase="burst"] .gc-box .gc-seam { animation: gc-seam-out 0.25s ease-out forwards; }
 .gc-stage[data-phase="burst"] .gc-box .gc-mouth { animation: gc-mouth 1.1s ease-out forwards; }
 .gc-stage[data-phase="burst"] .gc-box .gc-beam { animation: gc-beam 1.1s ease-out forwards; }
-.gc-stage[data-phase="burst"] .gc-box .gc-lid { animation: gc-lid-pop 1s cubic-bezier(0.2, 0.7, 0.2, 1) forwards; }
-.gc-stage[data-phase="burst"] .gc-box .gc-body { animation: gc-body-drop 1s ease-out forwards; }
 
 .gc-box .gc-sparkle { transform-box: fill-box; transform-origin: center; animation: gc-twinkle 1.6s ease-in-out infinite; }
 .gc-box .gc-shine { animation: gc-shine 4.4s ease-in-out infinite; }
