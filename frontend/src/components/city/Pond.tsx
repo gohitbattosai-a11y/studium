@@ -41,7 +41,31 @@ interface Decor {
   k: number;
 }
 
+interface Minnow {
+  x: number;
+  y: number;
+  a: number;
+  sp: number;
+  g: number;
+  ph: number;
+}
+
+interface Duck {
+  x: number;
+  y: number;
+  a: number;
+  tx: number;
+  ty: number;
+  t: number;
+  ph: number;
+  w: number;
+}
+
 interface World {
+  bg: HTMLCanvasElement | null;
+  minnows: Minnow[];
+  groupT: { x: number; y: number; t: number }[];
+  ducks: Duck[];
   W: number;
   H: number;
   dpr: number;
@@ -89,6 +113,248 @@ function rng(seed: number) {
   };
 }
 
+
+function paintBg(w: World, rand: () => number) {
+  const bc = document.createElement("canvas");
+  bc.width = Math.round(w.W * w.dpr);
+  bc.height = Math.round(w.H * w.dpr);
+  const c = bc.getContext("2d");
+  const path = w.path;
+  if (!c || !path) return null;
+  c.setTransform(w.dpr, 0, 0, w.dpr, 0, 0);
+  const { W, H } = w;
+  const px = W / 2;
+  const outside = (x: number, y: number, m: number) => ((x - w.cx) / (w.rx * m)) ** 2 + ((y - w.cy) / (w.ry * m)) ** 2 > 1;
+  const free = (x: number, y: number, m: number) => outside(x, y, m) && !(Math.abs(x - px) < 60 && y > H * 0.7);
+  const bg = c.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, "#2f6a34");
+  bg.addColorStop(1, "#234a27");
+  c.fillStyle = bg;
+  c.fillRect(0, 0, W, H);
+  for (let i = 0; i < 70; i++) {
+    c.fillStyle = i % 3 === 0 ? "rgba(120,180,80,0.08)" : i % 3 === 1 ? "rgba(10,50,20,0.14)" : "rgba(200,220,120,0.05)";
+    c.beginPath();
+    c.ellipse(rand() * W, rand() * H, 50 + rand() * 160, 24 + rand() * 70, rand() * 3, 0, Math.PI * 2);
+    c.fill();
+  }
+  w.tufts.forEach((tf) => {
+    c.fillStyle = tf.k > 0.5 ? "#2f6232" : "#356b38";
+    c.beginPath();
+    c.ellipse(tf.x, tf.y, tf.r * 1.8, tf.r, 0, 0, Math.PI * 2);
+    c.fill();
+    c.strokeStyle = "#4a8a4a";
+    c.lineWidth = 1.4;
+    c.beginPath();
+    c.moveTo(tf.x - 2, tf.y);
+    c.lineTo(tf.x - 4, tf.y - tf.r * 2);
+    c.moveTo(tf.x + 1, tf.y);
+    c.lineTo(tf.x + 2, tf.y - tf.r * 2.4);
+    c.moveTo(tf.x + 4, tf.y);
+    c.lineTo(tf.x + 6, tf.y - tf.r * 1.7);
+    c.stroke();
+  });
+  const cols = ["#f9a8d4", "#fde68a", "#ffffff", "#c4b5fd", "#fca5a5"];
+  w.flowers.forEach((f, i) => {
+    c.fillStyle = cols[i % cols.length];
+    for (let a = 0; a < 5; a++) {
+      c.beginPath();
+      c.arc(f.x + Math.cos(a * 1.256) * f.r * 0.8, f.y + Math.sin(a * 1.256) * f.r * 0.8, f.r * 0.55, 0, Math.PI * 2);
+      c.fill();
+    }
+    c.fillStyle = "#facc15";
+    c.beginPath();
+    c.arc(f.x, f.y, f.r * 0.45, 0, Math.PI * 2);
+    c.fill();
+  });
+  for (let i = 0, n = 0; i < 300 && n < 18; i++) {
+    const x = rand() * W;
+    const y = rand() * H * 0.92;
+    if (!free(x, y, 1.2)) continue;
+    n++;
+    c.strokeStyle = "#2f8a46";
+    c.lineWidth = 2.6;
+    c.lineCap = "round";
+    for (let a = -3; a <= 3; a++) {
+      c.beginPath();
+      c.moveTo(x, y);
+      c.quadraticCurveTo(x + a * 7, y - 16, x + a * 11, y - 26 + Math.abs(a) * 4);
+      c.stroke();
+    }
+  }
+  for (let i = 0, n = 0; i < 300 && n < 6; i++) {
+    const x = rand() * W;
+    const y = rand() * H * 0.9;
+    if (!free(x, y, 1.18)) continue;
+    n++;
+    c.save();
+    c.translate(x, y);
+    c.rotate(rand() * 3);
+    c.fillStyle = "rgba(0,0,0,0.25)";
+    c.beginPath();
+    c.ellipse(4, 8, 40, 9, 0, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = "#5a3d22";
+    c.beginPath();
+    c.roundRect(-38, -8, 76, 16, 7);
+    c.fill();
+    c.fillStyle = "#7a5632";
+    c.beginPath();
+    c.roundRect(-38, -8, 76, 6, 4);
+    c.fill();
+    c.fillStyle = "#c79a62";
+    c.beginPath();
+    c.ellipse(38, 0, 5, 8, 0, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = "rgba(90,170,80,0.8)";
+    c.beginPath();
+    c.ellipse(-12, -8, 18, 4, 0, 0, Math.PI * 2);
+    c.fill();
+    c.restore();
+  }
+  for (let i = 0, n = 0; i < 400 && n < 26; i++) {
+    const x = rand() * W;
+    const y = rand() * H * 0.92;
+    if (!free(x, y, 1.14)) continue;
+    n++;
+    const r = 12 + rand() * 18;
+    c.fillStyle = "rgba(0,0,0,0.25)";
+    c.beginPath();
+    c.ellipse(x + 3, y + r * 0.5, r * 1.1, r * 0.5, 0, 0, Math.PI * 2);
+    c.fill();
+    const g = ["#1f5a2c", "#2a7038", "#388a45"];
+    [[-0.5, 0.1, 0.7], [0.5, 0.1, 0.75], [0, -0.3, 0.85]].forEach(([dx, dy, k], j) => {
+      c.fillStyle = g[j];
+      c.beginPath();
+      c.arc(x + dx * r, y + dy * r, r * k, 0, Math.PI * 2);
+      c.fill();
+    });
+    c.fillStyle = "rgba(255,255,255,0.09)";
+    c.beginPath();
+    c.arc(x - r * 0.3, y - r * 0.5, r * 0.3, 0, Math.PI * 2);
+    c.fill();
+    if (rand() > 0.6) {
+      c.fillStyle = "#e34b5a";
+      for (let b = 0; b < 4; b++) {
+        c.beginPath();
+        c.arc(x + (rand() - 0.5) * r * 1.4, y + (rand() - 0.5) * r * 0.8, 2, 0, Math.PI * 2);
+        c.fill();
+      }
+    }
+  }
+  for (let i = 0, n = 0; i < 300 && n < 12; i++) {
+    const x = rand() * W;
+    const y = rand() * H * 0.92;
+    if (!free(x, y, 1.12)) continue;
+    n++;
+    const col = rand() > 0.5 ? "#ef4444" : "#e5e7eb";
+    c.fillStyle = "#e8dcc0";
+    c.fillRect(x - 1.5, y - 2, 3, 7);
+    c.fillStyle = col;
+    c.beginPath();
+    c.ellipse(x, y - 3, 7, 4.5, 0, Math.PI, Math.PI * 2);
+    c.fill();
+    c.fillStyle = "#fff";
+    c.fillRect(x - 3, y - 6, 1.6, 1.6);
+    c.fillRect(x + 1, y - 5.5, 1.4, 1.4);
+  }
+  const dirt = c.createLinearGradient(0, H * 0.7, 0, H);
+  dirt.addColorStop(0, "rgba(140,112,70,0)");
+  dirt.addColorStop(1, "rgba(140,112,70,0.85)");
+  c.fillStyle = dirt;
+  c.beginPath();
+  c.moveTo(px - 26, H * 0.7);
+  c.lineTo(px + 26, H * 0.7);
+  c.lineTo(px + 70, H);
+  c.lineTo(px - 70, H);
+  c.closePath();
+  c.fill();
+  c.lineJoin = "round";
+  [[44, "#1b3d1f"], [32, "#5c4a2e"], [22, "#a8926a"], [12, "#d8c593"]].forEach(([lw, col]) => {
+    c.lineWidth = lw as number;
+    c.strokeStyle = col as string;
+    c.stroke(path);
+  });
+  const g = c.createRadialGradient(w.cx, w.cy - w.ry * 0.2, 10, w.cx, w.cy, w.rx * 1.05);
+  g.addColorStop(0, "#46b8d8");
+  g.addColorStop(0.45, "#2184a8");
+  g.addColorStop(0.8, "#175c7e");
+  g.addColorStop(1, "#0f3d58");
+  c.fillStyle = g;
+  c.fill(path);
+  [0.86, 0.68, 0.48].forEach((sc) => {
+    c.save();
+    c.translate(w.cx, w.cy);
+    c.scale(sc, sc);
+    c.translate(-w.cx, -w.cy);
+    c.fillStyle = "rgba(4,32,54,0.2)";
+    c.fill(path);
+    c.restore();
+  });
+  c.save();
+  c.clip(path);
+  c.lineWidth = 46;
+  c.strokeStyle = "rgba(226,208,150,0.2)";
+  c.stroke(path);
+  const inside = () => {
+    for (let i = 0; i < 40; i++) {
+      const x = w.cx + (rand() * 2 - 1) * w.rx * 0.95;
+      const y = w.cy + (rand() * 2 - 1) * w.ry * 0.95;
+      if (c.isPointInPath(path, x, y)) return { x, y };
+    }
+    return { x: w.cx, y: w.cy };
+  };
+  for (let i = 0; i < 44; i++) {
+    const p = inside();
+    const r = 5 + rand() * 16;
+    c.fillStyle = "rgba(2,20,34,0.4)";
+    c.beginPath();
+    c.ellipse(p.x + 2, p.y + 3, r, r * 0.7, rand() * 3, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = "rgba(96,130,140,0.4)";
+    c.beginPath();
+    c.ellipse(p.x, p.y, r, r * 0.7, 0, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = "rgba(210,240,250,0.12)";
+    c.beginPath();
+    c.ellipse(p.x - r * 0.25, p.y - r * 0.25, r * 0.5, r * 0.3, 0, 0, Math.PI * 2);
+    c.fill();
+  }
+  c.lineCap = "round";
+  for (let i = 0; i < 56; i++) {
+    const p = inside();
+    const n = 3 + Math.floor(rand() * 3);
+    const h = 16 + rand() * 34;
+    c.strokeStyle = `rgba(${20 + Math.floor(rand() * 30)},${110 + Math.floor(rand() * 40)},${80 + Math.floor(rand() * 30)},0.4)`;
+    c.lineWidth = 2.4;
+    for (let k = 0; k < n; k++) {
+      c.beginPath();
+      c.moveTo(p.x + k * 3, p.y);
+      c.quadraticCurveTo(p.x + k * 3 + (k % 2 ? 9 : -9), p.y - h * 0.5, p.x + k * 4 + (k % 2 ? 4 : -4), p.y - h);
+      c.stroke();
+    }
+  }
+  for (let i = 0; i < 3; i++) {
+    const p = inside();
+    c.save();
+    c.translate(p.x, p.y);
+    c.rotate(rand() * 3);
+    c.fillStyle = "rgba(28,22,14,0.42)";
+    c.beginPath();
+    c.roundRect(-46, -6, 92, 12, 6);
+    c.fill();
+    c.restore();
+  }
+  for (let i = 0; i < 70; i++) {
+    const p = inside();
+    c.fillStyle = `rgba(255,255,255,${0.025 + rand() * 0.04})`;
+    c.beginPath();
+    c.ellipse(p.x, p.y, 10 + rand() * 30, 5 + rand() * 12, rand() * 3, 0, Math.PI * 2);
+    c.fill();
+  }
+  c.restore();
+  return bc;
+}
+
 const pxLen = (cm: number, k: number) => Math.min(150, 16 + Math.sqrt(cm) * 9) * k;
 
 export default function Pond({ city, onBucket }: { city: CityState; onBucket: () => void }) {
@@ -103,6 +369,10 @@ export default function Pond({ city, onBucket }: { city: CityState; onBucket: ()
   const baitRef = useRef(bait);
   const reelRef = useRef(reel.mutate);
   const world = useRef<World>({
+    bg: null,
+    minnows: [],
+    groupT: [],
+    ducks: [],
     W: 0,
     H: 0,
     dpr: 1,
@@ -212,7 +482,12 @@ export default function Pond({ city, onBucket }: { city: CityState; onBucket: ()
       });
     w.reeds = ring(34, 1.0, 10, 20);
     w.rocks = ring(12, 1.1, 6, 14);
-    w.pads = ring(9, 0.72, 10, 18);
+    w.pads = Array.from({ length: 26 }, (_, i) => {
+      const t = rand() * Math.PI * 2;
+      const q = Math.sqrt(rand()) * 0.8;
+      const cl = i % 5;
+      return { x: w.cx + w.rx * q * Math.cos(t + cl) * 0.9, y: w.cy + w.ry * q * Math.sin(t + cl) * 0.9, r: 9 + rand() * 11, k: rand() };
+    });
     w.blots = Array.from({ length: 10 }, () => ({ x: w.cx + (rand() * 2 - 1) * w.rx * 0.8, y: w.cy + (rand() * 2 - 1) * w.ry * 0.8, r: 30 + rand() * 70, k: rand() }));
     w.tufts = Array.from({ length: 70 }, () => ({ x: rand() * W, y: rand() * H, r: 3 + rand() * 5, k: rand() }));
     const outside = (x: number, y: number, m: number) => ((x - w.cx) / (w.rx * m)) ** 2 + ((y - w.cy) / (w.ry * m)) ** 2 > 1;
@@ -226,11 +501,18 @@ export default function Pond({ city, onBucket }: { city: CityState; onBucket: ()
       }
       return out;
     };
-    w.trees = place(60, 16, 1.28, 22, 46).sort((a, b) => a.y - b.y);
+    w.trees = place(220, 34, 1.22, 20, 50).sort((a, b) => a.y - b.y);
     w.flowers = place(140, 70, 1.12, 2, 4);
     w.stones = place(80, 26, 1.1, 3, 8);
-    w.flies = Array.from({ length: 5 }, () => ({ x: w.cx + (rand() * 2 - 1) * w.rx, y: w.cy + (rand() * 2 - 1) * w.ry * 0.8, r: 18 + rand() * 40, k: rand() }));
-    w.leaves = Array.from({ length: 6 }, () => ({ x: w.cx + (rand() * 2 - 1) * w.rx * 0.7, y: w.cy + (rand() * 2 - 1) * w.ry * 0.7, r: 3 + rand() * 2, k: rand() }));
+    w.flies = Array.from({ length: 9 }, () => ({ x: w.cx + (rand() * 2 - 1) * w.rx, y: w.cy + (rand() * 2 - 1) * w.ry * 0.8, r: 18 + rand() * 40, k: rand() }));
+    w.leaves = Array.from({ length: 10 }, () => ({ x: w.cx + (rand() * 2 - 1) * w.rx * 0.7, y: w.cy + (rand() * 2 - 1) * w.ry * 0.7, r: 3 + rand() * 2, k: rand() }));
+    w.bg = paintBg(w, rng(77));
+    w.groupT = [0, 1, 2, 3].map(() => ({ ...randomWater(), t: 3 }));
+    w.minnows = Array.from({ length: 24 }, (_, i) => ({ ...randomWater(), a: rand() * 6.28, sp: 34 + rand() * 18, g: i % 4, ph: rand() * 6 }));
+    w.ducks = Array.from({ length: 3 }, () => {
+      const p = randomWater();
+      return { x: p.x, y: p.y, a: rand() * 6.28, tx: p.x, ty: p.y, t: 0, ph: rand() * 6, w: rand() };
+    });
     if (w.shadows.length === 0) {
       const list = cityRef.current.species;
       for (let i = 0; i < 7; i++) {
@@ -343,6 +625,50 @@ export default function Pond({ city, onBucket }: { city: CityState; onBucket: ()
         }
       };
 
+      w.groupT.forEach((g) => {
+        g.t -= dt;
+        if (g.t <= 0) {
+          const p = randomWater();
+          g.x = p.x;
+          g.y = p.y;
+          g.t = 4 + Math.random() * 6;
+        }
+      });
+      for (const m of w.minnows) {
+        const g = w.groupT[m.g];
+        let da = Math.atan2(g.y + Math.sin(m.ph * 0.3) * 30 - m.y, g.x + Math.cos(m.ph * 0.3) * 30 - m.x) - m.a;
+        while (da > Math.PI) da -= Math.PI * 2;
+        while (da < -Math.PI) da += Math.PI * 2;
+        m.a += Math.max(-2.6 * dt, Math.min(2.6 * dt, da));
+        const nx = m.x + Math.cos(m.a) * m.sp * k * dt;
+        const ny = m.y + Math.sin(m.a) * m.sp * k * dt;
+        if (inPond(nx, ny)) {
+          m.x = nx;
+          m.y = ny;
+        } else m.a += Math.PI * 0.6;
+        m.ph += dt * 16;
+      }
+      for (const d of w.ducks) {
+        d.t -= dt;
+        if (d.t <= 0 || Math.hypot(d.tx - d.x, d.ty - d.y) < 16) {
+          const p = randomWater();
+          d.tx = p.x;
+          d.ty = p.y;
+          d.t = 6 + Math.random() * 6;
+        }
+        let da = Math.atan2(d.ty - d.y, d.tx - d.x) - d.a;
+        while (da > Math.PI) da -= Math.PI * 2;
+        while (da < -Math.PI) da += Math.PI * 2;
+        d.a += Math.max(-0.8 * dt, Math.min(0.8 * dt, da));
+        const nx = d.x + Math.cos(d.a) * 12 * k * dt;
+        const ny = d.y + Math.sin(d.a) * 12 * k * dt;
+        if (inPond(nx, ny)) {
+          d.x = nx;
+          d.y = ny;
+        } else d.t = 0;
+        d.ph += dt * 3;
+        if (now - w.lastRipple > 1400 && Math.random() < 0.02) addRipple(d.x - Math.cos(d.a) * 12, d.y - Math.sin(d.a) * 12, 18, 1500);
+      }
       for (const s of w.shadows) {
         s.ph += dt * 5;
         const lureOn = !!w.cast && w.phase !== "idle";
@@ -435,78 +761,7 @@ export default function Pond({ city, onBucket }: { city: CityState; onBucket: ()
       const t = now / 1000;
       const px = w.W / 2;
       const py = w.H - 20;
-      const bg = ctx.createLinearGradient(0, 0, 0, w.H);
-      bg.addColorStop(0, "#2c5a2f");
-      bg.addColorStop(1, "#244a27");
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, w.W, w.H);
-      w.tufts.forEach((tf) => {
-        ctx.fillStyle = tf.k > 0.5 ? "#2f6232" : "#356b38";
-        ctx.beginPath();
-        ctx.ellipse(tf.x, tf.y, tf.r * 1.8, tf.r, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = "#3f7d42";
-        ctx.lineWidth = 1.2;
-        ctx.beginPath();
-        ctx.moveTo(tf.x - 2, tf.y);
-        ctx.lineTo(tf.x - 3, tf.y - tf.r * 1.6);
-        ctx.moveTo(tf.x + 1, tf.y);
-        ctx.lineTo(tf.x + 2, tf.y - tf.r * 2);
-        ctx.stroke();
-      });
-      const cols = ["#f9a8d4", "#fde68a", "#ffffff", "#c4b5fd", "#fca5a5"];
-      w.flowers.forEach((f, i) => {
-        ctx.fillStyle = cols[i % cols.length];
-        for (let a = 0; a < 5; a++) {
-          ctx.beginPath();
-          ctx.arc(f.x + Math.cos(a * 1.256) * f.r * 0.8, f.y + Math.sin(a * 1.256) * f.r * 0.8, f.r * 0.55, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        ctx.fillStyle = "#facc15";
-        ctx.beginPath();
-        ctx.arc(f.x, f.y, f.r * 0.45, 0, Math.PI * 2);
-        ctx.fill();
-      });
-      const dirt = ctx.createLinearGradient(0, w.H * 0.7, 0, w.H);
-      dirt.addColorStop(0, "rgba(140,112,70,0)");
-      dirt.addColorStop(1, "rgba(140,112,70,0.85)");
-      ctx.fillStyle = dirt;
-      ctx.beginPath();
-      ctx.moveTo(px - 26, w.H * 0.7);
-      ctx.lineTo(px + 26, w.H * 0.7);
-      ctx.lineTo(px + 70, w.H);
-      ctx.lineTo(px - 70, w.H);
-      ctx.closePath();
-      ctx.fill();
-      ctx.lineJoin = "round";
-      ctx.lineWidth = 40;
-      ctx.strokeStyle = "#1f4222";
-      ctx.stroke(path);
-      ctx.lineWidth = 28;
-      ctx.strokeStyle = "#5c4a2e";
-      ctx.stroke(path);
-      ctx.lineWidth = 18;
-      ctx.strokeStyle = "#a8926a";
-      ctx.stroke(path);
-      ctx.lineWidth = 9;
-      ctx.strokeStyle = "#d8c593";
-      ctx.stroke(path);
-      const g = ctx.createRadialGradient(w.cx, w.cy - w.ry * 0.2, 10, w.cx, w.cy, w.rx * 1.05);
-      g.addColorStop(0, "#3fb0d0");
-      g.addColorStop(0.45, "#2184a8");
-      g.addColorStop(0.8, "#175c7e");
-      g.addColorStop(1, "#0f3d58");
-      ctx.fillStyle = g;
-      ctx.fill(path);
-      [0.86, 0.68, 0.48].forEach((sc) => {
-        ctx.save();
-        ctx.translate(w.cx, w.cy);
-        ctx.scale(sc, sc);
-        ctx.translate(-w.cx, -w.cy);
-        ctx.fillStyle = "rgba(4,32,54,0.2)";
-        ctx.fill(path);
-        ctx.restore();
-      });
+      if (w.bg) ctx.drawImage(w.bg, 0, 0, w.W, w.H);
       ctx.save();
       ctx.clip(path);
       w.blots.forEach((b, i) => {
@@ -547,6 +802,22 @@ export default function Pond({ city, onBucket }: { city: CityState; onBucket: ()
         fishPath(ctx, { ...s, x: s.x + 3, y: s.y + 4, len: s.len * 1.08, h: s.h * 1.2 });
         ctx.fillStyle = "rgba(3,16,26,0.34)";
         fishPath(ctx, s);
+      });
+      w.minnows.forEach((m) => {
+        ctx.save();
+        ctx.translate(m.x, m.y);
+        ctx.rotate(m.a);
+        const L = 9 * w.k;
+        ctx.fillStyle = "rgba(3,16,26,0.34)";
+        ctx.beginPath();
+        ctx.ellipse(0, 0, L, L * 0.32, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-L * 0.8, 0);
+        ctx.lineTo(-L * 1.5, Math.sin(m.ph) * L * 0.4 - L * 0.4);
+        ctx.lineTo(-L * 1.5, Math.sin(m.ph) * L * 0.4 + L * 0.4);
+        ctx.fill();
+        ctx.restore();
       });
       w.leaves.forEach((l, i) => {
         const lx = l.x + Math.sin(t * 0.2 + i) * 30;
@@ -615,6 +886,42 @@ export default function Pond({ city, onBucket }: { city: CityState; onBucket: ()
           ctx.arc(bx, by, 1.8, 0, Math.PI * 2);
           ctx.fill();
         }
+      });
+      w.ducks.forEach((d) => {
+        ctx.save();
+        ctx.translate(d.x, d.y);
+        ctx.rotate(d.a);
+        const k = w.k;
+        ctx.fillStyle = "rgba(0,0,0,0.22)";
+        ctx.beginPath();
+        ctx.ellipse(2, 4, 13 * k, 8 * k, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = d.w > 0.5 ? "#e8e2d2" : "#8a6a43";
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 12 * k, 7.5 * k, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-10 * k, 0);
+        ctx.lineTo(-17 * k, -3 * k + Math.sin(d.ph) * 1.2);
+        ctx.lineTo(-11 * k, 4 * k);
+        ctx.fill();
+        ctx.fillStyle = d.w > 0.5 ? "#c9c2ae" : "#6b4f30";
+        ctx.beginPath();
+        ctx.ellipse(-2 * k, 0, 7 * k, 4.5 * k, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = d.w > 0.5 ? "#e8e2d2" : "#1f7a4d";
+        ctx.beginPath();
+        ctx.arc(10 * k, 0, 4.6 * k, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#f59e0b";
+        ctx.beginPath();
+        ctx.moveTo(13.5 * k, -1.6 * k);
+        ctx.lineTo(18 * k, 0.4 * k);
+        ctx.lineTo(13.5 * k, 2 * k);
+        ctx.fill();
+        ctx.fillStyle = "#111";
+        ctx.fillRect(11 * k, -2 * k, 1.1, 1.1);
+        ctx.restore();
       });
       ctx.restore();
       w.stones.forEach((r) => {
