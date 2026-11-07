@@ -5,6 +5,7 @@ import type { Me } from "@/lib/api/types";
 import { useCity } from "@/lib/domain/city";
 import { Button } from "@/components/ui/button";
 import { LoadError, SkeletonList } from "@/components/common";
+import { getAmbient, setAmbient } from "@/lib/audio/ambient";
 import { setSandboxUser } from "@/lib/runtime/sandbox";
 import { useOverlay } from "@/lib/runtime/activity";
 import AnimalRoom from "./AnimalRoom";
@@ -21,6 +22,7 @@ type View = "map" | "lobby" | "room" | "pond" | "forest" | "stadium" | "animals"
 
 const TITLES: Record<View, string> = { map: "Città", lobby: "Museo", room: "Sala", pond: "Il Pond", forest: "La Foresta", stadium: "Lo Stadio", animals: "Sala animali" };
 const PARENT: Record<View, View | null> = { map: null, lobby: "map", room: "lobby", pond: "map", forest: "map", stadium: "map", animals: "lobby" };
+const SCAPE: Record<View, string> = { map: "city-map", lobby: "city-hall", room: "city-water", pond: "city-pond", forest: "city-forest", stadium: "city-map", animals: "city-meadow" };
 const BACK_LABEL: Record<View, string> = { map: "Esci", lobby: "Città", room: "Atrio", pond: "Città", forest: "Città", stadium: "Città", animals: "Atrio" };
 
 export default function CityPanel({ me, onClose }: { me: Me; onClose: () => void }) {
@@ -36,6 +38,15 @@ export default function CityPanel({ me, onClose }: { me: Me; onClose: () => void
   const data = city.data;
   const parent = PARENT[view];
   const roomName = useMemo(() => ROOMS.find((r) => r.id === roomId)?.name ?? TITLES.room, [roomId]);
+
+  useEffect(() => {
+    const prev = getAmbient();
+    return () => setAmbient(prev);
+  }, []);
+
+  useEffect(() => {
+    setAmbient(SCAPE[view]);
+  }, [view]);
 
   const back = () => (parent ? setView(parent) : onClose());
 
