@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
-import { CFG, ROSTER, type RosterEntry } from "@/lib/domain/stadiumConfig";
+import { CFG, ROSTER, canInstantBuy, type RosterEntry } from "@/lib/domain/stadiumConfig";
+import { readJson, writeJson } from "@/lib/utils/storage";
 
 export type Pos = "POR" | "DIF" | "CEN" | "ATT";
 export type StatKey = "rit" | "tir" | "pas" | "dri" | "dif" | "fis";
@@ -21,6 +22,7 @@ export interface Player {
   priceAt?: number;
   card?: string;
   look?: { skin?: string; hair?: string; style?: number };
+  loan?: { from: string; until: number };
 }
 
 export interface Team {
@@ -31,6 +33,7 @@ export interface Team {
   mine: boolean;
   formation: string;
   xi: (string | null)[];
+  budget: number;
 }
 
 export interface MatchEvent {
@@ -57,6 +60,7 @@ export interface Fixture {
   ag: number | null;
   events: MatchEvent[];
   log: LogEntry[];
+  reward?: number;
 }
 
 export interface Row {
@@ -81,6 +85,42 @@ export interface StadiumState {
   champion: string | null;
   rewarded: boolean;
   prize: number;
+  auctions: Auction[];
+  offers: Offer[];
+  ledger: Ledger[];
+}
+
+export interface AuctionBot {
+  id: string;
+  max: number;
+  at: number;
+}
+
+export interface Auction {
+  id: string;
+  pid: string;
+  seller: string | null;
+  bid: number;
+  bidder: string | null;
+  endsAt: number;
+  bots: AuctionBot[];
+}
+
+export interface Offer {
+  id: string;
+  kind: "loan" | "buy";
+  team: string;
+  pid: string;
+  amount: number;
+  days: number;
+  expires: number;
+}
+
+export interface Ledger {
+  at: number;
+  day: number;
+  text: string;
+  amount: number;
 }
 
 export interface Slot {
@@ -237,7 +277,7 @@ function mkBot(name: string): Team {
     if (at >= 0) players[at] = fromRoster(r);
     else players.push(fromRoster(r));
   });
-  return { id: uid("t"), name, color: pick(COLORS), players, mine: false, formation: "4-3-3", xi: autoXI(players, "4-3-3") };
+  return { id: uid("t"), name, color: pick(COLORS), players, mine: false, formation: "4-3-3", xi: autoXI(players, "4-3-3"), budget: rnd(CFG.auction.botBudgetMin, CFG.auction.botBudgetMax) };
 }
 
 function mkMarket(owned: Set<string> = new Set()): Player[] {
@@ -271,7 +311,7 @@ function schedule(ids: string[]): Fixture[] {
 
 function fresh(): StadiumState {
   const names = [...BOT_NAMES].sort(() => Math.random() - 0.5).slice(0, TEAMS - 1);
-  const s: StadiumState = { budget: START_BUDGET, myId: null, teams: names.map(mkBot), market: [], fixtures: [], day: 0, season: 1, champion: null, rewarded: false, prize: 0 };
+  const s: StadiumState = { budget: START_BUDGET, myId: null, teams: names.map(mkBot), market: [], fixtures: [], day: 0, season: 1, champion: null, rewarded: false, prize: 0, auctions: [], offers: [], ledger: [] };
   s.market = mkMarket(ownedIds(s));
   return s;
 }
@@ -446,10 +486,23 @@ export function table(s: StadiumState): Row[] {
 
 export const myTeam = (s: StadiumState) => s.teams.find((t) => t.id === s.myId);
 
-let state: StadiumState = fresh();
+const KEY = "studium.stadium.v2";
+
+function load(): StadiumState {
+  const raw = readJson<StadiumState | null>(KEY, null);
+  if (!raw || !Array.isArray(raw.teams) || !Array.isArray(raw.market) || !Array.isArray(raw.fixtures)) return fresh();
+  raw.auctions = raw.auctions ?? [];
+  raw.offers = raw.offers ?? [];
+  raw.ledger = raw.ledger ?? [];
+  raw.teams.forEach((t) => (t.budget = t.budget ?? 0));
+  return raw;
+}
+
+let state: StadiumState = load();
 const listeners = new Set<() => void>();
 const commit = (next: StadiumState) => {
   state = next;
+  writeJson(KEY, next);
   listeners.forEach((l) => l());
 };
 const subscribe = (l: () => void) => {
@@ -476,7 +529,7 @@ export function createTeam(name: string, color: string): string | null {
   const clean = name.trim();
   if (clean.length < 3 || clean.length > 24) return "Il nome deve avere tra 3 e 24 caratteri";
   const s = structuredClone(state);
-  const team: Team = { id: uid("t"), name: clean, color, players: [], mine: true, formation: "4-3-3", xi: Array(11).fill(null) };
+  const team: Team = { id: uid("t"), name: clean, color, players: [], mine: true, formation: "4-3-3", xi: Array(11).fill(null), budget: 0 };
   s.teams.push(team);
   s.myId = team.id;
   s.fixtures = schedule(s.teams.map((t) => t.id));
@@ -508,9 +561,11 @@ export function buyPlayer(pid: string): string | null {
   if (!mine) return "Prima crea o compra una squadra";
   const p = state.market.find((x) => x.id === pid);
   if (!p) return "Giocatore non disponibile";
+  if (!canInstantBuy(p.ovr, p.card)) return "Questo giocatore si prende solo all'asta";
+  if (state.auctions.some((a) => a.pid === pid)) return "Giocatore già all'asta";
   if (mine.players.length >= SQUAD_MAX) return `Rosa piena (massimo ${SQUAD_MAX} giocatori)`;
   const price = playerPrice(p);
-  if (state.budget < price) return `Budget insufficiente: servono €${price.toFixed(1)}M`;
+  if (state.budget - reserved(state) < price) return `Budget insufficiente: servono €${price.toFixed(1)}M`;
   const s = structuredClone(state);
   const t = myTeam(s) as Team;
   t.players.push(p);
@@ -525,6 +580,9 @@ export function sellPlayer(pid: string): string | null {
   const mine = myTeam(state);
   const p = mine?.players.find((x) => x.id === pid);
   if (!mine || !p) return "Giocatore non trovato";
+  if (p.loan) return "Un giocatore in prestito non si può vendere";
+  if (state.auctions.some((a) => a.pid === pid)) return "Giocatore già all'asta";
+  if (mine.players.length <= SQUAD_MIN) return `Rosa troppo corta: servono almeno ${SQUAD_MIN} giocatori`;
   const s = structuredClone(state);
   const t = myTeam(s) as Team;
   t.players = t.players.filter((x) => x.id !== pid);
@@ -533,11 +591,6 @@ export function sellPlayer(pid: string): string | null {
   s.market = [{ ...p, goals: 0 }, ...s.market].sort((a, b) => b.ovr - a.ovr);
   s.budget = round1(s.budget + sellPrice(p));
   commit(s);
-  return null;
-}
-
-export function refreshMarket(): string | null {
-  commit({ ...state, market: mkMarket(ownedIds(state)) });
   return null;
 }
 
@@ -646,8 +699,18 @@ export function resetTraining() {
 
 function runDay(s: StadiumState) {
   const map = new Map(s.teams.map((t) => [t.id, t]));
-  s.fixtures.filter((f) => f.day === s.day + 1).forEach((f) => simulate(f, map));
+  s.fixtures.filter((f) => f.day === s.day + 1).forEach((f) => {
+    simulate(f, map);
+    if (!s.myId || (f.home !== s.myId && f.away !== s.myId) || f.hg === null || f.ag === null) return;
+    const mineGoals = f.home === s.myId ? f.hg : f.ag;
+    const oppGoals = f.home === s.myId ? f.ag : f.hg;
+    const base = mineGoals > oppGoals ? CFG.economy.winReward : mineGoals === oppGoals ? CFG.economy.drawReward : CFG.economy.lossReward;
+    f.reward = round1(base + CFG.economy.goalBonus * mineGoals);
+    s.budget = round1(s.budget + f.reward);
+    note(s, mineGoals > oppGoals ? "Vittoria in campionato" : mineGoals === oppGoals ? "Pareggio in campionato" : "Sconfitta in campionato", f.reward);
+  });
   s.day += 1;
+  dayEnd(s);
   if (s.day >= TOTAL_DAYS && !s.rewarded) {
     const rows = table(s);
     const idx = rows.findIndex((r) => r.team.id === s.myId);
@@ -704,7 +767,6 @@ export function newSeason(): string | null {
   s.champion = null;
   s.rewarded = false;
   s.prize = 0;
-  s.market = mkMarket(ownedIds(s));
   commit(s);
   return null;
 }
@@ -715,4 +777,351 @@ export function addBudget(n: number) {
 
 export function resetStadium() {
   commit(fresh());
+}
+
+
+const fr = (a: number, b: number) => a + Math.random() * (b - a);
+
+export const reserved = (s: StadiumState) => round1(s.auctions.filter((a) => a.bidder === s.myId && a.seller !== s.myId).reduce((t, a) => t + a.bid, 0));
+export const available = (s: StadiumState) => round1(s.budget - reserved(s));
+export const auctionStep = (price: number) => Math.max(CFG.auction.minStep, round1(price * CFG.auction.stepRatio));
+export const auctionStart = (p: Player) => Math.max(CFG.auction.minStep, round1(playerPrice(p) * CFG.auction.startRatio));
+export const borrowFee = (p: Player, days: number) => round1(Math.max(CFG.loan.minFee, playerPrice(p) * CFG.loan.borrowRatio * days));
+export const auctionOf = (s: StadiumState, pid: string) => s.auctions.find((a) => a.pid === pid);
+export const isFree = (s: StadiumState, p: Player) => !p.loan && !auctionOf(s, p.id);
+
+const note = (s: StadiumState, text: string, amount: number) => {
+  s.ledger = [{ at: Date.now(), day: s.day, text, amount }, ...s.ledger].slice(0, 40);
+};
+
+const locate = (s: StadiumState, pid: string): { p: Player; team: Team | null } | null => {
+  for (const t of s.teams) {
+    const p = t.players.find((x) => x.id === pid);
+    if (p) return { p, team: t };
+  }
+  const m = s.market.find((x) => x.id === pid);
+  return m ? { p: m, team: null } : null;
+};
+
+const fixXI = (t: Team) => {
+  if (t.mine) fillEmpty(t);
+  else t.xi = autoXI(t.players, t.formation);
+};
+
+const detach = (t: Team, pid: string): Player | null => {
+  const p = t.players.find((x) => x.id === pid);
+  if (!p) return null;
+  t.players = t.players.filter((x) => x.id !== pid);
+  t.xi = t.xi.map((id) => (id === pid ? null : id));
+  return p;
+};
+
+const attach = (t: Team, p: Player) => {
+  t.players.push(p);
+  fixXI(t);
+};
+
+const pay = (s: StadiumState, t: Team, delta: number) => {
+  if (t.mine) s.budget = round1(s.budget + delta);
+  else t.budget = round1(t.budget + delta);
+};
+
+const funds = (s: StadiumState, t: Team) => (t.mine ? s.budget : t.budget);
+
+const wants = (t: Team, pos: Pos) => t.players.filter((x) => x.pos === pos).length < { POR: 2, DIF: 5, CEN: 5, ATT: 3 }[pos];
+
+const dropWorst = (s: StadiumState, t: Team) => {
+  while (t.players.length >= SQUAD_MAX) {
+    const w = [...t.players].filter((x) => !x.loan).sort((a, b) => a.ovr - b.ovr)[0];
+    if (!w) return;
+    detach(t, w.id);
+    s.market.push(w);
+  }
+};
+
+function interested(s: StadiumState, p: Player, seller: string | null, floor: number, now: number): AuctionBot[] {
+  return s.teams
+    .filter((t) => !t.mine && t.id !== seller && t.budget >= floor)
+    .map((t) => ({ id: t.id, max: Math.min(t.budget, round1(playerPrice(p) * fr(CFG.auction.botMaxMin, CFG.auction.botMaxMax) * (wants(t, p.pos) ? 1.12 : 0.78))), at: now + fr(CFG.auction.botDelayMin, CFG.auction.botDelayMax) * 1000 }))
+    .filter((b) => b.max >= floor);
+}
+
+export function openAuction(pid: string, amount: number): string | null {
+  const mine = myTeam(state);
+  if (!mine) return "Prima crea o compra una squadra";
+  const found = locate(state, pid);
+  if (!found) return "Giocatore non disponibile";
+  if (found.p.loan) return "Un giocatore in prestito non si può mettere all'asta";
+  if (auctionOf(state, pid)) return "Già all'asta";
+  if (state.auctions.length >= CFG.auction.maxActive) return `Massimo ${CFG.auction.maxActive} aste contemporanee`;
+  const now = Date.now();
+  const s = structuredClone(state);
+  const p = (locate(s, pid) as { p: Player }).p;
+  if (found.team?.mine) {
+    if (mine.players.length <= SQUAD_MIN) return `Rosa troppo corta: servono almeno ${SQUAD_MIN} giocatori`;
+    const ask = round1(Math.max(CFG.auction.minStep, amount));
+    const bots = interested(s, p, mine.id, ask, now);
+    if (!bots.length) return "Nessun club ha i fondi per questa base d'asta";
+    s.auctions.push({ id: uid("a"), pid, seller: mine.id, bid: ask, bidder: null, endsAt: now + CFG.auction.firstSeconds * 1000, bots });
+    commit(s);
+    return null;
+  }
+  if (found.team) return "Questo giocatore appartiene a un altro club: proponi uno scambio o un prestito";
+  const min = auctionStart(p);
+  const bid = round1(amount);
+  if (bid < min) return `Offerta minima €${min.toFixed(1)}M`;
+  if (available(state) < bid) return `Budget disponibile insufficiente: €${available(state).toFixed(1)}M`;
+  if (mine.players.length >= SQUAD_MAX) return `Rosa piena (massimo ${SQUAD_MAX} giocatori)`;
+  const bots = interested(s, p, null, bid + auctionStep(bid), now);
+  s.auctions.push({ id: uid("a"), pid, seller: null, bid, bidder: mine.id, endsAt: now + CFG.auction.firstSeconds * 1000, bots });
+  commit(s);
+  return null;
+}
+
+export function placeBid(aid: string, amount: number): string | null {
+  const a = state.auctions.find((x) => x.id === aid);
+  const mine = myTeam(state);
+  if (!a || !mine) return "Asta non trovata";
+  if (a.seller === mine.id) return "Non puoi rilanciare sulla tua asta";
+  if (a.bidder === mine.id) return "Sei già in testa";
+  if (Date.now() >= a.endsAt) return "Asta chiusa";
+  const min = round1(a.bid + auctionStep(a.bid));
+  const bid = round1(amount);
+  if (bid < min) return `Rilancio minimo €${min.toFixed(1)}M`;
+  if (available(state) < bid) return `Budget disponibile insufficiente: €${available(state).toFixed(1)}M`;
+  const s = structuredClone(state);
+  const x = s.auctions.find((y) => y.id === aid) as Auction;
+  const now = Date.now();
+  x.bid = bid;
+  x.bidder = mine.id;
+  x.endsAt = Math.max(x.endsAt, now + CFG.auction.extendSeconds * 1000);
+  x.bots.forEach((b) => (b.at = now + fr(CFG.auction.botDelayMin, CFG.auction.botDelayMax) * 1000));
+  commit(s);
+  return null;
+}
+
+function stepAuction(s: StadiumState, a: Auction, now: number): boolean {
+  for (let guard = 0; guard < 400; guard++) {
+    const bot = [...a.bots].sort((x, y) => x.at - y.at)[0];
+    if (bot && bot.at < a.endsAt && bot.at <= now) {
+      const team = s.teams.find((t) => t.id === bot.id);
+      const min = a.bidder ? round1(a.bid + auctionStep(a.bid)) : a.bid;
+      if (!team || min > bot.max || min > team.budget) {
+        a.bots = a.bots.filter((b) => b !== bot);
+        continue;
+      }
+      if (a.bidder === bot.id) {
+        bot.at += fr(CFG.auction.botDelayMin, CFG.auction.botDelayMax) * 1000;
+        continue;
+      }
+      const amt = round1(Math.min(bot.max, team.budget, min + auctionStep(a.bid) * Math.floor(Math.random() * 3)));
+      a.bid = Math.max(amt, min);
+      a.bidder = bot.id;
+      a.endsAt = Math.max(a.endsAt, bot.at + CFG.auction.extendSeconds * 1000);
+      bot.at += fr(CFG.auction.botDelayMin, CFG.auction.botDelayMax) * 1000;
+      continue;
+    }
+    return a.endsAt <= now;
+  }
+  return a.endsAt <= now;
+}
+
+function closeAuction(s: StadiumState, a: Auction): { text: string; good: boolean } {
+  const found = locate(s, a.pid);
+  if (!found) return { text: "Asta annullata", good: false };
+  const { p } = found;
+  const winner = s.teams.find((t) => t.id === a.bidder);
+  const mine = myTeam(s);
+  if (!winner) return { text: a.seller ? `${p.name}: nessuna offerta, resta in rosa` : `${p.name}: asta chiusa senza offerte`, good: false };
+  if (!a.seller) {
+    if (winner.mine) {
+      if (winner.players.length >= SQUAD_MAX) return { text: `Rosa piena: asta di ${p.name} annullata`, good: false };
+      if (s.budget < a.bid) return { text: `Fondi insufficienti: asta di ${p.name} annullata`, good: false };
+    } else dropWorst(s, winner);
+    s.market = s.market.filter((x) => x.id !== p.id);
+    pay(s, winner, -a.bid);
+    attach(winner, p);
+    if (winner.mine) {
+      note(s, `Asta vinta: ${p.name}`, -a.bid);
+      return { text: `Asta vinta! ${p.name} è tuo per €${a.bid.toFixed(1)}M`, good: true };
+    }
+    return { text: `${p.name} è andato a ${winner.name} per €${a.bid.toFixed(1)}M`, good: false };
+  }
+  if (!mine) return { text: "Asta annullata", good: false };
+  detach(mine, p.id);
+  fillEmpty(mine);
+  dropWorst(s, winner);
+  pay(s, winner, -a.bid);
+  attach(winner, p);
+  s.budget = round1(s.budget + a.bid);
+  note(s, `Asta chiusa: ${p.name} a ${winner.name}`, a.bid);
+  return { text: `${p.name} venduto a ${winner.name} per €${a.bid.toFixed(1)}M`, good: true };
+}
+
+export function settleAuctions(now = Date.now()): { text: string; good: boolean }[] {
+  const due = state.auctions.some((a) => a.bots.some((b) => b.at <= now && b.at < a.endsAt) || a.endsAt <= now);
+  if (!due) return [];
+  const s = structuredClone(state);
+  const out: { text: string; good: boolean }[] = [];
+  const left: Auction[] = [];
+  s.auctions.forEach((a) => {
+    if (stepAuction(s, a, now)) out.push(closeAuction(s, a));
+    else left.push(a);
+  });
+  s.auctions = left;
+  commit(s);
+  return out;
+}
+
+export function acceptOffer(oid: string): string | null {
+  const o = state.offers.find((x) => x.id === oid);
+  const mine = myTeam(state);
+  if (!o || !mine) return "Offerta scaduta";
+  const p = mine.players.find((x) => x.id === o.pid);
+  const bot = state.teams.find((t) => t.id === o.team);
+  if (!p || !bot || !isFree(state, p)) return "L'offerta non è più valida";
+  if (mine.players.length <= SQUAD_MIN) return `Rosa troppo corta: servono almeno ${SQUAD_MIN} giocatori`;
+  if (bot.budget < o.amount) return `${bot.name} non ha più i fondi`;
+  const s = structuredClone(state);
+  const m = myTeam(s) as Team;
+  const b = s.teams.find((t) => t.id === o.team) as Team;
+  const pl = detach(m, o.pid) as Player;
+  fillEmpty(m);
+  b.budget = round1(b.budget - o.amount);
+  s.budget = round1(s.budget + o.amount);
+  if (o.kind === "loan") pl.loan = { from: m.id, until: s.day + o.days };
+  b.players.push(pl);
+  b.xi = autoXI(b.players, b.formation);
+  s.offers = s.offers.filter((x) => x.id !== oid);
+  note(s, o.kind === "loan" ? `Prestito di ${pl.name} a ${b.name}` : `Cessione di ${pl.name} a ${b.name}`, o.amount);
+  commit(s);
+  return null;
+}
+
+export function declineOffer(oid: string): string | null {
+  commit({ ...state, offers: state.offers.filter((o) => o.id !== oid) });
+  return null;
+}
+
+export function borrowPlayer(pid: string, days: number): string | null {
+  const mine = myTeam(state);
+  if (!mine) return "Prima crea o compra una squadra";
+  const found = locate(state, pid);
+  const host = found?.team;
+  if (!found || !host || host.mine) return "Giocatore non trovato";
+  if (!isFree(state, found.p)) return "Giocatore non disponibile";
+  if (mine.players.length >= SQUAD_MAX) return `Rosa piena (massimo ${SQUAD_MAX} giocatori)`;
+  if (host.players.length <= SQUAD_MIN) return `${host.name} ha la rosa troppo corta`;
+  if (found.p.pos === "POR" && host.players.filter((x) => x.pos === "POR").length < 2) return `${host.name} non può cedere il suo portiere`;
+  const fee = borrowFee(found.p, days);
+  if (available(state) < fee) return `Budget disponibile insufficiente: servono €${fee.toFixed(1)}M`;
+  const s = structuredClone(state);
+  const m = myTeam(s) as Team;
+  const h = s.teams.find((t) => t.id === host.id) as Team;
+  const pl = detach(h, pid) as Player;
+  h.xi = autoXI(h.players, h.formation);
+  pl.loan = { from: h.id, until: s.day + days };
+  s.budget = round1(s.budget - fee);
+  h.budget = round1(h.budget + fee);
+  attach(m, pl);
+  note(s, `Prestito di ${pl.name} da ${h.name}`, -fee);
+  commit(s);
+  return null;
+}
+
+export function tradeQuote(s: StadiumState, botId: string, give: string[], get: string[], cash: number): { need: number; error: string | null } {
+  const mine = myTeam(s);
+  const bot = s.teams.find((t) => t.id === botId);
+  if (!mine || !bot) return { need: 0, error: "Squadra non trovata" };
+  if (!give.length && !get.length) return { need: 0, error: "Scegli almeno un giocatore" };
+  const mine_ = give.map((id) => mine.players.find((p) => p.id === id));
+  const theirs = get.map((id) => bot.players.find((p) => p.id === id));
+  if (mine_.some((p) => !p || !isFree(s, p)) || theirs.some((p) => !p || !isFree(s, p))) return { need: 0, error: "Un giocatore scelto non è disponibile" };
+  const myAfter = mine.players.length - give.length + get.length;
+  const botAfter = bot.players.length + give.length - get.length;
+  if (myAfter > SQUAD_MAX || myAfter < SQUAD_MIN) return { need: 0, error: `La tua rosa deve restare tra ${SQUAD_MIN} e ${SQUAD_MAX} giocatori` };
+  if (botAfter > SQUAD_MAX || botAfter < SQUAD_MIN) return { need: 0, error: `${bot.name} deve restare tra ${SQUAD_MIN} e ${SQUAD_MAX} giocatori` };
+  const botGk = bot.players.filter((p) => p.pos === "POR" && !get.includes(p.id)).length + mine.players.filter((p) => give.includes(p.id) && p.pos === "POR").length;
+  if (botGk < 1) return { need: 0, error: `${bot.name} non può restare senza portiere` };
+  if (cash > 0 && available(s) < cash) return { need: 0, error: "Budget disponibile insufficiente" };
+  if (cash < 0 && bot.budget < -cash) return { need: 0, error: `${bot.name} non ha i fondi per pagarti` };
+  const v = (list: (Player | undefined)[]) => list.reduce((t, p) => t + (p ? playerPrice(p) : 0), 0);
+  const need = round1(Math.max(0, v(theirs) * CFG.trade.margin - (v(mine_) + cash)));
+  return { need, error: null };
+}
+
+export function proposeTrade(botId: string, give: string[], get: string[], cash: number): string | null {
+  const q = tradeQuote(state, botId, give, get, cash);
+  if (q.error) return q.error;
+  if (q.need > 0) return `${(state.teams.find((t) => t.id === botId) as Team).name} chiede ancora €${q.need.toFixed(1)}M`;
+  const s = structuredClone(state);
+  const m = myTeam(s) as Team;
+  const b = s.teams.find((t) => t.id === botId) as Team;
+  const out = give.map((id) => detach(m, id) as Player);
+  const inn = get.map((id) => detach(b, id) as Player);
+  out.forEach((p) => b.players.push(p));
+  inn.forEach((p) => m.players.push(p));
+  s.budget = round1(s.budget - cash);
+  b.budget = round1(b.budget + cash);
+  fixXI(m);
+  b.xi = autoXI(b.players, b.formation);
+  note(s, `Scambio con ${b.name}`, -cash);
+  commit(s);
+  return null;
+}
+
+function returnLoans(s: StadiumState) {
+  s.teams.forEach((host) => {
+    host.players
+      .filter((p) => p.loan && s.day >= p.loan.until)
+      .forEach((p) => {
+        const home = s.teams.find((t) => t.id === p.loan?.from);
+        detach(host, p.id);
+        delete p.loan;
+        fixXI(host);
+        if (home) attach(home, p);
+        else s.market.push(p);
+      });
+  });
+}
+
+function botMarket(s: StadiumState) {
+  const bots = s.teams.filter((t) => !t.mine).sort(() => Math.random() - 0.5);
+  for (let i = 0; i < CFG.auction.botBuysPerDay && i < bots.length; i++) {
+    const t = bots[i];
+    const pool = s.market.filter((p) => !auctionOf(s, p.id) && playerPrice(p) <= t.budget * 0.5 && wants(t, p.pos) && t.players.length < SQUAD_MAX);
+    if (!pool.length) continue;
+    const p = pool.sort((a, b) => b.ovr - a.ovr)[Math.floor(Math.random() * Math.min(3, pool.length))];
+    s.market = s.market.filter((x) => x.id !== p.id);
+    t.budget = round1(t.budget - playerPrice(p));
+    attach(t, p);
+  }
+}
+
+function makeOffers(s: StadiumState) {
+  const mine = myTeam(s);
+  if (!mine) return;
+  const L = CFG.loan;
+  s.offers = s.offers.filter((o) => o.expires > s.day && mine.players.some((p) => p.id === o.pid && isFree(s, p)));
+  let n = Math.random() < L.offerChance ? 1 + Math.floor(Math.random() * 2) : 0;
+  const pool = mine.players.filter((p) => isFree(s, p) && !s.offers.some((o) => o.pid === p.id)).sort((a, b) => b.ovr - a.ovr).slice(0, 10);
+  const bots = s.teams.filter((t) => !t.mine);
+  while (n-- > 0 && pool.length && bots.length && s.offers.length < L.maxOffers) {
+    const p = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+    const team = pick(bots);
+    const loan = Math.random() < 0.6;
+    const days = rnd(L.minDays, L.maxDays);
+    const amount = loan ? round1(Math.max(L.minFee, playerPrice(p) * L.feeRatio * days)) : round1(playerPrice(p) * fr(L.buyMin, L.buyMax));
+    if (team.budget < amount) continue;
+    s.offers.push({ id: uid("o"), kind: loan ? "loan" : "buy", team: team.id, pid: p.id, amount, days: loan ? days : 0, expires: s.day + L.offerLifeDays });
+  }
+}
+
+function dayEnd(s: StadiumState) {
+  s.teams.forEach((t) => {
+    if (!t.mine) t.budget = round1(t.budget + CFG.auction.botIncomePerDay);
+  });
+  returnLoans(s);
+  botMarket(s);
+  makeOffers(s);
 }
