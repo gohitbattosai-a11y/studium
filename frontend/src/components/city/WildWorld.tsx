@@ -1,4 +1,5 @@
 import { memo, useMemo } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import "./wild.css";
 
 export const WORLD_W = 3600;
@@ -135,6 +136,7 @@ function buildProps(): PropDef[] {
   const place = (k: PropKind, n: number, box: [number, number, number, number], pathR: number, smin: number, smax: number) => {
     let c = 0;
     let guard = 0;
+    n = Math.round(n * 0.62);
     while (c < n && guard < n * 40) {
       guard++;
       const x = box[0] + r() * (box[2] - box[0]);
@@ -460,7 +462,7 @@ function Tree() {
 
 function Ground() {
   return (
-    <svg viewBox={`0 0 ${WORLD_W} ${WORLD_H}`} width={WORLD_W} height={WORLD_H} className="absolute top-0 left-0" aria-hidden>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${WORLD_W} ${WORLD_H}`} width={WORLD_W} height={WORLD_H}>
       <defs>
         <linearGradient id="wl-grass" x1="0" y1="0" x2="0.4" y2="1">
           <stop offset="0" stopColor="#7cc56a" />
@@ -568,24 +570,22 @@ const Props = memo(function Props() {
 const Life = memo(function Life() {
   const bf = useMemo(() => {
     const r = rng(99);
-    return Array.from({ length: 16 }, (_, i) => ({ x: 200 + r() * 3000, y: 900 + r() * 1100, d: 12 + r() * 10, dl: -r() * 12, c: ["#ffd84a", "#ff8fb4", "#8fd3ff", "#ffffff"][i % 4] }));
+    return Array.from({ length: 7 }, (_, i) => ({ x: 200 + r() * 3000, y: 900 + r() * 1100, d: 12 + r() * 10, dl: -r() * 12, c: ["#ffd84a", "#ff8fb4", "#8fd3ff", "#ffffff"][i % 4] }));
   }, []);
   const leaves = useMemo(() => {
     const r = rng(5);
-    return Array.from({ length: 22 }, () => ({ x: 100 + r() * 1400, y: 100 + r() * 500, d: 8 + r() * 6, dl: -r() * 10, c: ["#d9a441", "#9fd05a", "#e07a3c"][Math.floor(r() * 3)] }));
+    return Array.from({ length: 8 }, () => ({ x: 100 + r() * 1400, y: 100 + r() * 500, d: 8 + r() * 6, dl: -r() * 10, c: ["#d9a441", "#9fd05a", "#e07a3c"][Math.floor(r() * 3)] }));
   }, []);
-  const clouds = useMemo(() => [[200, 1500, 120], [1400, 700, 160], [900, 1900, 180], [2200, 1100, 140]], []);
+  const clouds = useMemo(() => [[600, 1500, 120], [1800, 700, 160]], []);
   return (
     <>
       {bf.map((b, i) => (
         <div key={i} className="wl-bf pointer-events-none absolute" style={{ left: b.x, top: b.y, zIndex: 2000, ["--bd" as string]: `${b.d}s`, ["--bdl" as string]: `${b.dl}s` }}>
           <svg width="22" height="16" viewBox="0 0 22 16" aria-hidden>
-            <g className="wl-wing">
-              <ellipse cx="6" cy="6" rx="6" ry="5" fill={b.c} />
-              <ellipse cx="16" cy="6" rx="6" ry="5" fill={b.c} />
-              <ellipse cx="7" cy="12" rx="4" ry="3" fill={b.c} opacity="0.8" />
-              <ellipse cx="15" cy="12" rx="4" ry="3" fill={b.c} opacity="0.8" />
-            </g>
+            <ellipse cx="6" cy="6" rx="6" ry="5" fill={b.c} />
+            <ellipse cx="16" cy="6" rx="6" ry="5" fill={b.c} />
+            <ellipse cx="7" cy="12" rx="4" ry="3" fill={b.c} opacity="0.8" />
+            <ellipse cx="15" cy="12" rx="4" ry="3" fill={b.c} opacity="0.8" />
             <rect x="10.2" y="2" width="1.6" height="12" rx="0.8" fill="#2a1f14" />
           </svg>
         </div>
@@ -602,11 +602,36 @@ const Life = memo(function Life() {
   );
 });
 
+let groundUrl: string | null = null;
+const getGround = () => {
+  if (!groundUrl) groundUrl = URL.createObjectURL(new Blob([renderToStaticMarkup(<Ground />)], { type: "image/svg+xml" }));
+  return groundUrl;
+};
+
+const Ripples = memo(function Ripples() {
+  const rip = useMemo(
+    () => [
+      ...Array.from({ length: 7 }, (_, i) => ({ x: LAKE.x - 300 + i * 100, y: LAKE.y - 70 + (i % 3) * 60, w: 110, h: 34, d: i * 0.9 })),
+      { x: PLAZA.x, y: PLAZA.y + 8, w: 100, h: 60, d: 0 },
+      { x: PLAZA.x, y: PLAZA.y + 8, w: 130, h: 80, d: 1.6 },
+    ],
+    [],
+  );
+  return (
+    <>
+      {rip.map((r, i) => (
+        <span key={i} className="wl-ripd pointer-events-none absolute rounded-[50%] border-2 border-white/70" style={{ left: r.x - r.w / 2, top: r.y - r.h / 2, width: r.w, height: r.h, zIndex: 3, animationDelay: `${r.d}s` }} />
+      ))}
+    </>
+  );
+});
+
 export const WildWorld = memo(function WildWorld() {
   return (
     <>
       <Symbols />
-      <Ground />
+      <img src={getGround()} alt="" width={WORLD_W} height={WORLD_H} draggable={false} decoding="async" className="pointer-events-none absolute top-0 left-0 max-w-none" style={{ width: WORLD_W, height: WORLD_H }} />
+      <Ripples />
       <Props />
       <Life />
     </>
