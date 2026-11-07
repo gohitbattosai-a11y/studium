@@ -93,15 +93,15 @@ export default function AdminView({ me }: { me: Me }) {
                 ))}
               </NativeSelect>
             </Field>
-            <div className="grid grid-cols-[1fr_7rem] gap-3">
+            <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-[1fr_7rem]">
               <Field label="Materia">
-                <Input className="h-9" value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={40} placeholder="Matematica" data-testid="grade-subject" />
+                <Input className="h-10 text-base md:h-9 md:text-sm" value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={40} placeholder="Matematica" data-testid="grade-subject" />
               </Field>
               <Field label="Voto">
-                <Input className="h-9" inputMode="decimal" value={grade} onChange={(e) => setGrade(e.target.value)} placeholder="8,5" data-testid="grade-value" />
+                <Input className="h-10 text-base md:h-9 md:text-sm" inputMode="decimal" value={grade} onChange={(e) => setGrade(e.target.value)} placeholder="8,5" data-testid="grade-value" />
               </Field>
             </div>
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm text-[#8B949E]" data-testid="grade-preview">
                 {gradeValid ? (
                   <>
@@ -112,7 +112,7 @@ export default function AdminView({ me }: { me: Me }) {
                   "Voto da 1 a 10"
                 )}
               </p>
-              <Button type="submit" className="h-9" disabled={!gradeMember || !subject.trim() || !gradeValid || actions.grade.isPending} data-testid="grade-submit">
+              <Button type="submit" className="h-10 text-base md:h-9 md:text-sm" disabled={!gradeMember || !subject.trim() || !gradeValid || actions.grade.isPending} data-testid="grade-submit">
                 <ClipboardCheck className="size-4" /> Assegna
               </Button>
             </div>
@@ -139,16 +139,16 @@ export default function AdminView({ me }: { me: Me }) {
               ))}
             </NativeSelect>
           </Field>
-          <div className="grid grid-cols-[7rem_1fr] gap-3">
+          <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-[7rem_1fr]">
             <Field label="Punti">
-              <Input className="h-9" inputMode="numeric" value={bonusPoints} onChange={(e) => setBonusPoints(e.target.value)} placeholder="+2 / -1" data-testid="bonus-points" />
+              <Input className="h-10 text-base md:h-9 md:text-sm" inputMode="numeric" value={bonusPoints} onChange={(e) => setBonusPoints(e.target.value)} placeholder="+2 / -1" data-testid="bonus-points" />
             </Field>
             <Field label="Motivo">
-              <Input className="h-9" value={bonusReason} onChange={(e) => setBonusReason(e.target.value)} maxLength={80} placeholder="Interrogazione volontaria" data-testid="bonus-reason" />
+              <Input className="h-10 text-base md:h-9 md:text-sm" value={bonusReason} onChange={(e) => setBonusReason(e.target.value)} maxLength={80} placeholder="Interrogazione volontaria" data-testid="bonus-reason" />
             </Field>
           </div>
           <div className="flex justify-end">
-            <Button type="submit" className="h-9" disabled={!bonusMember || !bonusReason.trim() || !bonusValid || actions.bonus.isPending} data-testid="bonus-submit">
+            <Button type="submit" className="h-10 text-base md:h-9 md:text-sm" disabled={!bonusMember || !bonusReason.trim() || !bonusValid || actions.bonus.isPending} data-testid="bonus-submit">
               <Award className="size-4" /> Registra
             </Button>
           </div>
@@ -167,7 +167,7 @@ export default function AdminView({ me }: { me: Me }) {
               ))}
             </NativeSelect>
           </Field>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2">
             <Field label="Tipo">
               <NativeSelect
                 value={giftKind}
@@ -194,7 +194,7 @@ export default function AdminView({ me }: { me: Me }) {
             </Field>
           </div>
           <div className="flex justify-end">
-            <Button type="submit" className="h-9" disabled={!giftMember || !giftItem || giftPending} data-testid="gift-submit">
+            <Button type="submit" className="h-10 text-base md:h-9 md:text-sm" disabled={!giftMember || !giftItem || giftPending} data-testid="gift-submit">
               <Gift className="size-4" /> Regala
             </Button>
           </div>
@@ -204,7 +204,7 @@ export default function AdminView({ me }: { me: Me }) {
       <Panel title="Ruoli" hint="Gli admin inseriscono i voti e gestiscono i ruoli." testId="admin-roles-panel" action={<Users className="size-4 text-[#8B949E]" />}>
         <ul className="space-y-2">
           {all.map((m) => (
-            <li key={m.member_id} className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <li key={m.member_id} className="flex items-center gap-3">
               <Avatar name={m.nickname} size="sm" />
               <span className="min-w-0 flex-1 truncate text-sm">
                 {m.nickname}
@@ -214,7 +214,7 @@ export default function AdminView({ me }: { me: Me }) {
               <Button
                 variant="outline"
                 size="sm"
-                className="ml-auto"
+                className="ml-auto shrink-0"
                 disabled={actions.setRole.isPending}
                 onClick={() => actions.setRole.mutate({ member_id: m.member_id, role: m.role === "admin" ? "member" : "admin" })}
                 data-testid={`role-toggle-${m.member_id}`}
@@ -230,22 +230,22 @@ export default function AdminView({ me }: { me: Me }) {
         {!events.data || events.data.length === 0 ? (
           <EmptyState icon={<ClipboardCheck className="size-5" />} title="Nessun movimento" hint="I voti inseriti compariranno qui." testId="admin-events-empty" />
         ) : (
-          <ul className="max-h-96 space-y-2 overflow-y-auto pr-1">
+          <ul className="max-h-[60dvh] space-y-3 overflow-y-auto overscroll-contain pr-1">
             {events.data.map((ev) => (
-              <li key={ev.id} className="flex items-center gap-3 text-sm" data-testid={`event-${ev.id}`}>
+              <li key={ev.id} className="flex items-center gap-2 text-sm sm:gap-3" data-testid={`event-${ev.id}`}>
                 <span className={cn("w-10 shrink-0 text-right font-semibold tabular-nums", ev.points >= 0 ? "text-[#7EE787]" : "text-[#FFA198]")}>
                   {ev.points > 0 ? "+" : ""}
                   {ev.points}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate">
+                  <span className="block break-words">
                     <b className="font-medium">{ev.nickname}</b> · {ev.kind === "grade" ? `${ev.subject} ${String(ev.grade).replace(".", ",")}` : ev.reason}
                   </span>
                   <span className="block text-xs text-[#8B949E]">
                     {ev.created_by} · {relTime(ev.created_at)}
                   </span>
                 </span>
-                <Button variant="ghost" size="icon-sm" aria-label="Annulla movimento" disabled={actions.removeEvent.isPending} onClick={() => actions.removeEvent.mutate(ev.id)} data-testid={`event-delete-${ev.id}`}>
+                <Button variant="ghost" size="icon-sm" className="size-9 shrink-0" aria-label="Annulla movimento" disabled={actions.removeEvent.isPending} onClick={() => actions.removeEvent.mutate(ev.id)} data-testid={`event-delete-${ev.id}`}>
                   <Trash2 className="size-4 text-[#8B949E]" />
                 </Button>
               </li>
