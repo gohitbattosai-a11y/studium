@@ -5,6 +5,7 @@ import { useSandbox } from "@/lib/runtime/sandbox";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import AnimalArt from "./AnimalArt";
+import Wings from "./Wings";
 import AnimalBag from "./AnimalBag";
 import { RarityTag, fmtWhen } from "./Bucket";
 import { ANCHORS, LAKE, MINI, WORLD_H, WORLD_W, WildWorld, inLake, type Anchor } from "./WildWorld";
@@ -33,6 +34,8 @@ interface Sim {
   dir: 1 | -1;
   mode: Mode;
   seed: number;
+  z: number;
+  sd: number;
 }
 
 interface Node {
@@ -71,7 +74,7 @@ function makeSim(sp: AnimalSpecies): Sim {
   const t = pickPoint(home, fly);
   const w = clamp(Math.round(125 * sp.scale), 70, 260);
   const base = fly ? 95 : hop ? 70 : sp.behavior === "graze" ? 30 : 42;
-  return { sp, home, fly, hop, w, h: w * 0.75, x: p.x, y: p.y, tx: t.x, ty: t.y, hx: 1, hy: 0, v: 0, max: base * Math.max(0.6, sp.speed), wait: Math.random() * 3, dir: Math.random() < 0.5 ? 1 : -1, mode: "idle", seed: Math.random() * 10 };
+  return { sp, home, fly, hop, w, h: w * 0.75, x: p.x, y: p.y, tx: t.x, ty: t.y, hx: 1, hy: 0, v: 0, max: base * Math.max(0.6, sp.speed), wait: Math.random() * 3, dir: Math.random() < 0.5 ? 1 : -1, mode: "idle", seed: Math.random() * 10, z: -1, sd: -1 };
 }
 
 export default function AnimalRoom() {
@@ -252,11 +255,19 @@ export default function AnimalRoom() {
         }
         const alt = s.fly ? 90 * s.sp.scale + 40 + Math.sin(t * 0.8 + s.seed) * 14 : 0;
         n.root.style.transform = `translate3d(${s.x - s.w / 2}px, ${s.y - s.h * 0.94 - alt}px, 0)`;
-        n.root.style.zIndex = String(Math.round(s.y + (s.fly ? 600 : 0)));
-        if (n.inner) n.inner.style.setProperty("--sd", `${clamp(0.9 - s.v / 140, 0.32, 0.9)}s`);
+        const z = Math.round((s.y + (s.fly ? 600 : 0)) / 6);
+        if (z !== s.z) {
+          s.z = z;
+          n.root.style.zIndex = String(z * 6);
+          if (n.shadow) n.shadow.style.zIndex = String(Math.round(s.y) - 1);
+        }
+        const sd = Math.round(clamp(0.9 - s.v / 140, 0.32, 0.9) * 10) / 10;
+        if (sd !== s.sd) {
+          s.sd = sd;
+          if (n.inner) n.inner.style.setProperty("--sd", `${sd}s`);
+        }
         if (n.shadow) {
           n.shadow.style.transform = `translate3d(${s.x - s.w * 0.35}px, ${s.y - 8}px, 0) scale(${clamp(1 - alt / 420, 0.5, 1)})`;
-          n.shadow.style.zIndex = String(Math.round(s.y) - 1);
         }
       });
       raf = requestAnimationFrame(frame);
@@ -342,8 +353,9 @@ export default function AnimalRoom() {
               <div ref={setNode("root")} className="absolute top-0 left-0" style={{ width: s.w, height: s.h, willChange: "transform" }}>
                 <button type="button" onClick={() => open(s)} className="block size-full cursor-pointer outline-none" aria-label={owned ? s.sp.name : "Animale sconosciuto"} data-testid={`park-animal-${s.sp.id}`}>
                   <div ref={setNode("flip")} className="size-full" style={{ transform: `scaleX(${s.dir})` }}>
-                    <div ref={setNode("inner")} className="wl-idle size-full">
-                      <AnimalArt a={s.sp} silhouette={!owned} className="size-full overflow-visible drop-shadow-[0_3px_3px_rgba(0,0,0,0.25)]" />
+                    <div ref={setNode("inner")} className="wl-idle relative size-full">
+                      {s.fly && <Wings a={s.sp} silhouette={!owned} />}
+                      <AnimalArt a={s.sp} silhouette={!owned} className="size-full overflow-visible" />
                     </div>
                   </div>
                 </button>
