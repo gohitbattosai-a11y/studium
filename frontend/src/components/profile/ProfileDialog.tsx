@@ -92,7 +92,7 @@ function PinSection() {
         <Field id="pf-pin-old" label="PIN attuale">
           <Input id="pf-pin-old" type="password" inputMode="numeric" autoComplete="off" value={current} onChange={(e) => setCurrent(e.target.value)} maxLength={6} data-testid="profile-pin-current" />
         </Field>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2">
           <Field id="pf-pin-new" label="Nuovo PIN">
             <Input id="pf-pin-new" type="password" inputMode="numeric" autoComplete="off" value={next} onChange={(e) => setNext(e.target.value)} maxLength={6} data-testid="profile-pin-new" />
           </Field>
@@ -192,7 +192,7 @@ export default function ProfileDialog({ me, className, testId, children }: { me:
         {children}
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[88dvh] overflow-y-auto sm:max-w-md" data-testid="profile-dialog">
+        <DialogContent className="max-h-[92dvh] overflow-y-auto overscroll-contain pb-[max(1rem,env(safe-area-inset-bottom))] max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:w-full max-sm:max-w-full max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-b-none sm:max-w-md" data-testid="profile-dialog">
           <DialogHeader>
             <DialogTitle>Il tuo profilo</DialogTitle>
             <DialogDescription>
