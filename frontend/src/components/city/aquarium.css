@@ -48,7 +48,6 @@
   background-image:
     repeating-radial-gradient(ellipse at 20% 30%, rgba(255, 255, 255, 0.14) 0 5px, transparent 5px 24px),
     repeating-radial-gradient(ellipse at 70% 60%, rgba(255, 255, 255, 0.1) 0 4px, transparent 4px 20px);
-  animation: aq-caustic 16s linear infinite;
 }
 .aq-glow { animation: aq-glow 3.4s ease-in-out infinite; animation-delay: var(--kd, 0s); }
 .aq-ray { animation: aq-ray 8s ease-in-out infinite; animation-delay: var(--kd, 0s); }
@@ -56,3 +55,9 @@
 @media (prefers-reduced-motion: reduce) {
   .aq-fall, .aq-mist, .aq-kelp, .aq-bub, .aq-mote, .aq-visitor, .aq-caustic, .aq-glow, .aq-ray { animation: none; }
 }
+@keyframes aq-sheet {
+  from { transform: translateY(-60px); }
+  to { transform: translateY(0); }
+}
+.aq-sheet { animation: aq-sheet 0.55s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .aq-sheet { animation: none; } }
