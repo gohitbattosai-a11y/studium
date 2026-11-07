@@ -3,7 +3,7 @@ from pymongo.errors import DuplicateKeyError
 
 from lib.exclusive import OBS_PET
 from lib.gate import feature_gate
-from lib.pets import BOXES, BOXES_BY_ID, DUPLICATE_REFUND, PETS, PETS_BY_ID, PITY_RARITIES, pick_pet, pick_rarity, pity_left, RARITIES
+from lib.pets import BOXES, BOXES_BY_ID, DUPLICATE_REFUND, PETS, PETS_BY_ID, PITY_RARITIES, bonus_percent, pick_pet, pick_rarity, pity_left, RARITIES
 from lib.db import db
 from lib.security import new_id, now_iso
 from models.schemas import ActivePetRequest, BoxInfo, BoxOdd, GiftPetRequest, PetInfo, PetsState, RollRequest, RollResult
@@ -36,12 +36,12 @@ async def build_state(member: dict) -> PetsState:
         for b in BOXES
     ]
     pets = [
-        PetInfo(id=p["id"], name=p["name"], rarity=p["rarity"], owned=p["id"] in owned, copies=owned.get(p["id"], 0), active=active == p["id"])
+        PetInfo(id=p["id"], name=p["name"], rarity=p["rarity"], owned=p["id"] in owned, copies=owned.get(p["id"], 0), active=active == p["id"], bonus_percent=bonus_percent(p["id"]))
         for p in PETS
     ]
     if OBS_PET["id"] in owned:
         pets.append(
-            PetInfo(id=OBS_PET["id"], name=OBS_PET["name"], rarity=OBS_PET["rarity"], owned=True, copies=owned[OBS_PET["id"]], active=active == OBS_PET["id"])
+            PetInfo(id=OBS_PET["id"], name=OBS_PET["name"], rarity=OBS_PET["rarity"], owned=True, copies=owned[OBS_PET["id"]], active=active == OBS_PET["id"], bonus_percent=bonus_percent(OBS_PET["id"]))
         )
     return PetsState(participating=bool(member.get("participating", False)), balance=balance, active_pet=active, boxes=boxes, pets=pets)
 
