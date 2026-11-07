@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils/cn";
 import { useNow } from "@/lib/runtime/useNow";
-import { FORMATIONS, FORMATION_LIST, SQUAD_MAX, STAT_KEYS, STAT_LABEL, TRAIN, autoLineup, lineup, sellPlayer, sellPrice, setFormation, setSlot, strength, train, trainCost, trainSeconds, type Player, type StadiumState, type Team, type TrainKind } from "@/lib/domain/football";
+import { auctionOf, FORMATIONS, FORMATION_LIST, SQUAD_MAX, STAT_KEYS, STAT_LABEL, TRAIN, autoLineup, lineup, sellPlayer, sellPrice, setFormation, setSlot, strength, train, trainCost, trainSeconds, type Player, type StadiumState, type Team, type TrainKind } from "@/lib/domain/football";
 import PlayerCard, { tierName } from "./PlayerCard";
 import { stadiumArt } from "@/lib/art/stadiumAssets";
+import { AskDialog } from "./Market";
 
 const eur = (n: number) => `€${n.toFixed(1)}M`;
 const run = (fn: () => string | null, ok?: string) => {
@@ -20,6 +21,7 @@ export function PlayerDetail({ p, team, s, onClose }: { p: Player | null; team: 
   const trained = !!cur && cur.trained === s.day;
   const busy = !!cur?.training;
   const now = useNow(busy);
+  const [ask, setAsk] = useState(false);
   const left = cur?.training ? Math.max(0, Math.ceil((cur.training.end - now) / 1000)) : 0;
   const pct = cur?.training ? Math.min(100, Math.max(0, 100 - (left / trainSeconds(cur)) * 100)) : 0;
   return (
@@ -72,16 +74,28 @@ export function PlayerDetail({ p, team, s, onClose }: { p: Player | null; team: 
                 trained && <p className="mt-1 text-[11px] text-[#8B949E]">Già allenato in questa giornata: torna dopo la prossima partita.</p>
               )}
             </div>
-            <Button
-              variant="ghost"
-              className="text-[#FFA198]"
-              onClick={() => {
-                run(() => sellPlayer(cur.id), "Giocatore venduto");
-                onClose();
-              }}
-            >
-              Vendi per {eur(sellPrice(cur))}
-            </Button>
+            {cur.loan ? (
+              <p className="text-[11px] text-[#8B949E]">In prestito: non si può vendere né mettere all'asta.</p>
+            ) : auctionOf(s, cur.id) ? (
+              <p className="text-[11px] text-[#E3B341]">Questo giocatore è all'asta.</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-1.5">
+                <Button variant="outline" onClick={() => setAsk(true)}>
+                  Metti all'asta
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="text-[#FFA198]"
+                  onClick={() => {
+                    run(() => sellPlayer(cur.id), "Giocatore venduto");
+                    onClose();
+                  }}
+                >
+                  Vendi subito {eur(sellPrice(cur))}
+                </Button>
+              </div>
+            )}
+            <AskDialog s={s} p={ask ? cur : null} mine onClose={() => setAsk(false)} />
           </>
         )}
       </DialogContent>
