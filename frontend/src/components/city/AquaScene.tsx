@@ -1,7 +1,8 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import type { Donation, Species } from "@/lib/domain/city";
 import FishArt, { shade } from "./FishArt";
-import { Scenery, fishW } from "./Aqua";
+import { fishW } from "./Aqua";
+import { ZoneArt } from "./AquaArt";
 import { isBig, type ResolvedRoom, type ResolvedSystem, type Theme, type ThemeId } from "./rooms";
 import "./city.css";
 import "./aquarium.css";
@@ -76,7 +77,7 @@ function PassageArt({ kind, th, closed }: { kind: PassKind; th: Theme; closed: b
       <path d="M60 0 L150 0 L120 90 L40 60Z M200 140 L290 90 L310 190 L230 230Z M30 300 L120 260 L150 380 L50 420Z M200 380 L300 330 L320 470 L210 500Z" fill={rockHi} opacity="0.28" />
       <path d="M0 150 L60 190 L30 280 L0 260Z M120 470 L220 430 L250 560 L110 600Z" fill={rockLo} opacity="0.4" />
       {!closed && <path d="M64 600 V300 Q64 186 168 186 Q272 186 272 300 V600Z" fill={`url(#ps-open-${kind})`} />}
-      {!closed && <ellipse cx="168" cy="330" rx="150" ry="210" fill="url(#ps-halo)" className="aq-glow" />}
+      {!closed && <ellipse cx="168" cy="330" rx="150" ry="210" fill="url(#ps-halo)" />}
       {closed && (
         <g>
           <path d="M40 600 L60 330 L140 250 L240 270 L290 380 L300 600Z" fill={rockLo} />
@@ -91,39 +92,39 @@ function PassageArt({ kind, th, closed }: { kind: PassKind; th: Theme; closed: b
           <rect x="44" y="150" width="256" height="14" rx="7" fill="#7fc46a" />
           <rect x="74" y="182" width="190" height="418" fill="url(#ps-curtain)" />
           {Array.from({ length: 13 }, (_, i) => (
-            <line key={i} x1={80 + i * 14.6} y1="188" x2={80 + i * 14.6} y2="590" stroke="#ffffff" strokeOpacity={0.55 + (i % 3) * 0.12} strokeWidth={3 + (i % 3)} className="aq-fall" style={{ animationDelay: `${-(i % 5) * 0.14}s`, animationDuration: `${0.6 + (i % 4) * 0.08}s` }} />
+            <line key={i} x1={80 + i * 14.6} y1="188" x2={80 + i * 14.6} y2="590" stroke="#ffffff" strokeOpacity={0.55 + (i % 3) * 0.12} strokeWidth={3 + (i % 3)} style={{ animationDelay: `${-(i % 5) * 0.14}s`, animationDuration: `${0.6 + (i % 4) * 0.08}s` }} />
           ))}
           {[100, 150, 200, 240].map((x, i) => (
-            <circle key={x} cx={x} cy={590} r={34 + (i % 2) * 14} fill="#ffffff" opacity="0.28" className="aq-mist" style={{ ["--kd" as string]: `${i * 0.5}s` }} />
+            <circle key={x} cx={x} cy={590} r={34 + (i % 2) * 14} fill="#ffffff" opacity="0.28" style={{ ["--kd" as string]: `${i * 0.5}s` }} />
           ))}
           <ellipse cx="168" cy="596" rx="118" ry="14" fill="#ffffff" opacity="0.55" />
           {[[40, 596], [300, 590]].map(([x, y]) => (
-            <path key={x} d={`M${x} ${y} q-14 -50 -2 -96 q18 40 10 96Z`} fill="#3f9a4a" className="aq-kelp" />
+            <path key={x} d={`M${x} ${y} q-14 -50 -2 -96 q18 40 10 96Z`} fill="#3f9a4a" />
           ))}
         </g>
       )}
       {kind === "cave" && !closed && (
         <g>
           {[96, 132, 168, 204, 240].map((x, i) => (
-            <path key={x} d={`M${x} 186 q${i % 2 ? 10 : -10} 70 ${i % 2 ? -4 : 6} ${110 + i * 16}`} stroke="#4a3320" strokeWidth={5 + (i % 2) * 2} fill="none" strokeLinecap="round" className="aq-kelp" style={{ ["--kd" as string]: `${i * 0.3}s` }} />
+            <path key={x} d={`M${x} 186 q${i % 2 ? 10 : -10} 70 ${i % 2 ? -4 : 6} ${110 + i * 16}`} stroke="#4a3320" strokeWidth={5 + (i % 2) * 2} fill="none" strokeLinecap="round" style={{ ["--kd" as string]: `${i * 0.3}s` }} />
           ))}
-          <ellipse cx="168" cy="560" rx="104" ry="26" fill="#b08d57" opacity="0.18" className="aq-glow" />
+          <ellipse cx="168" cy="560" rx="104" ry="26" fill="#b08d57" opacity="0.18" />
           {[[120, 520], [210, 480], [170, 420]].map(([x, y], i) => (
-            <circle key={i} cx={x} cy={y} r="3" fill="#e3cfa0" opacity="0.6" className="aq-glow" style={{ ["--kd" as string]: `${i * 0.7}s` }} />
+            <circle key={i} cx={x} cy={y} r="3" fill="#e3cfa0" opacity="0.6" style={{ ["--kd" as string]: `${i * 0.7}s` }} />
           ))}
         </g>
       )}
       {kind === "vent" && !closed && (
         <g>
-          <path d="M20 230 L58 330 L34 420 M300 250 L270 360 L296 460 M120 100 L160 160" stroke="#38bdf8" strokeWidth="4" fill="none" strokeLinecap="round" className="aq-glow" />
+          <path d="M20 230 L58 330 L34 420 M300 250 L270 360 L296 460 M120 100 L160 160" stroke="#38bdf8" strokeWidth="4" fill="none" strokeLinecap="round" />
           {[[54, 600], [280, 600], [304, 600]].map(([x, y], i) => (
             <g key={i}>
-              <path d={`M${x} ${y} q-8 -70 ${i % 2 ? 10 : -10} -150`} stroke="#e8f6ff" strokeWidth="6" fill="none" strokeLinecap="round" className="aq-kelp" />
-              <circle cx={x + (i % 2 ? 10 : -10)} cy={y - 152} r="7" fill="#f472b6" className="aq-glow" style={{ ["--kd" as string]: `${i * 0.6}s` }} />
+              <path d={`M${x} ${y} q-8 -70 ${i % 2 ? 10 : -10} -150`} stroke="#e8f6ff" strokeWidth="6" fill="none" strokeLinecap="round" />
+              <circle cx={x + (i % 2 ? 10 : -10)} cy={y - 152} r="7" fill="#f472b6" style={{ ["--kd" as string]: `${i * 0.6}s` }} />
             </g>
           ))}
           {Array.from({ length: 9 }, (_, i) => (
-            <circle key={i} cx={100 + (i * 37) % 140} cy={250 + (i * 71) % 300} r={2.5 + (i % 3)} fill="#7dd3fc" className="aq-glow" style={{ ["--kd" as string]: `${i * 0.4}s` }} />
+            <circle key={i} cx={100 + (i * 37) % 140} cy={250 + (i * 71) % 300} r={2.5 + (i % 3)} fill="#7dd3fc" style={{ ["--kd" as string]: `${i * 0.4}s` }} />
           ))}
         </g>
       )}
@@ -132,9 +133,9 @@ function PassageArt({ kind, th, closed }: { kind: PassKind; th: Theme; closed: b
           <rect x="42" y="170" width="28" height="430" fill="#8a6a1f" />
           <rect x="266" y="170" width="28" height="430" fill="#8a6a1f" />
           <path d="M34 182 Q168 120 302 182 V204 Q168 142 34 204Z" fill="#fbbf24" />
-          <path d="M120 186 L216 186 L290 600 L46 600Z" fill="#fde68a" opacity="0.22" className="aq-glow" />
+          <path d="M120 186 L216 186 L290 600 L46 600Z" fill="#fde68a" opacity="0.22" />
           {Array.from({ length: 12 }, (_, i) => (
-            <circle key={i} cx={90 + (i * 29) % 160} cy={220 + (i * 53) % 340} r={2 + (i % 3)} fill="#fff7cc" className="aq-glow" style={{ ["--kd" as string]: `${i * 0.3}s` }} />
+            <circle key={i} cx={90 + (i * 29) % 160} cy={220 + (i * 53) % 340} r={2 + (i % 3)} fill="#fff7cc" style={{ ["--kd" as string]: `${i * 0.3}s` }} />
           ))}
         </g>
       )}
@@ -147,6 +148,11 @@ function Passage({ side, th, kind, closed, w, h, label, onClick }: { side: "left
     <button type="button" onClick={onClick} disabled={!onClick} className="group absolute top-0 block outline-none" style={side === "left" ? { left: 0, width: w, height: h } : { right: 0, width: w, height: h, transform: "scaleX(-1)" }} aria-label={label} data-testid={`room-pass-${side}`}>
       <div className="absolute inset-0 transition-[filter] duration-150 group-hover:brightness-125 group-focus-visible:brightness-125">
         <PassageArt kind={kind} th={th} closed={closed} />
+        {kind === "fall" && !closed && (
+          <div className="absolute overflow-hidden" style={{ left: "19%", width: "46%", top: "31%", bottom: "1%" }}>
+            <div className="aq-sheet absolute inset-x-0 top-0 h-[calc(100%+60px)] [background-image:repeating-linear-gradient(180deg,rgba(255,255,255,0.75)_0_16px,transparent_16px_60px),repeating-linear-gradient(90deg,rgba(255,255,255,0.18)_0_6px,transparent_6px_17px)]" />
+          </div>
+        )}
       </div>
     </button>
   );
@@ -161,7 +167,7 @@ function Arch({ th, w, h, x }: { th: Theme; w: number; h: number; x: number }) {
       <path d="M52 120 Q150 20 250 130 L206 90 Q150 50 96 86Z" fill={shade(rock, 0.18)} />
       <path d="M18 380 L10 240 L52 120 L36 300Z M282 400 L292 250 L250 130 L264 310Z" fill={shade(rock, 0.25)} opacity="0.5" />
       {[[40, 600], [262, 600], [28, 560]].map(([cx, y], i) => (
-        <path key={i} d={`M${cx} ${y} q-14 -90 4 -190 q22 90 6 190Z`} fill={i % 2 ? "#2f7a3a" : "#3f9a4a"} className="aq-kelp" style={{ ["--kd" as string]: `${i * 0.6}s` }} />
+        <path key={i} d={`M${cx} ${y} q-14 -90 4 -190 q22 90 6 190Z`} fill={i % 2 ? "#2f7a3a" : "#3f9a4a"} style={{ ["--kd" as string]: `${i * 0.6}s` }} />
       ))}
     </svg>
   );
@@ -175,7 +181,7 @@ const Backdrop = memo(function Backdrop({ th, w, h }: { th: Theme; w: number; h:
       <svg viewBox="0 0 1000 300" preserveAspectRatio="none" className="pointer-events-none absolute bottom-0 left-0" style={{ width: w, height: h * 0.62, opacity: 0.55 }} aria-hidden>
         <path d="M0 300 V210 Q60 150 120 200 T250 170 T380 210 T520 150 T660 200 T800 160 T1000 200 V300Z" fill={c1} />
         {[80, 330, 590, 870].map((x, i) => (
-          <path key={x} d={`M${x} 210 q-10 -80 6 -150 q20 70 4 150Z`} fill={shade(c1, 0.1)} className="aq-kelp" style={{ ["--kd" as string]: `${i * 0.7}s` }} />
+          <path key={x} d={`M${x} 210 q-10 -80 6 -150 q20 70 4 150Z`} fill={shade(c1, 0.1)} style={{ ["--kd" as string]: `${i * 0.7}s` }} />
         ))}
       </svg>
       <svg viewBox="0 0 1000 300" preserveAspectRatio="none" className="pointer-events-none absolute bottom-0 left-0" style={{ width: w, height: h * 0.4, opacity: 0.8 }} aria-hidden>
@@ -190,7 +196,7 @@ function Rays({ w, th }: { w: number; th: Theme }) {
   return (
     <div className="pointer-events-none absolute inset-0">
       {Array.from({ length: n }, (_, i) => (
-        <div key={i} className="aq-ray absolute top-0 h-[78%] [clip-path:polygon(35%_0,65%_0,100%_100%,0_100%)]" style={{ left: (i * w) / n + ((i * 53) % 90), width: 180 + ((i * 37) % 120), background: `linear-gradient(180deg, ${th.water[0]}cc, transparent)`, ["--kd" as string]: `${(i % 5) * 1.3}s` }} />
+        <div key={i} className="absolute top-0 h-[78%] [clip-path:polygon(35%_0,65%_0,100%_100%,0_100%)]" style={{ left: (i * w) / n + ((i * 53) % 90), width: 180 + ((i * 37) % 120), background: `linear-gradient(180deg, ${th.water[0]}cc, transparent)`, ["--kd" as string]: `${(i % 5) * 1.3}s` }} />
       ))}
     </div>
   );
@@ -299,7 +305,7 @@ export default function AquaScene({ room, th, gifts, prevName, nextName, onFish,
     zones.forEach((sys, zi) => {
       sys.species.forEach((sp, si) => {
         const small = sp.max_cm <= 20 && sys.species.length > 2;
-        const copies = isBig(sp) ? 1 : small ? 3 : sp.max_cm <= 45 ? 2 : 1;
+        const copies = isBig(sp) ? 1 : small || sp.max_cm <= 45 ? 2 : 1;
         for (let c = 0; c < copies; c++) {
           const big = isBig(sp);
           out.push({ sp, sys, zi, copy: c, w: 0, bottom: BOTTOM.has(sp.shape), big, depth: big ? 1.1 : [1, 0.82, 1.18][(si + c) % 3], x: 0, y: 0, tx: 0, ty: 0, vx: 0, vy: 0, speed: 0, timer: 0, dir: Math.random() < 0.5 ? 1 : -1, seed: Math.random() * 20 });
@@ -415,7 +421,7 @@ export default function AquaScene({ room, th, gifts, prevName, nextName, onFish,
       place(far.current, 0.25);
       place(mid.current, 0.55);
       place(main.current, 1);
-      if (floor.current) floor.current.style.backgroundPositionX = `${-c.x}px`;
+      if (floor.current) floor.current.style.transform = `translate3d(${-(c.x % 130)}px, 0, 0)`;
       const center = c.x + geo.vw / 2;
       const zi = clamp(Math.floor((center - geo.endW) / geo.zw), 0, nZ - 1);
       if (zi !== curRef.current) {
@@ -527,24 +533,16 @@ export default function AquaScene({ room, th, gifts, prevName, nextName, onFish,
           </div>
           <div ref={mid} className="pointer-events-none absolute top-0 left-0 h-full will-change-transform" style={{ width: (geo.worldW - geo.vw) * 0.55 + geo.vw }}>
             <Backdrop th={th} w={(geo.worldW - geo.vw) * 0.55 + geo.vw} h={geo.vh * 1.05} />
-            <Motes w={(geo.worldW - geo.vw) * 0.55 + geo.vw} h={geo.vh} n={Math.round(geo.worldW / 140)} c={th.dark ? "#9bd8ff" : "#e8fbff"} />
+            <Motes w={(geo.worldW - geo.vw) * 0.55 + geo.vw} h={geo.vh} n={Math.min(26, Math.round(geo.worldW / 300))} c={th.dark ? "#9bd8ff" : "#e8fbff"} />
           </div>
           <div ref={main} className="absolute top-0 left-0 h-full will-change-transform" style={{ width: geo.worldW }}>
             <div className="pointer-events-none absolute inset-x-0 bottom-0" style={{ height: geo.fh * 1.5, background: `linear-gradient(180deg, transparent, ${th.sand}cc 55%, ${shade(th.sand, -0.45)})` }} />
             {zones.map((s, zi) => {
               const x0 = geo.endW + zi * geo.zw;
               const sceneH = geo.vh - geo.fh * 0.45;
-              const tile = Math.round(sceneH * 1.5);
-              const tiles = Math.max(2, Math.ceil(geo.zw / tile) + 1);
               return (
                 <div key={s.id} className="pointer-events-none absolute top-0 overflow-hidden" style={{ left: x0, width: geo.zw, height: geo.vh }}>
-                  <div className="absolute inset-x-0 top-0 flex overflow-hidden" style={{ height: sceneH }}>
-                    {Array.from({ length: tiles }, (_, i) => (
-                      <div key={i} className="relative h-full flex-none" style={{ width: tile, transform: i % 2 ? "scaleX(-1)" : undefined }}>
-                        <Scenery kind={s.decor} th={th} />
-                      </div>
-                    ))}
-                  </div>
+                  <ZoneArt decor={s.decor} theme={room.def.theme} zi={zi} w={geo.zw} h={sceneH} th={th} />
                   <div className="absolute inset-0" style={{ background: `linear-gradient(90deg, transparent, ${s.decor === "ice" ? "rgba(186,230,253,0.16)" : s.decor === "abyss" ? "rgba(76,29,149,0.16)" : s.decor === "koi" ? "rgba(251,146,60,0.1)" : s.decor === "mud" ? "rgba(92,64,28,0.18)" : "rgba(255,255,255,0.05)"} 50%, transparent)` }} />
                   <BubbleTrail x={geo.zw * 0.2} h={geo.vh} n={5} />
                   <BubbleTrail x={geo.zw * 0.66} h={geo.vh} n={4} />
@@ -563,7 +561,7 @@ export default function AquaScene({ room, th, gifts, prevName, nextName, onFish,
                 <div key={`${f.sys.id}-${f.sp.id}-${f.copy}`} ref={(el) => { fishNodes.current[i] = el; }} className="absolute top-0 left-0" style={{ width: f.w || 80, zIndex: Math.round(f.depth * 10), opacity: f.depth < 0.9 ? 0.8 : 1, willChange: "transform" }}>
                   <button type="button" onClick={tune(() => onFish(f.sp, f.sys))} className="block w-full cursor-pointer outline-none" aria-label={owned ? (f.sp.name ?? "Pesce") : "Specie sconosciuta"} data-testid={`aq-fish-${f.sp.id}`}>
                     <div ref={(el) => { flipNodes.current[i] = el; }} style={{ transform: `scaleX(${f.dir})` }}>
-                      <FishArt shape={f.sp.shape} colors={f.sp.colors} pattern={f.sp.pattern} silhouette={!owned} swim={owned} className="w-full drop-shadow" />
+                      <FishArt shape={f.sp.shape} colors={f.sp.colors} pattern={f.sp.pattern} silhouette={!owned} swim={owned && f.copy === 0} className="w-full" />
                     </div>
                   </button>
                 </div>
@@ -574,7 +572,7 @@ export default function AquaScene({ room, th, gifts, prevName, nextName, onFish,
             ))}
           </div>
           <div className="pointer-events-none absolute inset-x-0 bottom-0" style={{ height: geo.fh }}>
-            <div ref={floor} className="absolute inset-0 opacity-40 [background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.12)_0_2px,transparent_2px_130px)]" />
+            <div ref={floor} className="absolute inset-y-0 left-0 opacity-40 [background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.12)_0_2px,transparent_2px_130px)]" style={{ width: geo.vw + 130 }} />
           </div>
           <Frame geo={geo} th={th} />
           <div className="aq-hint pointer-events-none absolute inset-x-0 flex justify-center" style={{ bottom: geo.fh + 14 }}>
