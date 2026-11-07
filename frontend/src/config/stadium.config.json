@@ -5,7 +5,20 @@
     "squadMin": 11,
     "sellRatio": 0.7,
     "teamPriceRatio": 0.85,
-    "prizes": [20, 12, 8, 5, 3, 3, 2, 2]
+    "prizes": [
+      20,
+      12,
+      8,
+      5,
+      3,
+      3,
+      2,
+      2
+    ],
+    "winReward": 4,
+    "drawReward": 1.5,
+    "lossReward": 0.5,
+    "goalBonus": 0.2
   },
   "price": {
     "base": 0.8,
@@ -19,23 +32,63 @@
     "secondsPerOvr": 0.3333
   },
   "tiers": [
-    { "id": "bronzo", "name": "Bronzo", "min": 0 },
-    { "id": "argento", "name": "Argento", "min": 65 },
-    { "id": "oro", "name": "Oro", "min": 75 },
-    { "id": "elite", "name": "Élite", "min": 85 }
+    {
+      "id": "bronzo",
+      "name": "Bronzo",
+      "min": 0
+    },
+    {
+      "id": "argento",
+      "name": "Argento",
+      "min": 65
+    },
+    {
+      "id": "oro",
+      "name": "Oro",
+      "min": 75
+    },
+    {
+      "id": "elite",
+      "name": "Élite",
+      "min": 85
+    },
+    {
+      "id": "leggenda",
+      "name": "Leggenda",
+      "min": 91
+    }
   ],
   "random": {
     "enabled": true,
-    "market": { "POR": 12, "DIF": 38, "CEN": 40, "ATT": 30 },
+    "market": {
+      "POR": 12,
+      "DIF": 38,
+      "CEN": 40,
+      "ATT": 30
+    },
     "marketOvrMin": 44,
     "marketOvrSpread": 46,
     "botOvrMin": 58,
     "botOvrMax": 72
   },
-  "teamColors": ["#E11D48", "#2563EB", "#16A34A", "#F59E0B", "#8B5CF6", "#0EA5E9", "#F97316", "#14B8A6"],
+  "teamColors": [
+    "#E11D48",
+    "#2563EB",
+    "#16A34A",
+    "#F59E0B",
+    "#8B5CF6",
+    "#0EA5E9",
+    "#F97316",
+    "#14B8A6"
+  ],
   "match": {
     "secondsPerMinute": 3,
-    "speeds": [1, 2, 4, 8],
+    "speeds": [
+      1,
+      2,
+      4,
+      8
+    ],
     "defaultSpeed": 2,
     "playerSpeed": 8.4,
     "gkSpeed": 7.2,
@@ -45,8 +98,46 @@
     "minSeparation": 3.3,
     "intervalSeconds": 7,
     "celebrationSeconds": 2.6,
-    "gkColors": ["#F59E0B", "#A3E635"],
+    "gkColors": [
+      "#F59E0B",
+      "#A3E635"
+    ],
     "awayAlt": "#F8FAFC",
     "clashDistance": 90
+  },
+  "auction": {
+    "instantTiers": [
+      "bronzo",
+      "argento"
+    ],
+    "maxActive": 4,
+    "startRatio": 0.55,
+    "stepRatio": 0.04,
+    "minStep": 0.1,
+    "firstSeconds": 18,
+    "extendSeconds": 9,
+    "botDelayMin": 3,
+    "botDelayMax": 8,
+    "botMaxMin": 0.85,
+    "botMaxMax": 1.45,
+    "botBudgetMin": 50,
+    "botBudgetMax": 120,
+    "botIncomePerDay": 2.5,
+    "botBuysPerDay": 1
+  },
+  "loan": {
+    "minDays": 2,
+    "maxDays": 5,
+    "feeRatio": 0.07,
+    "borrowRatio": 0.09,
+    "minFee": 0.3,
+    "maxOffers": 4,
+    "offerChance": 0.75,
+    "offerLifeDays": 2,
+    "buyMin": 1.0,
+    "buyMax": 1.35
+  },
+  "trade": {
+    "margin": 1.08
   }
 }
