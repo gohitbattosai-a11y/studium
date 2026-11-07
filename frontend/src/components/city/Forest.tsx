@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Crosshair, Package, Volume2, Wind } from "lucide-react";
 import { toast } from "sonner";
 import { ANIMAL_LIMIT, addAnimal, getSandbox, useSandbox, type AnimalCatch } from "@/lib/runtime/sandbox";
@@ -96,48 +96,55 @@ function Back() {
 const VITAL = { x: 0.58, y: 0.52 };
 
 function Scope({ sp, onDone }: { sp: AnimalSpecies; onDone: (shot: Shot) => void }) {
-  const box = useRef<HTMLDivElement>(null);
   const reticle = useRef<HTMLDivElement>(null);
+  const ring = useRef<HTMLDivElement>(null);
   const animal = useRef<HTMLDivElement>(null);
   const breathBar = useRef<HTMLDivElement>(null);
   const timeBar = useRef<HTMLDivElement>(null);
-  const target = useRef({ x: 0.5, y: 0.5 });
-  const cur = useRef({ x: 0.5, y: 0.5 });
-  const pos = useRef({ x: 0.5, y: 0.5 });
   const holding = useRef(false);
   const stamina = useRef(1);
   const done = useRef(false);
+  const armed = useRef(false);
+  const state = useRef({ ax: 0.5, ay: 0.52, ox: 0, oy: 0 });
   const [verdict, setVerdict] = useState<Shot | null>(null);
   const d = sp.difficulty;
-  const radius = Math.max(0.04, 0.13 - d * 0.009);
-  const sway = 0.03 + d * 0.007;
+  const radius = Math.max(0.06, 0.15 - d * 0.009);
+  const sway = 0.035 + d * 0.006;
   const phase = useMemo(() => Math.random() * 6, []);
-  const limit = 9;
+  const limit = 12;
   const finish = useRef<() => void>(() => undefined);
 
   useEffect(() => {
     let raf = 0;
     let last = performance.now();
     const t0 = last;
+    const arm = window.setTimeout(() => {
+      armed.current = true;
+    }, 350);
     const frame = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       const t = (now - t0) / 1000;
-      if (holding.current && stamina.current > 0) stamina.current = Math.max(0, stamina.current - dt * 0.4);
-      else if (!holding.current) stamina.current = Math.min(1, stamina.current + dt * 0.18);
-      const steady = holding.current && stamina.current > 0 ? 0.18 : 1;
-      cur.current.x += (target.current.x - cur.current.x) * Math.min(1, dt * 9);
-      cur.current.y += (target.current.y - cur.current.y) * Math.min(1, dt * 9);
-      const sx = cur.current.x + Math.sin(t * 1.7 + phase) * sway * steady + Math.sin(t * 3.1) * sway * 0.4 * steady;
-      const sy = cur.current.y + Math.cos(t * 1.3 + phase) * sway * steady + Math.cos(t * 2.7) * sway * 0.4 * steady;
-      pos.current = { x: sx, y: sy };
-      const ax = 0.5 + Math.sin(t * 0.5 * sp.speed + phase) * 0.1;
-      const ay = 0.52 + Math.sin(t * 0.9 * sp.speed) * 0.015;
+      if (holding.current && stamina.current > 0) stamina.current = Math.max(0, stamina.current - dt * 0.35);
+      else if (!holding.current) stamina.current = Math.min(1, stamina.current + dt * 0.2);
+      const steady = holding.current && stamina.current > 0 ? 0.25 : 1;
+      const pulse = 0.3 + 0.7 * (0.5 + 0.5 * Math.sin(t * 1.15 + phase));
+      const amp = sway * pulse * steady;
+      const ax = 0.5 + Math.sin(t * 0.45 * sp.speed + phase) * 0.1;
+      const ay = 0.52 + Math.sin(t * 0.8 * sp.speed) * 0.015;
+      const w = 0.5 * sp.scale * 0.9;
+      const vx = ax - w / 2 + VITAL.x * w;
+      const vy = ay - w / 2 + VITAL.y * w;
+      const ox = Math.sin(t * 1.7 + phase) * amp + Math.sin(t * 3.1) * amp * 0.35;
+      const oy = Math.cos(t * 1.3 + phase) * amp + Math.cos(t * 2.7) * amp * 0.35;
+      state.current = { ax, ay, ox, oy };
       animal.current?.style.setProperty("left", `${ax * 100}%`);
       animal.current?.style.setProperty("top", `${ay * 100}%`);
-      animal.current?.setAttribute("data-ax", String(ax));
-      animal.current?.setAttribute("data-ay", String(ay));
-      if (reticle.current) reticle.current.style.transform = `translate(${sx * 100}cqw, ${sy * 75}cqw) translate(-50%, -50%)`;
+      if (reticle.current) reticle.current.style.transform = `translate(${(vx + ox) * 100}cqw, ${(vy + oy) * 75}cqw) translate(-50%, -50%)`;
+      if (ring.current) {
+        ring.current.style.transform = `translate(${vx * 100}cqw, ${vy * 75}cqw) translate(-50%, -50%) scale(${0.35 + (amp / (sway * 1.3)) * 0.65})`;
+        ring.current.style.opacity = amp < sway * 0.45 ? "1" : "0.55";
+      }
       if (breathBar.current) breathBar.current.style.width = `${stamina.current * 100}%`;
       if (timeBar.current) timeBar.current.style.width = `${Math.max(0, 1 - t / limit) * 100}%`;
       if (t >= limit && !done.current) {
@@ -147,21 +154,18 @@ function Scope({ sp, onDone }: { sp: AnimalSpecies; onDone: (shot: Shot) => void
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(raf);
-  }, [phase, sway, sp.speed]);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(arm);
+    };
+  }, [phase, sway, sp.speed, sp.scale]);
 
   const fire = () => {
-    if (done.current) return;
+    if (done.current || !armed.current) return;
     done.current = true;
-    const el = animal.current;
-    const ax = Number(el?.getAttribute("data-ax") ?? 0.5);
-    const ay = Number(el?.getAttribute("data-ay") ?? 0.52);
-    const w = 0.5 * sp.scale * 0.9;
-    const h = w;
-    const vx = ax - w / 2 + VITAL.x * w;
-    const vy = ay - h / 2 + VITAL.y * h;
-    const dist = Math.hypot(pos.current.x - vx, (pos.current.y - vy) * 0.75);
-    const shot: Shot = dist <= radius * 0.38 ? "perfect" : dist <= radius ? "hit" : "miss";
+    const { ox, oy } = state.current;
+    const dist = Math.hypot(ox, oy * 0.75);
+    const shot: Shot = dist <= radius * 0.42 ? "perfect" : dist <= radius ? "hit" : "miss";
     navigator.vibrate?.(shot === "miss" ? 30 : 70);
     setVerdict(shot);
     window.setTimeout(() => onDone(shot), 750);
@@ -195,11 +199,6 @@ function Scope({ sp, onDone }: { sp: AnimalSpecies; onDone: (shot: Shot) => void
     };
   });
 
-  const steer = (e: ReactPointerEvent<HTMLDivElement>) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    target.current = { x: Math.max(0.02, Math.min(0.98, (e.clientX - r.left) / r.width)), y: Math.max(0.02, Math.min(0.98, (e.clientY - r.top) / r.height)) };
-  };
-
   const label = verdict === "perfect" ? "Colpo perfetto!" : verdict === "hit" ? "Colpito!" : "Mancato!";
 
   return (
@@ -209,21 +208,19 @@ function Scope({ sp, onDone }: { sp: AnimalSpecies; onDone: (shot: Shot) => void
           <div ref={timeBar} className="h-full bg-[#E3B341]" />
         </div>
         <div
-          ref={box}
           className="relative aspect-[4/3] w-full touch-none overflow-hidden rounded-2xl border border-[#30363D] bg-[linear-gradient(180deg,#0f2a2c,#1c4a35_70%,#10301f)] shadow-2xl [container-type:inline-size]"
-          onPointerDown={(e) => {
-            e.currentTarget.setPointerCapture(e.pointerId);
-            steer(e);
-          }}
-          onPointerMove={(e) => {
-            if (e.buttons || e.pointerType === "mouse") steer(e);
-          }}
+          onPointerDown={fire}
         >
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(255,255,255,0.08),transparent_60%)]" />
           <div ref={animal} className="pointer-events-none absolute w-1/2 -translate-x-1/2 -translate-y-1/2" style={{ width: `${50 * sp.scale * 0.9}%` }}>
             <AnimalArt a={sp} silhouette className="w-full" />
           </div>
-          <div ref={reticle} className="pointer-events-none absolute top-0 left-0 size-[14cqw]">
+          <div ref={ring} className="pointer-events-none absolute top-0 left-0 size-[26cqw] transition-opacity">
+            <svg viewBox="0 0 100 100" className="size-full">
+              <circle cx="50" cy="50" r="46" fill="none" stroke="#7EE787" strokeWidth="2" strokeDasharray="6 5" />
+            </svg>
+          </div>
+          <div ref={reticle} className="pointer-events-none absolute top-0 left-0 size-[12cqw]">
             <svg viewBox="0 0 100 100" className="size-full">
               <circle cx="50" cy="50" r="40" fill="none" stroke="#E3B341" strokeWidth="2.5" />
               <circle cx="50" cy="50" r="3" fill="#F85149" />
@@ -237,7 +234,7 @@ function Scope({ sp, onDone }: { sp: AnimalSpecies; onDone: (shot: Shot) => void
             </p>
           )}
         </div>
-        <p className="mt-2 text-center text-xs text-[#C9D1D9]">Trascina per mirare al torace, trattieni il respiro per tenere ferma la mira, poi spara.</p>
+        <p className="mt-2 text-center text-xs text-[#C9D1D9]">Il mirino segue l'animale da solo. Tocca lo schermo quando il cerchio verde si stringe: più è piccolo, più il colpo è preciso.</p>
         <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
           <div ref={breathBar} className="h-full bg-[#58A6FF]" />
         </div>
