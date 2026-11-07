@@ -341,6 +341,7 @@ export interface PetInfo {
   owned: boolean;
   copies: number;
   active: boolean;
+  bonus_percent: number;
 }
 
 export interface PetsState {
