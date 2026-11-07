@@ -9,6 +9,8 @@ interface Props {
   onEnd: (ok: boolean) => void;
 }
 
+const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
+
 export default function ReelGame({ difficulty, strength = 0.5, dash = 0.5, head = 0, onEnd }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const zoneEl = useRef<HTMLDivElement>(null);
@@ -26,23 +28,24 @@ export default function ReelGame({ difficulty, strength = 0.5, dash = 0.5, head 
   }, [onEnd]);
 
   useEffect(() => {
-    const d = Math.max(1, Math.min(10, difficulty));
-    const zs = Math.max(0.1, Math.min(0.4, 0.37 - d * 0.021 - strength * 0.03));
-    const baseSpeed = 0.32 + d * 0.085 + strength * 0.2;
-    const dashEvery = Math.max(2.2, 5.4 - dash * 2 - d * 0.15);
-    const gain = 0.24;
-    const loss = 0.09 + d * 0.012;
-    let z = 0.1;
+    const d = clamp(difficulty, 1, 10);
+    const zs = clamp(0.47 - d * 0.026 - strength * 0.03, 0.24, 0.46);
+    const wander = 0.2 + d * 0.025;
+    const maxSpeed = 0.2 + d * 0.03 + strength * 0.08;
+    const dashEvery = Math.max(5, 9 - dash * 2 - d * 0.2);
+    const gain = 0.22;
+    const loss = 0.04 + d * 0.005;
+    let z = 0;
     let v = 0;
     let f = 0.5;
+    let fv = 0;
     let target = 0.5;
-    let retarget = 0;
-    let p = Math.min(0.6, 0.3 + head);
+    let retarget = 1;
+    let p = clamp(0.38 + head, 0.38, 0.7);
     let elapsed = 0;
-    let nextDash = 2.5 + Math.random() * 1.5;
+    let nextDash = 5 + Math.random() * 2;
     let warnLeft = 0;
     let dashLeft = 0;
-    let dir = 1;
     let last = performance.now();
     let raf = 0;
 
@@ -53,50 +56,58 @@ export default function ReelGame({ difficulty, strength = 0.5, dash = 0.5, head 
     };
 
     const step = (now: number) => {
-      const dt = Math.min(0.05, (now - last) / 1000);
+      const dt = Math.min(0.04, (now - last) / 1000);
       last = now;
       elapsed += dt;
-      v += (hold.current ? 2.7 : -2.3) * dt;
-      v = Math.max(-1.1, Math.min(1.1, v));
+
+      const acc = hold.current ? 2.1 : -1.7;
+      v += acc * dt;
+      v *= 1 - Math.min(1, 1.6 * dt);
+      v = clamp(v, -0.8, 0.8);
       z += v * dt;
       if (z < 0) {
         z = 0;
-        v = Math.abs(v) * 0.2;
+        v = 0;
       }
       if (z > 1 - zs) {
         z = 1 - zs;
         v = 0;
       }
+
       nextDash -= dt;
       if (nextDash <= 0 && warnLeft <= 0 && dashLeft <= 0) {
-        warnLeft = 0.55;
-        nextDash = dashEvery + Math.random() * 1.6;
+        warnLeft = 0.9;
+        nextDash = dashEvery + Math.random() * 2.5;
       }
       if (warnLeft > 0) {
         warnLeft -= dt;
         if (warnLeft <= 0) {
-          dashLeft = 0.7;
-          dir = f > 0.5 ? -1 : 1;
-          target = dir > 0 ? 0.85 + Math.random() * 0.15 : Math.random() * 0.15;
-          navigator.vibrate?.(60);
+          dashLeft = 0.9;
+          const dir = f > 0.5 ? -1 : 1;
+          target = clamp(f + dir * (0.28 + Math.random() * 0.14), 0.04, 0.96);
+          navigator.vibrate?.(40);
         }
       }
-      let speed = baseSpeed * (1 - 0.35 * p);
-      if (dashLeft > 0) {
-        dashLeft -= dt;
-        speed = baseSpeed * 3.2;
-      } else {
+      if (dashLeft > 0) dashLeft -= dt;
+      else {
         retarget -= dt;
         if (retarget <= 0) {
-          target = Math.random();
-          retarget = Math.max(0.35, 0.5 + Math.random() * 1.0 - d * 0.04);
+          target = clamp(target + (Math.random() - 0.5) * 2 * wander, 0.05, 0.95);
+          retarget = 1.1 + Math.random() * 1.3 - d * 0.04;
         }
       }
-      const diff = target - f;
-      f += Math.sign(diff) * Math.min(Math.abs(diff), speed * dt);
+
+      const stiff = dashLeft > 0 ? 9 : 5;
+      const damp = 2 * Math.sqrt(stiff) * 0.95;
+      fv += ((target - f) * stiff - fv * damp) * dt;
+      const cap = dashLeft > 0 ? maxSpeed * 2 : maxSpeed;
+      fv = clamp(fv, -cap, cap);
+      f = clamp(f + fv * dt, 0, 1);
+
       const inside = f >= z && f <= z + zs;
       p += (inside ? gain : -loss) * dt;
       p = Math.min(1, p);
+
       const h = box.current?.clientHeight ?? 300;
       if (zoneEl.current) {
         zoneEl.current.style.height = `${zs * h}px`;
@@ -105,15 +116,15 @@ export default function ReelGame({ difficulty, strength = 0.5, dash = 0.5, head 
       }
       if (fishEl.current) {
         fishEl.current.style.bottom = `${f * (h - 28)}px`;
-        fishEl.current.style.transform = `translateX(-50%) rotate(${Math.max(-40, Math.min(40, (target - f) * 120))}deg)`;
+        fishEl.current.style.transform = `translateX(-50%) rotate(${clamp(fv * 120, -35, 35)}deg)`;
         fishEl.current.style.color = dashLeft > 0 || warnLeft > 0 ? "#F85149" : "#FBBF24";
       }
       if (bar.current) bar.current.style.height = `${p * 100}%`;
       if (pct.current) pct.current.textContent = `${Math.round(p * 100)}%`;
       if (warn.current) warn.current.style.opacity = warnLeft > 0 || dashLeft > 0 ? "1" : "0";
-      if (root.current) root.current.style.setProperty("--shake", dashLeft > 0 ? `${Math.sin(now * 0.12) * 3}px` : "0px");
+      if (root.current) root.current.style.setProperty("--shake", dashLeft > 0 ? `${Math.sin(now * 0.08) * 1.5}px` : "0px");
       if (p >= 1) return finish(true);
-      if (p <= 0 || elapsed > 35) return finish(false);
+      if (p <= 0 || elapsed > 50) return finish(false);
       raf = requestAnimationFrame(step);
     };
     raf = requestAnimationFrame(step);
@@ -152,9 +163,9 @@ export default function ReelGame({ difficulty, strength = 0.5, dash = 0.5, head 
       }}
       data-testid="reel-game"
     >
-      <p className="px-6 text-center text-sm font-medium text-[#F0F6FC]">Tieni premuto per alzare la zona verde e tieni il pesce al suo interno</p>
+      <p className="px-6 text-center text-sm font-medium text-[#F0F6FC]">Tieni premuto per far salire la zona verde, rilascia per farla scendere. Tieni il pesce al suo interno.</p>
       <p ref={warn} className="rounded-full bg-[#F85149] px-3 py-0.5 text-xs font-bold text-white opacity-0 transition-opacity">
-        Scatto! Segui il pesce!
+        Sta per scattare!
       </p>
       <div className="flex items-stretch gap-3" style={{ transform: "translateX(var(--shake, 0px))" }}>
         <div ref={box} className="relative h-[min(52dvh,320px)] w-16 overflow-hidden rounded-lg border border-[#30363D] bg-[linear-gradient(180deg,#1d7fa5,#0b2a3d)]">
@@ -168,10 +179,10 @@ export default function ReelGame({ difficulty, strength = 0.5, dash = 0.5, head 
         </div>
         <div className="flex flex-col items-center gap-1">
           <div className="relative w-3 flex-1 overflow-hidden rounded-full border border-[#30363D] bg-[#0D1117]">
-            <div ref={bar} className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#3FB950] to-[#E3B341]" style={{ height: "30%" }} />
+            <div ref={bar} className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#3FB950] to-[#E3B341]" style={{ height: "38%" }} />
           </div>
           <span ref={pct} className="text-[10px] font-semibold tabular-nums text-[#C9D1D9]">
-            30%
+            38%
           </span>
         </div>
       </div>
