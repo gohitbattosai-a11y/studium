@@ -16,14 +16,17 @@ import Museum from "./Museum";
 import MuseumRoom from "./MuseumRoom";
 import Pond from "./Pond";
 import Stadium from "./Stadium";
+import School from "./School";
+import Dig from "./Dig";
+import FossilRoom from "./FossilRoom";
 import { ROOMS } from "./rooms";
 
-type View = "map" | "lobby" | "room" | "pond" | "forest" | "stadium" | "animals";
+type View = "map" | "lobby" | "room" | "pond" | "forest" | "stadium" | "animals" | "school" | "dig" | "fossils";
 
-const TITLES: Record<View, string> = { map: "Città", lobby: "Museo", room: "Sala", pond: "Il Pond", forest: "La Foresta", stadium: "Lo Stadio", animals: "Sala animali" };
-const PARENT: Record<View, View | null> = { map: null, lobby: "map", room: "lobby", pond: "map", forest: "map", stadium: "map", animals: "lobby" };
-const SCAPE: Record<View, string> = { map: "city-map", lobby: "city-hall", room: "city-water", pond: "city-pond", forest: "city-forest", stadium: "city-map", animals: "city-meadow" };
-const BACK_LABEL: Record<View, string> = { map: "Esci", lobby: "Città", room: "Atrio", pond: "Città", forest: "Città", stadium: "Città", animals: "Atrio" };
+const TITLES: Record<View, string> = { map: "Città", lobby: "Museo", room: "Sala", pond: "Il Pond", forest: "La Foresta", stadium: "Lo Stadio", animals: "Sala animali", school: "Scuola", dig: "Sito di scavo", fossils: "Sala fossili" };
+const PARENT: Record<View, View | null> = { map: null, lobby: "map", room: "lobby", pond: "map", forest: "map", stadium: "map", animals: "lobby", school: "map", dig: "map", fossils: "lobby" };
+const SCAPE: Record<View, string> = { map: "city-map", lobby: "city-hall", room: "city-water", pond: "city-pond", forest: "city-forest", stadium: "city-map", animals: "city-meadow", school: "city-hall", dig: "city-meadow", fossils: "city-hall" };
+const BACK_LABEL: Record<View, string> = { map: "Esci", lobby: "Città", room: "Atrio", pond: "Città", forest: "Città", stadium: "Città", animals: "Atrio", school: "Città", dig: "Città", fossils: "Atrio" };
 
 export default function CityPanel({ me, onClose }: { me: Me; onClose: () => void }) {
   const [view, setView] = useState<View>("map");
@@ -102,11 +105,14 @@ export default function CityPanel({ me, onClose }: { me: Me; onClose: () => void
                 <CityMap onGo={setView} />
               </>
             )}
-            {view === "lobby" && <Museum city={data} onFish={() => openRoom(ROOMS[0].id)} onAnimals={() => setView("animals")} onBucket={() => setBucketOpen(true)} onExit={() => setView("map")} />}
+            {view === "lobby" && <Museum city={data} onFish={() => openRoom(ROOMS[0].id)} onAnimals={() => setView("animals")} onFossils={() => setView("fossils")} onBucket={() => setBucketOpen(true)} onExit={() => setView("map")} />}
             {view === "room" && <MuseumRoom key={roomId} city={data} roomId={roomId} onRoom={setRoomId} onAtrium={() => setView("lobby")} onBucket={() => setBucketOpen(true)} />}
             {view === "pond" && <Pond city={data} onBucket={() => setBucketOpen(true)} />}
             {view === "animals" && <AnimalRoom />}
             {view === "forest" && <Forest />}
+            {view === "school" && <School memberId={me.member_id} />}
+            {view === "dig" && <Dig />}
+            {view === "fossils" && <FossilRoom />}
             {view === "stadium" && <Stadium />}
             <Bucket open={bucketOpen} onClose={() => setBucketOpen(false)} city={data} />
           </>
