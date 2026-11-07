@@ -167,7 +167,7 @@ export default function Observatory({ me, open, onClose }: { me: Me; open: boole
       <div key={finished ? "fin" : (room?.id ?? "load")} className="ob-door absolute inset-0">
         <RoomScene id={finished ? "campana" : (room?.id ?? "ponte")} />
       </div>
-      <header className="relative z-10 flex items-center gap-3 px-4 py-3">
+      <header className="relative z-10 flex items-center gap-2 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-[10px] tracking-[0.4em] text-[#7ff3e6]/70 uppercase">Il Relitto</p>
           <p className="truncate text-lg leading-tight tracking-wide text-[#7ff3e6]" data-testid="obs-room-title">
@@ -193,12 +193,12 @@ export default function Observatory({ me, open, onClose }: { me: Me; open: boole
           <BookMarked className="mr-1 inline size-4" />
           {state?.fragments.length ?? 0}
         </button>
-        <button type="button" onClick={onClose} className="grid size-9 place-items-center rounded-full border border-[#2dd4bf]/50 text-[#7ff3e6] hover:bg-white/10" aria-label="Chiudi" data-testid="obs-close">
+        <button type="button" onClick={onClose} className="grid size-10 shrink-0 place-items-center rounded-full border border-[#2dd4bf]/50 text-[#7ff3e6] hover:bg-white/10" aria-label="Chiudi" data-testid="obs-close">
           <X className="size-4" />
         </button>
       </header>
 
-      <main className="relative z-10 flex-1 overflow-y-auto px-4 pb-10">
+      <main className="relative z-10 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))]">
         {!state && <p className="animate-pulse py-24 text-center tracking-[0.6em] text-[#7ff3e6]/60">· · ·</p>}
 
         {state && finished && <Finale me={me} state={state} />}
@@ -223,7 +223,7 @@ export default function Observatory({ me, open, onClose }: { me: Me; open: boole
       </main>
 
       {notes && state && (
-        <aside className="ob-rise absolute right-3 bottom-3 z-20 w-[min(22rem,calc(100%-1.5rem))] rounded-2xl border border-[#2dd4bf]/50 bg-[#041520]/95 p-4 shadow-2xl" data-testid="obs-notes">
+        <aside className="ob-rise absolute right-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-20 max-h-[60dvh] w-[min(22rem,calc(100%-1.5rem))] overflow-y-auto rounded-2xl border border-[#2dd4bf]/50 bg-[#041520]/95 p-4 shadow-2xl" data-testid="obs-notes">
           <p className="ob-title !text-left">Taccuino</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {state.fragments.length === 0 && <p className="text-xs text-[#d7f3ee]/50 italic">Ancora niente.</p>}
