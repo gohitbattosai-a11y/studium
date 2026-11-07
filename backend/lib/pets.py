@@ -1,3 +1,4 @@
+import math
 import random
 
 from lib.custom_catalog import load_pets
@@ -26,6 +27,36 @@ PETS.sort(key=lambda p: RARITIES.index(p["rarity"]))
 
 PETS_BY_ID: dict[str, dict] = {p["id"]: p for p in PETS}
 PETS_BY_ID[OBS_PET["id"]] = OBS_PET
+
+POINT_BONUS: dict[str, int] = {
+    "coniglio": 4,
+    "gatto": 7,
+    "cane": 5,
+    "tartaruga": 9,
+    "gufo": 12,
+    "lupo": 10,
+    "volpe": 14,
+    "drago": 18,
+    "dinosauro": 16,
+    "panda": 20,
+    "squalo": 11,
+    "drago-cinese": 25,
+    "paguro-lanterna": 15,
+}
+DEFAULT_POINT_BONUS = 5
+
+
+def bonus_percent(pet_id: str | None) -> int:
+    if not pet_id or pet_id not in PETS_BY_ID:
+        return 0
+    return POINT_BONUS.get(pet_id, DEFAULT_POINT_BONUS)
+
+
+def boosted(points: int, pet_id: str | None) -> int:
+    pct = bonus_percent(pet_id)
+    if points <= 0 or pct <= 0:
+        return points
+    return points + math.ceil(points * pct / 100)
 
 BOXES: list[dict] = [
     {
