@@ -118,6 +118,43 @@ export default function GachaOpening({ box, result, canAgain, onAgain, onClose }
     return () => window.clearTimeout(timer);
   }, [phase, tier]);
 
+  const stageRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (phase !== "burst") return;
+    const root = stageRef.current;
+    if (!root) return;
+    const anims: Animation[] = [];
+    const play = (el: Element | null, frames: Keyframe[], easing: string) => {
+      if (!el) return;
+      const anim = el.animate(frames, { duration: 1000, easing, fill: "forwards" });
+      anim.onfinish = () => {
+        (el as SVGElement).style.opacity = "0";
+        anim.cancel();
+      };
+      anims.push(anim);
+    };
+    play(
+      root.querySelector(".gc-lid"),
+      [
+        { transform: "translate(0px, 0px) rotate(0deg)", opacity: 1, offset: 0 },
+        { transform: "translate(0px, -16px) rotate(-3deg)", opacity: 1, offset: 0.16 },
+        { transform: "translate(78px, -250px) rotate(-58deg)", opacity: 0, offset: 1 },
+      ],
+      "cubic-bezier(0.2, 0.7, 0.2, 1)",
+    );
+    play(
+      root.querySelector(".gc-body"),
+      [
+        { transform: "scale(1)", opacity: 1, offset: 0 },
+        { transform: "scale(1.08, 0.88)", opacity: 1, offset: 0.14 },
+        { transform: "scale(0.97, 1.05)", opacity: 1, offset: 0.3 },
+        { transform: "scale(0.94) translateY(24px)", opacity: 0, offset: 1 },
+      ],
+      "ease-out",
+    );
+    return () => anims.forEach((a) => a.cancel());
+  }, [phase]);
+
   const tierRef = useRef(tier);
   useEffect(() => {
     tierRef.current = tier;
@@ -138,6 +175,7 @@ export default function GachaOpening({ box, result, canAgain, onAgain, onClose }
 
   return (
     <div
+      ref={stageRef}
       className="gc-stage"
       data-phase={phase}
       data-rarity={rarity}
