@@ -1,8 +1,9 @@
 import { useEffect, useState, type KeyboardEvent } from "react";
 import { Forest3D, ForestNight, Stadium3D, StadiumNight } from "./Landmarks";
+import { Dig3D, DigNight, School3D, SchoolNight } from "./Places";
 import "./city.css";
 
-type View = "map" | "lobby" | "room" | "pond" | "forest" | "stadium" | "animals";
+type View = "map" | "lobby" | "room" | "pond" | "forest" | "stadium" | "animals" | "school" | "dig" | "fossils";
 type Kind = "oak" | "pine" | "cherry";
 type Pt = { x: number; y: number; s?: number; t?: Kind };
 type House = { x: number; y: number; c: string; w?: string; smoke?: boolean };
@@ -222,7 +223,9 @@ const LAND = {
   moon: [130, 60],
   forest: [690, 88, 1],
   stadium: [415, 415, 1],
-  roads: ["M250 250 C 330 330, 430 270, 560 330", "M250 250 L 90 400", "M560 330 L 720 420", "M330 150 C 450 100, 560 70, 650 100", "M430 285 C 445 335, 415 360, 418 385"],
+  school: [180, 420, 1],
+  dig: [572, 446, 0.72],
+  roads: ["M250 250 C 330 330, 430 270, 560 330", "M250 250 L 90 400", "M560 330 L 720 420", "M330 150 C 450 100, 560 70, 650 100", "M430 285 C 445 335, 415 360, 418 385", "M118 372 L 172 408", "M566 334 C 560 372, 570 400, 572 430"],
   stream: "M598 338 C 612 362, 650 356, 640 380 S 626 430, 660 500",
   bridge: { x: 640, y: 378, r: 29 },
   fountain: [380, 175],
@@ -242,7 +245,9 @@ const PORT = {
   moon: [90, 60],
   forest: [415, 235, 0.72],
   stadium: [80, 725, 0.75],
-  roads: ["M240 330 C 300 400, 180 450, 240 500", "M240 330 L 70 400", "M240 500 L 410 560", "M250 320 C 330 300, 380 270, 410 245", "M70 400 C 50 520, 50 640, 78 705"],
+  school: [120, 440, 0.9],
+  dig: [395, 690, 0.8],
+  roads: ["M240 330 C 300 400, 180 450, 240 500", "M240 330 L 70 400", "M240 500 L 410 560", "M250 320 C 330 300, 380 270, 410 245", "M70 400 C 50 520, 50 640, 78 705", "M118 381 L 122 424", "M410 560 C 420 610, 402 650, 396 676"],
   stream: "M250 662 C 262 700, 230 730, 246 800",
   bridge: null as null | { x: number; y: number; r: number },
   fountain: [370, 390],
@@ -498,7 +503,7 @@ export default function CityMap({ onGo }: { onGo: (v: View) => void }) {
     return () => window.removeEventListener("resize", fn);
   }, []);
   const base = portrait ? PORT : LAND;
-  const far = (x: number, y: number) => [base.forest, base.stadium].every(([fx, fy, fs]) => Math.hypot(x - fx, y - fy) > 82 * fs);
+  const far = (x: number, y: number) => [base.forest, base.stadium, base.school, base.dig].every(([fx, fy, fs]) => Math.hypot(x - fx, y - fy) > 82 * fs);
   const L = {
     ...base,
     trees: base.trees.filter((t) => far(t.x, t.y)),
@@ -603,6 +608,20 @@ export default function CityMap({ onGo }: { onGo: (v: View) => void }) {
         </g>
       </g>
 
+      <g transform={`translate(${L.school[0]} ${L.school[1]}) scale(${L.school[2]})`}>
+        <g {...hot("school", "Entra a scuola")} className="group cursor-pointer outline-none" data-testid="city-school">
+          <ellipse cx="0" cy="-10" rx="92" ry="62" className="fill-white opacity-0 transition-opacity duration-200 group-hover:opacity-20 group-focus-visible:opacity-20" />
+          <School3D />
+        </g>
+      </g>
+
+      <g transform={`translate(${L.dig[0]} ${L.dig[1]}) scale(${L.dig[2]})`}>
+        <g {...hot("dig", "Vai al sito di scavo")} className="group cursor-pointer outline-none" data-testid="city-dig">
+          <ellipse cx="0" cy="6" rx="96" ry="48" className="fill-white opacity-0 transition-opacity duration-200 group-hover:opacity-20 group-focus-visible:opacity-20" />
+          <Dig3D />
+        </g>
+      </g>
+
       <g transform={`translate(${L.museum[0]} ${L.museum[1]})`}>
         <g {...hot("lobby", "Entra nel museo")} className="group cursor-pointer outline-none" data-testid="city-museum">
           <ellipse cx="230" cy="215" rx="150" ry="100" className="fill-white opacity-0 transition-opacity duration-200 group-hover:opacity-20 group-focus-visible:opacity-20" />
@@ -630,6 +649,8 @@ export default function CityMap({ onGo }: { onGo: (v: View) => void }) {
       <Night L={L} />
       <ForestNight x={L.forest[0]} y={L.forest[1]} s={L.forest[2]} />
       <StadiumNight x={L.stadium[0]} y={L.stadium[1]} s={L.stadium[2]} />
+      <SchoolNight x={L.school[0]} y={L.school[1]} s={L.school[2]} />
+      <DigNight x={L.dig[0]} y={L.dig[1]} s={L.dig[2]} />
     </svg>
   );
 }
