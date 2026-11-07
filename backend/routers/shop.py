@@ -5,6 +5,7 @@ from pymongo.errors import DuplicateKeyError
 
 from lib.catalog import AUTHOR_REWARD_DEFAULT, AUTHOR_REWARDS, GAME_TIERS, GRADE_POINTS, ITEMS, ITEMS_BY_ID, grade_to_points, in_window, window_label
 from lib.dates import today_iso
+from lib.pets import boosted
 from lib.db import db
 from lib.security import TZ, current_member, new_id, now_iso
 from models.schemas import (
@@ -236,7 +237,7 @@ async def add_grade(body: GradeCreate, member: dict = Depends(current_member)):
         "kind": "grade",
         "subject": body.subject,
         "grade": body.grade,
-        "points": grade_to_points(body.grade),
+        "points": boosted(grade_to_points(body.grade), target.get("active_pet")),
         "reason": None,
         "created_by": member["nickname"],
         "created_at": now_iso(),
@@ -251,8 +252,9 @@ async def add_bonus(body: BonusCreate, member: dict = Depends(current_member)):
     if body.points == 0:
         raise HTTPException(status_code=400, detail="I punti non possono essere zero")
     target = await target_participant(member, body.member_id)
+    amount = boosted(body.points, target.get("active_pet"))
     earned, spent = await totals(member["group_id"])
-    if earned.get(target["id"], 0) + body.points - spent.get(target["id"], 0) < 0:
+    if earned.get(target["id"], 0) + amount - spent.get(target["id"], 0) < 0:
         raise HTTPException(status_code=409, detail="Il saldo non può andare sotto zero")
     doc = {
         "id": new_id(),
@@ -262,7 +264,7 @@ async def add_bonus(body: BonusCreate, member: dict = Depends(current_member)):
         "kind": "bonus",
         "subject": None,
         "grade": None,
-        "points": body.points,
+        "points": amount,
         "reason": body.reason,
         "created_by": member["nickname"],
         "created_at": now_iso(),
