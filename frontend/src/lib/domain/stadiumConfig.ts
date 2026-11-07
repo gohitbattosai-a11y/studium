@@ -26,7 +26,10 @@ export interface RosterEntry {
 }
 
 export interface StadiumConfig {
-  economy: { startBudget: number; squadMax: number; squadMin: number; sellRatio: number; teamPriceRatio: number; prizes: number[] };
+  economy: { startBudget: number; squadMax: number; squadMin: number; sellRatio: number; teamPriceRatio: number; prizes: number[]; winReward: number; drawReward: number; lossReward: number; goalBonus: number };
+  auction: { instantTiers: string[]; maxActive: number; startRatio: number; stepRatio: number; minStep: number; firstSeconds: number; extendSeconds: number; botDelayMin: number; botDelayMax: number; botMaxMin: number; botMaxMax: number; botBudgetMin: number; botBudgetMax: number; botIncomePerDay: number; botBuysPerDay: number };
+  loan: { minDays: number; maxDays: number; feeRatio: number; borrowRatio: number; minFee: number; maxOffers: number; offerChance: number; offerLifeDays: number; buyMin: number; buyMax: number };
+  trade: { margin: number };
   price: { base: number; pivot: number; exponent: number };
   training: { costBase: number; costPerOvr: number; secondsBase: number; secondsPerOvr: number };
   tiers: TierCfg[];
@@ -55,3 +58,5 @@ export const ROSTER: RosterEntry[] = rosterRaw as RosterEntry[];
 
 const tiersDesc = [...CFG.tiers].sort((a, b) => b.min - a.min);
 export const tierFor = (ovr: number): TierCfg => tiersDesc.find((t) => ovr >= t.min) ?? tiersDesc[tiersDesc.length - 1];
+
+export const canInstantBuy = (ovr: number, card?: string): boolean => !card && CFG.auction.instantTiers.includes(tierFor(ovr).id);
