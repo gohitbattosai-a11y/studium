@@ -217,7 +217,7 @@ export default function SecretPassage({ me, open, onOpenChange }: { me: Me; open
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-0 overflow-hidden border border-[#BC8CFF]/25 bg-black p-0 sm:max-w-3xl" data-testid="secret-dialog">
+      <DialogContent className="max-h-[94dvh] gap-0 overflow-y-auto overscroll-contain border border-[#BC8CFF]/25 bg-black p-0 sm:max-w-3xl" data-testid="secret-dialog">
         <DialogTitle className="sr-only">Il passaggio</DialogTitle>
         <DialogDescription className="sr-only">Passaggio segreto</DialogDescription>
 
