@@ -41,6 +41,10 @@
   from { transform: scale(0.5); opacity: 0.8; }
   to { transform: scale(1.3); opacity: 0; }
 }
+@keyframes wl-ripd {
+  from { transform: scale(0.5); opacity: 0.8; }
+  to { transform: scale(1.25); opacity: 0; }
+}
 @keyframes wl-water {
   to { stroke-dashoffset: -80; }
 }
@@ -72,3 +76,5 @@
 @media (prefers-reduced-motion: reduce) {
   .wl-walk, .wl-hop, .wl-fly, .wl-idle, .wl-cloud, .wl-bf, .wl-wing, .wl-leaf, .wl-rip, .wl-water, .wl-ray, .wl-sparkle { animation: none; }
 }
+.wl-ripd { animation: wl-ripd 5s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) { .wl-ripd { animation: none; } }
