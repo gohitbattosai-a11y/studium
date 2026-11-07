@@ -7,6 +7,7 @@ from lib import push
 from lib.catalog import author_reward, game_points, next_tier
 from lib.scratch import ScratchError, clean_scratch, count_blocks
 from lib.db import db
+from lib.pets import boosted
 from lib.security import current_member, new_id, now_iso
 from models.schemas import (
     CustomContent,
@@ -247,7 +248,7 @@ async def grant_author_reward(game: dict, reviewer: dict) -> Optional[int]:
     author = await db.members.find_one({"id": game["author_id"], "group_id": game["group_id"]}, {"_id": 0})
     if not author or not author.get("participating"):
         return None
-    points = author_reward(game["template"])
+    points = boosted(author_reward(game["template"]), author.get("active_pet"))
     claimed = await db.games.update_one({"id": game["id"], "author_points": {"$exists": False}}, {"$set": {"author_points": points}})
     if claimed.modified_count != 1:
         return None
@@ -366,6 +367,7 @@ async def claim_points(game_id: str, member: dict = Depends(current_member)):
         raise HTTPException(status_code=409, detail="L'ultimo round è sotto il punteggio minimo per ottenere punti")
     if await db.game_claims.find_one({"game_id": game_id, "member_id": member["id"]}):
         raise HTTPException(status_code=409, detail="Hai già riscosso i punti di questo gioco")
+    points = boosted(points, member.get("active_pet"))
     try:
         await db.game_claims.insert_one(
             {
