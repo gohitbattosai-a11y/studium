@@ -44,6 +44,11 @@ export interface StadiumConfig {
     dribbleSpeed: number;
     passSpeed: number;
     shotSpeed: number;
+    attackLead: number;
+    lobDistance: number;
+    lobSpeed: number;
+    shotRange: number;
+    dribbleChance: number;
     minSeparation: number;
     intervalSeconds: number;
     celebrationSeconds: number;
