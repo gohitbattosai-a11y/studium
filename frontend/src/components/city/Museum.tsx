@@ -1,4 +1,4 @@
-import { Lock, Package } from "lucide-react";
+import { Bone, Lock, Package } from "lucide-react";
 import { useMemo } from "react";
 import type { CityState } from "@/lib/domain/city";
 import { Button } from "@/components/ui/button";
@@ -163,7 +163,7 @@ function SideDoor({ lock, tone, label, onClick }: { lock?: boolean; tone: [strin
 
 const STAND: Prop[] = ["ficus"];
 
-export default function Museum({ city, onFish, onAnimals, onBucket, onExit }: { city: CityState; onFish: () => void; onAnimals: () => void; onBucket: () => void; onExit: () => void }) {
+export default function Museum({ city, onFish, onAnimals, onFossils, onBucket, onExit }: { city: CityState; onFish: () => void; onAnimals: () => void; onFossils: () => void; onBucket: () => void; onExit: () => void }) {
   const { ref, g } = useGeo();
   const rooms = useMemo(() => buildRooms(city.species), [city.species]);
   const all = rooms.flatMap((r) => r.list);
@@ -199,6 +199,7 @@ export default function Museum({ city, onFish, onAnimals, onBucket, onExit }: { 
     ? [
         { key: "fish", pts: quadPts(g, "right", 72, 22, 22, 66), label: "Entra nella sezione pesci", onClick: onFish, tone: "#58A6FF" },
         { key: "ani", pts: quadPts(g, "left", 6, 22, 22, 66), label: "Entra nella sezione animali", onClick: onAnimals, tone: "#7EE787" },
+        { key: "fos", pts: quadPts(g, "back", 41, 62, 18, 34), label: "Entra nella sezione fossili", onClick: onFossils, tone: "#E3B341" },
       ]
     : [];
   const props: { p: Prop; u: number; z: number; k?: number }[] = [
@@ -227,7 +228,7 @@ export default function Museum({ city, onFish, onAnimals, onBucket, onExit }: { 
               <BackArt />
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_40%,transparent_50%,rgba(26,15,8,0.5))]" />
               <Lock className="absolute text-[#8B949E]" style={{ left: "47.5%", top: "26%", width: "5%", height: "8%" }} />
-              <Lock className="absolute text-[#8B949E]" style={{ left: "47.5%", top: "72%", width: "5%", height: "8%" }} />
+              <Bone className="absolute text-[#e3b341]/80" style={{ left: "47.5%", top: "72%", width: "5%", height: "8%" }} />
               {[0, 1, 2, 3, 4, 5].map((i) => (
                 <div key={i} className="absolute grid place-items-center text-[#e3b341]/60" style={{ left: `${[7.5, 19.5, 31.5, 62.5, 74.5, 86.5][i]}%`, top: "19.5%", width: "6.4%", height: "16%", fontSize: "clamp(10px,2vw,28px)" }}>
                   ?
@@ -316,7 +317,7 @@ export default function Museum({ city, onFish, onAnimals, onBucket, onExit }: { 
             return (
               <>
                 <Chip x={a.x} y={a.y}>Insetti · prossimamente</Chip>
-                <Chip x={b.x} y={b.y}>Fossili · prossimamente</Chip>
+                <Chip x={b.x} y={b.y} onClick={onFossils} tone="#E3B341">Fossili →</Chip>
                 <Chip x={l.x + 40} y={l.y} onClick={onAnimals} tone="#7EE787">← Animali</Chip>
                 <Chip x={r.x - 40} y={r.y} onClick={onFish} tone="#58A6FF">Pesci →</Chip>
                 <div className="absolute" style={{ left: o.x, top: o.y, width: 130 * o.s * Math.max(0.8, g.w / 1500), transform: "translate(-50%,-100%)" }}>
