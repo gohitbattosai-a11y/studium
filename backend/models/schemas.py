@@ -436,6 +436,7 @@ class PetInfo(BaseModel):
     owned: bool
     copies: int
     active: bool
+    bonus_percent: int = 0
 
 
 class PetsState(BaseModel):
