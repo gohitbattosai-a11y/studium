@@ -333,8 +333,8 @@ function Scope({ sp, onDone }: { sp: AnimalSpecies; onDone: (shot: Shot) => void
   const label = verdict === "perfect" ? "Colpo perfetto!" : verdict === "hit" ? "Colpito!" : "Mancato!";
 
   return (
-    <div className="absolute inset-0 z-[8] grid place-items-center bg-black/75 p-3" data-testid="forest-scope">
-      <div className="w-full max-w-lg">
+    <div className="absolute inset-0 z-[8] grid place-items-center overflow-y-auto bg-black/75 p-3 pt-14" data-testid="forest-scope">
+      <div className="w-full" style={{ maxWidth: "min(32rem, calc(54dvh * 1.3333))" }}>
         <div className="mb-2 h-1.5 overflow-hidden rounded-full bg-white/10">
           <div ref={timeBar} className="h-full bg-[#E3B341]" />
         </div>
@@ -408,6 +408,18 @@ export default function Forest() {
   const [callAt, setCallAt] = useState(0);
   const [now, setNow] = useState(() => Date.now());
   const paused = !!aim || !!result || bag;
+  const root = useRef<HTMLDivElement>(null);
+  const [fu, setFu] = useState(1);
+
+  useEffect(() => {
+    const el = root.current;
+    if (!el) return;
+    const m = () => setFu(Math.max(0.6, Math.min(1.25, Math.min(el.clientHeight / 820, el.clientWidth / 520))));
+    m();
+    const ro = new ResizeObserver(m);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     if (paused) return;
@@ -455,13 +467,13 @@ export default function Forest() {
   };
 
   return (
-    <div className="absolute inset-0 overflow-hidden bg-[#0a1230]" data-testid="forest">
+    <div ref={root} className="absolute inset-0 isolate overflow-hidden bg-[#0a1230]" data-testid="forest">
       <Back />
       <div className="fo-mist pointer-events-none absolute inset-x-[-10%] top-[48%] h-[16%] bg-[radial-gradient(ellipse,rgba(155,197,214,0.22),transparent_70%)]" />
       <div className="fo-mist pointer-events-none absolute inset-x-[-10%] top-[66%] h-[14%] bg-[radial-gradient(ellipse,rgba(155,197,214,0.16),transparent_70%)]" style={{ animationDelay: "-8s" }} />
       {spawns.map((s) => {
         const sky = s.sp.behavior === "fly";
-        const w = (sky ? 80 : 70 + (s.lane - 50) * 2.4) * s.sp.scale;
+        const w = (sky ? 80 : 70 + (s.lane - 50) * 2.4) * s.sp.scale * fu;
         const inner = s.sp.behavior === "hop" ? "fo-hop" : sky ? "fo-fly-arc" : "";
         return (
           <div
@@ -486,12 +498,12 @@ export default function Forest() {
       <div className="pointer-events-none absolute inset-y-0 left-0 w-[9%] bg-gradient-to-r from-[#050c08] to-transparent" />
       <div className="pointer-events-none absolute inset-y-0 right-0 w-[9%] bg-gradient-to-l from-[#050c08] to-transparent" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_50%,transparent_55%,rgba(2,8,5,0.55))]" />
-      <div className="pointer-events-none absolute inset-x-0 top-14 flex flex-col items-center gap-1.5">
+      <div className="pointer-events-none absolute inset-x-0 top-12 z-[7] flex flex-col items-center gap-1 px-2">
         <span className="rounded-full bg-black/55 px-3 py-1 text-[11px] font-medium text-white backdrop-blur">Tocca un animale per mirare</span>
         {streak > 1 && <span className="rounded-full border border-[#3FB950]/50 bg-black/55 px-2.5 py-0.5 text-[11px] font-semibold text-[#7EE787] backdrop-blur">Serie di {streak} colpi perfetti</span>}
         <span className="rounded-full border border-[#E3B341]/50 bg-black/55 px-2.5 py-0.5 text-[10px] font-semibold tracking-wider text-[#E3B341] uppercase backdrop-blur">Test · niente viene salvato</span>
       </div>
-      <div className="absolute right-4 bottom-4 z-[3] flex gap-2">
+      <div className="absolute right-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-[7] flex gap-2">
         <Button variant="outline" size="lg" onClick={call} disabled={callLeft > 0 || paused} data-testid="forest-call">
           <Volume2 /> {callLeft > 0 ? `Richiamo (${callLeft}s)` : "Richiamo"}
         </Button>
