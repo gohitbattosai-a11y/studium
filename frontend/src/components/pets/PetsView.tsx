@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from "react";
+import { useRef, useState, type CSSProperties } from "react";
 import { Check, Coins, Lock, Sparkles } from "lucide-react";
 import { usePets } from "@/lib/api/queries";
 import { usePetActions } from "@/lib/actions/petActions";
@@ -76,11 +76,14 @@ function PetCard({ pet, onActivate, busy }: { pet: PetInfo; onActivate: (id: str
       </div>
       <div className="flex flex-1 flex-col gap-2.5 p-4">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="font-medium">{pet.owned ? pet.name : "???"}</h3>
+          <h3 className="min-w-0 truncate font-medium">{pet.owned ? pet.name : "???"}</h3>
           <span className="rounded border px-1.5 py-0.5 text-[11px]" style={{ color: meta.color, borderColor: `${meta.color}55` }}>
             {meta.label}
           </span>
         </div>
+        <p className="text-xs text-[#3FB950]" data-testid={`pet-bonus-${pet.id}`}>
+          +{pet.bonus_percent}% punti da ogni fonte
+        </p>
         {pet.owned ? (
           <Button variant={pet.active ? "outline" : "default"} className="mt-auto h-9 w-full" disabled={busy} onClick={() => onActivate(pet.active ? null : pet.id)} data-testid={`pet-activate-${pet.id}`}>
             {pet.active ? (
@@ -138,14 +141,20 @@ function Body({ state }: { state: PetsState }) {
   const [opening, setOpening] = useState<BoxInfo | null>(null);
   const [result, setResult] = useState<RollResult | null>(null);
   const [round, setRound] = useState(0);
+  const busy = useRef(false);
 
   const open = (box: BoxInfo) => {
+    if (busy.current) return;
+    busy.current = true;
     setRound((r) => r + 1);
     setOpening(box);
     setResult(null);
     actions.roll.mutate(box.id, {
       onSuccess: setResult,
       onError: () => setOpening(null),
+      onSettled: () => {
+        busy.current = false;
+      },
     });
   };
 
