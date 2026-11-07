@@ -20,6 +20,20 @@ export interface AnimalGift {
   donated_at: string;
 }
 
+export interface FossilCatch {
+  id: string;
+  species_id: string;
+  integrity: number;
+  found_at: string;
+}
+
+export interface FossilGift {
+  species_id: string;
+  donor: string;
+  integrity: number;
+  donated_at: string;
+}
+
 export interface Sandbox {
   user: { id: string; nickname: string };
   fishBucket: CatchInfo[];
@@ -27,12 +41,15 @@ export interface Sandbox {
   known: Record<string, Known>;
   animalBag: AnimalCatch[];
   animalMuseum: AnimalGift[];
+  fossilBag: FossilCatch[];
+  fossilMuseum: FossilGift[];
 }
 
 export const FISH_LIMIT = 30;
 export const ANIMAL_LIMIT = 20;
+export const FOSSIL_LIMIT = 20;
 
-const initial = (): Sandbox => ({ user: { id: "test", nickname: "Admin" }, fishBucket: [], fishMuseum: [], known: {}, animalBag: [], animalMuseum: [] });
+const initial = (): Sandbox => ({ user: { id: "test", nickname: "Admin" }, fishBucket: [], fishMuseum: [], known: {}, animalBag: [], animalMuseum: [], fossilBag: [], fossilMuseum: [] });
 
 let state: Sandbox = initial();
 const listeners = new Set<() => void>();
@@ -102,4 +119,24 @@ export function donateAnimal(id: string): AnimalGift {
 export function releaseAnimal(id: string) {
   if (!state.animalBag.some((a) => a.id === id)) throw new Error("Animale non trovato");
   commit({ ...state, animalBag: state.animalBag.filter((a) => a.id !== id) });
+}
+
+export function addFossil(species_id: string, integrity: number): FossilCatch {
+  const item: FossilCatch = { id: newId(), species_id, integrity, found_at: new Date().toISOString() };
+  commit({ ...state, fossilBag: [item, ...state.fossilBag] });
+  return item;
+}
+
+export function donateFossil(id: string): FossilGift {
+  const item = state.fossilBag.find((f) => f.id === id);
+  if (!item) throw new Error("Fossile non trovato");
+  if (state.fossilMuseum.some((g) => g.species_id === item.species_id)) throw new Error("Questa specie è già stata donata al museo");
+  const gift: FossilGift = { species_id: item.species_id, donor: state.user.nickname, integrity: item.integrity, donated_at: new Date().toISOString() };
+  commit({ ...state, fossilBag: state.fossilBag.filter((f) => f.id !== id), fossilMuseum: [...state.fossilMuseum, gift] });
+  return gift;
+}
+
+export function discardFossil(id: string) {
+  if (!state.fossilBag.some((f) => f.id === id)) throw new Error("Fossile non trovato");
+  commit({ ...state, fossilBag: state.fossilBag.filter((f) => f.id !== id) });
 }
