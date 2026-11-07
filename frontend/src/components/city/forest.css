@@ -61,3 +61,22 @@
 .fo-spook { animation: fo-spook 0.8s ease-in forwards; }
 .fo-flash { animation: fo-flash 0.35s ease-out forwards; }
 .fo-pop { animation: fo-pop 1.1s ease-out forwards; }
+@keyframes fo-wingflap {
+  from { transform: rotate(-58deg); }
+  to { transform: rotate(26deg); }
+}
+@keyframes fo-mist {
+  from { transform: translateX(-8%); }
+  to { transform: translateX(8%); }
+}
+@keyframes fo-glowpulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+.fo-wing { transform-origin: 80px 60px; animation: fo-wingflap 0.24s ease-in-out infinite alternate; }
+.fo-wing-far { animation-delay: -0.12s; }
+.fo-mist { animation: fo-mist 16s ease-in-out infinite alternate; }
+.fo-glowpulse { animation: fo-glowpulse 3.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .fo-wing, .fo-mist, .fo-glowpulse { animation: none; }
+}
