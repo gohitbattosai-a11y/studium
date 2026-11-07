@@ -1,0 +1,58 @@
+@keyframes aq-fall {
+  to { stroke-dashoffset: -64; }
+}
+@keyframes aq-mist {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.65; transform: scale(1.14); }
+}
+@keyframes aq-kelp {
+  from { transform: rotate(-4deg); }
+  to { transform: rotate(4deg); }
+}
+@keyframes aq-rise {
+  0% { transform: translateY(0) scale(0.6); opacity: 0; }
+  12% { opacity: 0.85; }
+  100% { transform: translateY(-62vh) scale(1); opacity: 0; }
+}
+@keyframes aq-drift {
+  from { transform: translate(0, 0); opacity: 0.2; }
+  to { transform: translate(36px, -28px); opacity: 0.9; }
+}
+@keyframes aq-walk {
+  from { transform: translateX(-12vw); }
+  to { transform: translateX(108vw); }
+}
+@keyframes aq-caustic {
+  from { background-position: 0 0, 80px 40px; }
+  to { background-position: 260px 130px, -180px 170px; }
+}
+@keyframes aq-glow {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+@keyframes aq-ray {
+  0%, 100% { opacity: 0.18; }
+  50% { opacity: 0.5; }
+}
+@keyframes aq-hint {
+  0%, 65% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.aq-fall { stroke-dasharray: 22 42; animation: aq-fall 0.7s linear infinite; }
+.aq-mist { transform-box: fill-box; transform-origin: 50% 100%; animation: aq-mist 3.2s ease-in-out infinite; animation-delay: var(--kd, 0s); }
+.aq-kelp { transform-box: fill-box; transform-origin: 50% 100%; animation: aq-kelp 4s ease-in-out infinite alternate; animation-delay: var(--kd, 0s); }
+.aq-bub { position: absolute; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.65); background: rgba(255, 255, 255, 0.14); animation: aq-rise var(--bd, 9s) ease-in infinite; animation-delay: var(--bdl, 0s); }
+.aq-mote { position: absolute; border-radius: 9999px; animation: aq-drift var(--md, 8s) ease-in-out infinite alternate; animation-delay: var(--mdl, 0s); }
+.aq-visitor { animation: aq-walk var(--wd, 70s) linear infinite; animation-delay: var(--wdl, 0s); }
+.aq-caustic {
+  background-image:
+    repeating-radial-gradient(ellipse at 20% 30%, rgba(255, 255, 255, 0.14) 0 5px, transparent 5px 24px),
+    repeating-radial-gradient(ellipse at 70% 60%, rgba(255, 255, 255, 0.1) 0 4px, transparent 4px 20px);
+  animation: aq-caustic 16s linear infinite;
+}
+.aq-glow { animation: aq-glow 3.4s ease-in-out infinite; animation-delay: var(--kd, 0s); }
+.aq-ray { animation: aq-ray 8s ease-in-out infinite; animation-delay: var(--kd, 0s); }
+.aq-hint { animation: aq-hint 7s ease-out forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .aq-fall, .aq-mist, .aq-kelp, .aq-bub, .aq-mote, .aq-visitor, .aq-caustic, .aq-glow, .aq-ray { animation: none; }
+}
