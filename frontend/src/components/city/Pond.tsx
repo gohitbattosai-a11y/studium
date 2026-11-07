@@ -1281,8 +1281,8 @@ export default function Pond({ city, onBucket }: { city: CityState; onBucket: ()
       <div ref={wrap} className="relative min-h-0 flex-1 overflow-hidden bg-[#274e2a]">
         <canvas ref={canvas} onPointerDown={onPointer} className="absolute inset-0 size-full touch-manipulation" style={{ cursor: phase === "idle" || phase === "waiting" ? "crosshair" : "default" }} data-testid="pond-canvas" />
         {hint[phase] && (
-          <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center px-4">
-            <p className={cn("max-w-xl rounded-full px-4 py-1.5 text-center text-sm text-white shadow-lg backdrop-blur", phase === "bite" ? "animate-bounce bg-[#F85149] font-semibold" : "bg-black/55")} data-testid="pond-hint">
+          <div className="pointer-events-none absolute inset-x-0 top-14 flex justify-center px-3">
+            <p className={cn("max-w-xl rounded-2xl px-3 py-1.5 text-center text-xs text-white shadow-lg backdrop-blur sm:rounded-full sm:px-4 sm:text-sm", phase === "bite" ? "animate-bounce bg-[#F85149] font-semibold" : "bg-black/55")} data-testid="pond-hint">
               {hint[phase]}
             </p>
           </div>
@@ -1290,9 +1290,9 @@ export default function Pond({ city, onBucket }: { city: CityState; onBucket: ()
         {phase === "reel" && <ReelGame difficulty={fight.difficulty} strength={fight.strength} dash={fight.dash} head={fight.head} onEnd={onReelEnd} />}
       </div>
 
-      <div className="border-t border-[#30363D] bg-[#161B22] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <div className="border-t border-[#30363D] bg-[#161B22] p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:p-3">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Esca">
+          <div className="flex max-w-full gap-1.5 overflow-x-auto [scrollbar-width:none]" role="radiogroup" aria-label="Esca">
             {city.baits.map((b) => (
               <button
                 key={b.id}
@@ -1304,7 +1304,7 @@ export default function Pond({ city, onBucket }: { city: CityState; onBucket: ()
                 onClick={() => setBait(b.id)}
                 data-testid={`bait-${b.id}`}
                 className={cn(
-                  "rounded-md border px-3 py-1.5 text-sm transition-colors duration-150 disabled:opacity-50",
+                  "shrink-0 rounded-md border px-2.5 py-1.5 text-xs whitespace-nowrap transition-colors duration-150 disabled:opacity-50 sm:px-3 sm:text-sm",
                   bait === b.id ? "border-[#388BFD] bg-[#388BFD]/15 text-[#F0F6FC]" : "border-[#30363D] bg-[#0D1117] text-[#8B949E] hover:text-[#F0F6FC]",
                 )}
               >
@@ -1328,7 +1328,7 @@ export default function Pond({ city, onBucket }: { city: CityState; onBucket: ()
             </Button>
           </div>
         </div>
-        <p className="mt-2 text-xs text-[#8B949E]">{city.baits.find((b) => b.id === bait)?.description}</p>
+        <p className="mt-2 hidden text-xs text-[#8B949E] sm:block">{city.baits.find((b) => b.id === bait)?.description}</p>
       </div>
 
       <CatchDialog fish={caught} city={city} onClose={closeCatch} />
