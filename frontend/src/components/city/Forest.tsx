@@ -5,6 +5,7 @@ import { ANIMAL_LIMIT, addAnimal, getSandbox, useSandbox, type AnimalCatch } fro
 import { pickAnimal, rollWeight, type AnimalSpecies } from "@/lib/domain/animals";
 import { Button } from "@/components/ui/button";
 import AnimalArt from "./AnimalArt";
+import Wings from "./Wings";
 import AnimalBag, { AnimalDialog } from "./AnimalBag";
 import "./city.css";
 import "./forest.css";
@@ -31,61 +32,191 @@ const makeSpawn = (boost = 0): Spawn => {
   return { uid: ++counter, sp, lane, dir: Math.random() < 0.5 ? 1 : -1, dur: (base + Math.random() * 6) / sp.speed };
 };
 
-const PINES = Array.from({ length: 26 }, (_, i) => ({ x: (i * 41) % 1000, h: 90 + ((i * 53) % 70), l: i % 3 }));
+function rnd(seed: number) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const pine = (x: number, base: number, h: number, c: string, c2: string) => (
+  <g key={`p${x}-${base}`}>
+    <rect x={x - h * 0.04} y={base - h * 0.22} width={h * 0.08} height={h * 0.24} fill="#1a120a" />
+    <path d={`M${x} ${base - h} L${x + h * 0.2} ${base - h * 0.55} H${x - h * 0.2}Z`} fill={c} />
+    <path d={`M${x} ${base - h * 0.78} L${x + h * 0.27} ${base - h * 0.34} H${x - h * 0.27}Z`} fill={c} />
+    <path d={`M${x} ${base - h * 0.56} L${x + h * 0.33} ${base - h * 0.12} H${x - h * 0.33}Z`} fill={c} />
+    <path d={`M${x} ${base - h} L${x - h * 0.2} ${base - h * 0.55} H${x}Z`} fill={c2} opacity="0.5" />
+    <path d={`M${x} ${base - h * 0.78} L${x - h * 0.27} ${base - h * 0.34} H${x}Z`} fill={c2} opacity="0.5" />
+  </g>
+);
+
+const broad = (x: number, base: number, h: number, c: string, c2: string, tr: string) => (
+  <g key={`b${x}-${base}`}>
+    <path d={`M${x - h * 0.05} ${base} C${x - h * 0.04} ${base - h * 0.3} ${x - h * 0.06} ${base - h * 0.45} ${x - h * 0.08} ${base - h * 0.55} H${x + h * 0.08} C${x + h * 0.06} ${base - h * 0.45} ${x + h * 0.04} ${base - h * 0.3} ${x + h * 0.05} ${base}Z`} fill={tr} />
+    <circle cx={x - h * 0.2} cy={base - h * 0.62} r={h * 0.22} fill={c} />
+    <circle cx={x + h * 0.2} cy={base - h * 0.64} r={h * 0.23} fill={c} />
+    <circle cx={x} cy={base - h * 0.8} r={h * 0.28} fill={c} />
+    <circle cx={x - h * 0.08} cy={base - h * 0.88} r={h * 0.16} fill={c2} opacity="0.55" />
+  </g>
+);
+
+const FOREST = (() => {
+  const r = rnd(11);
+  const stars = Array.from({ length: 46 }, () => [r() * 1000, r() * 200, 0.5 + r() * 1.1] as const);
+  const rows = [
+    { base: 300, n: 26, h: [120, 190], c: "#12392c", c2: "#1d5240", t: "#0c241c", o: 0.55 },
+    { base: 340, n: 20, h: [150, 240], c: "#0e3023", c2: "#18463a", t: "#091d16", o: 0.7 },
+    { base: 395, n: 15, h: [200, 310], c: "#0a261c", c2: "#143a2c", t: "#07160f", o: 0.85 },
+    { base: 455, n: 10, h: [260, 380], c: "#071d15", c2: "#0f2e22", t: "#050f0a", o: 1 },
+  ].map((row, li) =>
+    Array.from({ length: row.n }, (_, i) => {
+      const x = (i + r() * 0.8) * (1000 / row.n);
+      const h = row.h[0] + r() * (row.h[1] - row.h[0]);
+      return { x, h, pine: (i + li) % 3 !== 0, row };
+    }),
+  );
+  const ferns = Array.from({ length: 22 }, () => ({ x: r() * 1000, y: 360 + r() * 230, s: 0.7 + r() * 0.9 }));
+  const bushes = Array.from({ length: 16 }, () => ({ x: r() * 1000, y: 350 + r() * 220, s: 0.7 + r() * 1 }));
+  const mush = Array.from({ length: 12 }, () => ({ x: r() * 1000, y: 380 + r() * 200, s: 0.7 + r() * 0.8, c: r() > 0.5 ? "#ff6b6b" : "#7dd3fc" }));
+  const rocks = Array.from({ length: 9 }, () => ({ x: r() * 1000, y: 400 + r() * 190, s: 0.6 + r() * 1 }));
+  const flowers = Array.from({ length: 40 }, () => ({ x: r() * 1000, y: 370 + r() * 230, c: ["#f9a8d4", "#fde68a", "#c4b5fd", "#ffffff"][Math.floor(r() * 4)] }));
+  const leaves = Array.from({ length: 30 }, () => ({ x: r() * 1000, y: 360 + r() * 230, c: ["#8a5a2a", "#a8742f", "#5a3f1e", "#6e8a2a"][Math.floor(r() * 4)] }));
+  const canopy = Array.from({ length: 22 }, (_, i) => ({ x: i * 48 + r() * 30, y: -10 + r() * 70, rr: 50 + r() * 50 }));
+  const vines = Array.from({ length: 9 }, () => ({ x: r() * 1000, l: 60 + r() * 120 }));
+  const grass = Array.from({ length: 36 }, () => ({ x: r() * 1000, h: 30 + r() * 60, y: 560 + r() * 40 }));
+  return { stars, rows, ferns, bushes, mush, rocks, flowers, leaves, canopy, vines, grass };
+})();
 
 function Back() {
-  const stars = Array.from({ length: 40 }, (_, i) => [(i * 137) % 1000, (i * 61) % 230, 0.6 + (i % 3) * 0.4, (i % 7) * 0.4]);
   return (
     <svg viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 size-full" aria-hidden>
       <defs>
         <linearGradient id="fo-sky" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#0a1230" />
-          <stop offset="0.55" stopColor="#173a44" />
-          <stop offset="1" stopColor="#1c4a35" />
+          <stop offset="0" stopColor="#070d26" />
+          <stop offset="0.5" stopColor="#12333f" />
+          <stop offset="1" stopColor="#1a4a3a" />
         </linearGradient>
         <linearGradient id="fo-ground" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#1f5a37" />
-          <stop offset="1" stopColor="#0f2b1c" />
+          <stop offset="0" stopColor="#1e5a38" />
+          <stop offset="0.5" stopColor="#173f2a" />
+          <stop offset="1" stopColor="#0b1f15" />
+        </linearGradient>
+        <linearGradient id="fo-haze" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#7fb6c4" stopOpacity="0" />
+          <stop offset="1" stopColor="#7fb6c4" stopOpacity="0.26" />
         </linearGradient>
         <radialGradient id="fo-moon" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0" stopColor="#dbe7ff" stopOpacity="0.5" />
+          <stop offset="0" stopColor="#dbe7ff" stopOpacity="0.55" />
           <stop offset="1" stopColor="#dbe7ff" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="fo-glow" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.9" />
+          <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
         </radialGradient>
       </defs>
       <rect width="1000" height="600" fill="url(#fo-sky)" />
-      {stars.map(([x, y, r, d], i) => (
-        <circle key={i} cx={x} cy={y} r={r} fill="#ffffff" className="ct-twinkle" style={{ animationDelay: `${d}s` }} />
+      {FOREST.stars.map(([x, y, rr], i) => (
+        <circle key={i} cx={x} cy={y} r={rr} fill="#ffffff" opacity="0.8" />
       ))}
-      <circle cx="800" cy="90" r="80" fill="url(#fo-moon)" />
-      <circle cx="800" cy="90" r="26" fill="#f3f0dc" />
-      {[0, 1, 2].map((layer) => (
-        <g key={layer} opacity={0.5 + layer * 0.25}>
-          {PINES.filter((p) => p.l === layer).map((p, i) => {
-            const base = 300 + layer * 55;
-            const col = ["#0f3326", "#0c2a1e", "#081f16"][layer];
-            return (
-              <g key={i} transform={`translate(${p.x + layer * 13} ${base})`}>
-                <path d={`M0 ${-p.h * 1.5} L${p.h * 0.32} ${-p.h * 0.6} H${-p.h * 0.32}Z`} fill={col} />
-                <path d={`M0 ${-p.h * 1.15} L${p.h * 0.42} ${-p.h * 0.2} H${-p.h * 0.42}Z`} fill={col} />
-                <path d={`M0 ${-p.h * 0.8} L${p.h * 0.52} ${p.h * 0.2} H${-p.h * 0.52}Z`} fill={col} />
-                <rect x="-5" y={p.h * 0.2} width="10" height={p.h * 0.5} fill="#1a120a" />
-              </g>
-            );
-          })}
+      <circle cx="800" cy="82" r="90" fill="url(#fo-moon)" />
+      <circle cx="800" cy="82" r="26" fill="#f3f0dc" />
+      <path d="M0 250 Q120 190 260 240 T520 220 T780 250 T1000 210 V330 H0Z" fill="#0f2c33" opacity="0.8" />
+      {FOREST.rows.map((row, li) => (
+        <g key={li} opacity={row[0].row.o}>
+          {row.map((t) => (t.pine ? pine(t.x, t.row.base, t.h, t.row.c, t.row.c2) : broad(t.x, t.row.base, t.h, t.row.c, t.row.c2, t.row.t)))}
+          <rect x="0" y={row[0].row.base - 40} width="1000" height="60" fill="url(#fo-haze)" />
         </g>
       ))}
+      <path d="M380 0 L470 0 L560 330 L260 330Z" fill="#dbe7ff" opacity="0.06" />
+      <path d="M620 0 L680 0 L780 330 L600 330Z" fill="#dbe7ff" opacity="0.05" />
       <rect y="330" width="1000" height="270" fill="url(#fo-ground)" />
-      <path d="M0 360 Q250 340 500 362 T1000 350 V380 H0Z" fill="#2b7045" opacity="0.5" />
-      <path d="M0 470 Q300 450 600 478 T1000 466 V500 H0Z" fill="#164a2e" opacity="0.55" />
-      <g className="fo-fog" opacity="0.35">
-        <ellipse cx="260" cy="400" rx="320" ry="26" fill="#9bc5d6" opacity="0.22" />
-        <ellipse cx="760" cy="440" rx="360" ry="30" fill="#9bc5d6" opacity="0.18" />
+      <path d="M0 372 Q250 352 500 374 T1000 362 V400 H0Z" fill="#2b7045" opacity="0.5" />
+      <path d="M0 480 Q300 458 600 486 T1000 474 V520 H0Z" fill="#14402a" opacity="0.6" />
+      <path d="M380 600 C420 520 470 470 520 430 C560 400 620 380 700 362" stroke="#4a3a24" strokeWidth="46" fill="none" strokeLinecap="round" opacity="0.5" />
+      <path d="M380 600 C420 520 470 470 520 430 C560 400 620 380 700 362" stroke="#6a5334" strokeWidth="30" fill="none" strokeLinecap="round" opacity="0.5" />
+      {FOREST.leaves.map((l, i) => (
+        <ellipse key={i} cx={l.x} cy={l.y} rx="6" ry="3" fill={l.c} opacity="0.8" transform={`rotate(${(i * 47) % 180} ${l.x} ${l.y})`} />
+      ))}
+      {FOREST.rocks.map((k, i) => (
+        <g key={i} transform={`translate(${k.x} ${k.y}) scale(${k.s})`}>
+          <ellipse cx="0" cy="6" rx="34" ry="7" fill="#000" opacity="0.3" />
+          <path d="M-32 6 Q-30 -22 -6 -28 Q22 -30 34 -8 Q38 0 32 6Z" fill="#59635f" />
+          <path d="M-6 -28 Q22 -30 34 -8 Q12 -16 -10 -10Z" fill="#7b8782" />
+          <ellipse cx="-14" cy="-20" rx="16" ry="5" fill="#3f7a3f" opacity="0.85" />
+        </g>
+      ))}
+      <g transform="translate(160 520)">
+        <ellipse cx="0" cy="10" rx="110" ry="12" fill="#000" opacity="0.3" />
+        <path d="M-100 8 Q-104 -22 -80 -26 H70 Q96 -22 96 8Z" fill="#4a3320" />
+        <path d="M-100 8 Q-104 -22 -80 -26 H70 L60 -14 H-76Z" fill="#6a4a2e" />
+        <ellipse cx="96" cy="-9" rx="10" ry="17" fill="#c79a62" />
+        <ellipse cx="-40" cy="-26" rx="46" ry="8" fill="#3f7a3f" opacity="0.8" />
       </g>
-      <path d="M300 0 L420 0 L620 330 L180 330Z" fill="#dbe7ff" opacity="0.05" />
-      {[[120, 520], [380, 560], [640, 535], [880, 575], [250, 585]].map(([x, y], i) => (
+      {FOREST.bushes.map((b, i) => (
+        <g key={i} transform={`translate(${b.x} ${b.y}) scale(${b.s})`}>
+          <ellipse cx="0" cy="4" rx="40" ry="7" fill="#000" opacity="0.3" />
+          <circle cx="-20" cy="-8" r="20" fill="#14432a" />
+          <circle cx="20" cy="-8" r="22" fill="#14432a" />
+          <circle cx="0" cy="-16" r="26" fill="#1c5a38" />
+          <circle cx="-8" cy="-24" r="14" fill="#2b7a4a" opacity="0.7" />
+        </g>
+      ))}
+      {FOREST.ferns.map((f, i) => (
+        <g key={i} transform={`translate(${f.x} ${f.y}) scale(${f.s})`} stroke="#2f8a4a" strokeWidth="3" fill="none" strokeLinecap="round">
+          {[-50, -28, -8, 12, 32, 52].map((a) => (
+            <path key={a} d={`M0 0 Q${a * 0.5} -26 ${a} -${40 - Math.abs(a) * 0.3}`} />
+          ))}
+        </g>
+      ))}
+      {FOREST.mush.map((m, i) => (
+        <g key={i} transform={`translate(${m.x} ${m.y}) scale(${m.s})`}>
+          <circle cx="0" cy="-8" r="22" fill="url(#fo-glow)" opacity="0.35" />
+          <rect x="-2" y="-8" width="4" height="9" fill="#e8dcc0" />
+          <path d="M-9 -8 Q0 -22 9 -8Z" fill={m.c} />
+          <circle cx="-3" cy="-12" r="1.2" fill="#fff" />
+          <circle cx="3" cy="-11" r="1" fill="#fff" />
+        </g>
+      ))}
+      {FOREST.flowers.map((f, i) => (
         <g key={i}>
-          {[-5, 0, 5].map((d) => (
-            <path key={d} d={`M${x + d} ${y} q${d} -14 ${d * 2} -26`} stroke="#3a8a4a" strokeWidth="3" fill="none" strokeLinecap="round" />
+          <path d={`M${f.x} ${f.y} v7`} stroke="#2f8a4a" strokeWidth="1.4" />
+          <circle cx={f.x} cy={f.y} r="2.6" fill={f.c} />
+        </g>
+      ))}
+      <path d="M0 0 H1000 V50 Q900 80 800 50 T600 54 T400 48 T200 56 T0 46Z" fill="#06180f" />
+      {FOREST.canopy.map((c, i) => (
+        <circle key={i} cx={c.x} cy={c.y} r={c.rr} fill={i % 3 ? "#0a2a1b" : "#0e3524"} />
+      ))}
+      {FOREST.vines.map((v, i) => (
+        <path key={i} d={`M${v.x} 40 q8 ${v.l * 0.5} -2 ${v.l}`} stroke="#1f6a3a" strokeWidth="3" fill="none" strokeLinecap="round" />
+      ))}
+    </svg>
+  );
+}
+
+function Front() {
+  return (
+    <svg viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice" className="pointer-events-none absolute inset-0 z-[6] size-full" aria-hidden>
+      <path d="M-20 600 L-20 0 H70 C60 120 80 260 66 380 C56 470 74 540 96 600Z" fill="#050d08" />
+      <path d="M70 0 C60 120 80 260 66 380 C56 470 74 540 96 600 H70 C50 520 40 470 52 380 C62 260 48 120 52 0Z" fill="#14281c" opacity="0.8" />
+      <path d="M1020 600 L1020 0 H930 C940 120 920 260 934 380 C944 470 926 540 904 600Z" fill="#050d08" />
+      <path d="M930 0 C940 120 920 260 934 380 C944 470 926 540 904 600 H930 C950 520 960 470 948 380 C938 260 952 120 948 0Z" fill="#14281c" opacity="0.8" />
+      <path d="M-20 590 q60 -40 120 -2 M1020 590 q-60 -40 -120 -2" stroke="#050d08" strokeWidth="26" fill="none" strokeLinecap="round" />
+      {FOREST.grass.map((g, i) => (
+        <g key={i} stroke={i % 3 ? "#2f8a4a" : "#46a85e"} strokeWidth="3.4" fill="none" strokeLinecap="round">
+          <path d={`M${g.x - 7} ${g.y + 40} Q${g.x - 8} ${g.y + 20} ${g.x - 14} ${g.y + 40 - g.h}`} />
+          <path d={`M${g.x} ${g.y + 40} Q${g.x + 2} ${g.y + 10} ${g.x} ${g.y + 40 - g.h * 1.15}`} />
+          <path d={`M${g.x + 7} ${g.y + 40} Q${g.x + 8} ${g.y + 20} ${g.x + 15} ${g.y + 40 - g.h}`} />
+        </g>
+      ))}
+      {[[120, 560], [880, 566]].map(([x, y], i) => (
+        <g key={i} transform={`translate(${x} ${y}) scale(${i ? -1.5 : 1.5} 1.5)`} stroke="#1f6a3a" strokeWidth="4" fill="none" strokeLinecap="round">
+          {[-60, -36, -12, 12, 36, 60].map((a) => (
+            <path key={a} d={`M0 0 Q${a * 0.6} -36 ${a} -${56 - Math.abs(a) * 0.4}`} />
           ))}
         </g>
       ))}
@@ -108,10 +239,10 @@ function Scope({ sp, onDone }: { sp: AnimalSpecies; onDone: (shot: Shot) => void
   const state = useRef({ ax: 0.5, ay: 0.52, ox: 0, oy: 0 });
   const [verdict, setVerdict] = useState<Shot | null>(null);
   const d = sp.difficulty;
-  const radius = Math.max(0.06, 0.15 - d * 0.009);
-  const sway = 0.035 + d * 0.006;
+  const radius = Math.max(0.035, 0.07 - d * 0.0045);
+  const sway = 0.08 + d * 0.008;
   const phase = useMemo(() => Math.random() * 6, []);
-  const limit = 12;
+  const limit = 10;
   const finish = useRef<() => void>(() => undefined);
 
   useEffect(() => {
@@ -127,10 +258,10 @@ function Scope({ sp, onDone }: { sp: AnimalSpecies; onDone: (shot: Shot) => void
       const t = (now - t0) / 1000;
       if (holding.current && stamina.current > 0) stamina.current = Math.max(0, stamina.current - dt * 0.35);
       else if (!holding.current) stamina.current = Math.min(1, stamina.current + dt * 0.2);
-      const steady = holding.current && stamina.current > 0 ? 0.25 : 1;
-      const pulse = 0.3 + 0.7 * (0.5 + 0.5 * Math.sin(t * 1.15 + phase));
+      const steady = holding.current && stamina.current > 0 ? 0.55 : 1;
+      const pulse = 0.1 + 0.9 * (0.5 + 0.5 * Math.sin(t * 1.6 + phase)) ** 2;
       const amp = sway * pulse * steady;
-      const ax = 0.5 + Math.sin(t * 0.45 * sp.speed + phase) * 0.1;
+      const ax = 0.5 + Math.sin(t * 0.8 * sp.speed + phase) * 0.16;
       const ay = 0.52 + Math.sin(t * 0.8 * sp.speed) * 0.015;
       const w = 0.5 * sp.scale * 0.9;
       const vx = ax - w / 2 + VITAL.x * w;
@@ -165,7 +296,7 @@ function Scope({ sp, onDone }: { sp: AnimalSpecies; onDone: (shot: Shot) => void
     done.current = true;
     const { ox, oy } = state.current;
     const dist = Math.hypot(ox, oy * 0.75);
-    const shot: Shot = dist <= radius * 0.42 ? "perfect" : dist <= radius ? "hit" : "miss";
+    const shot: Shot = dist <= radius * 0.4 ? "perfect" : dist <= radius ? "hit" : "miss";
     navigator.vibrate?.(shot === "miss" ? 30 : 70);
     setVerdict(shot);
     window.setTimeout(() => onDone(shot), 750);
@@ -234,7 +365,7 @@ function Scope({ sp, onDone }: { sp: AnimalSpecies; onDone: (shot: Shot) => void
             </p>
           )}
         </div>
-        <p className="mt-2 text-center text-xs text-[#C9D1D9]">Il mirino segue l'animale da solo. Tocca lo schermo quando il cerchio verde si stringe: più è piccolo, più il colpo è preciso.</p>
+        <p className="mt-2 text-center text-xs text-[#C9D1D9]">Il mirino segue l'animale da solo. Il mirino trema: tocca nel momento esatto in cui il cerchio verde è al minimo. Se lo fai al momento sbagliato, manchi.</p>
         <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
           <div ref={breathBar} className="h-full bg-[#58A6FF]" />
         </div>
@@ -326,6 +457,8 @@ export default function Forest() {
   return (
     <div className="absolute inset-0 overflow-hidden bg-[#0a1230]" data-testid="forest">
       <Back />
+      <div className="fo-mist pointer-events-none absolute inset-x-[-10%] top-[48%] h-[16%] bg-[radial-gradient(ellipse,rgba(155,197,214,0.22),transparent_70%)]" />
+      <div className="fo-mist pointer-events-none absolute inset-x-[-10%] top-[66%] h-[14%] bg-[radial-gradient(ellipse,rgba(155,197,214,0.16),transparent_70%)]" style={{ animationDelay: "-8s" }} />
       {spawns.map((s) => {
         const sky = s.sp.behavior === "fly";
         const w = (sky ? 80 : 70 + (s.lane - 50) * 2.4) * s.sp.scale;
@@ -338,8 +471,9 @@ export default function Forest() {
             onAnimationEnd={() => setSpawns((cur) => cur.filter((x) => x.uid !== s.uid))}
           >
             <button type="button" onClick={() => tap(s)} className="pointer-events-auto block w-full outline-none" aria-label="Animale nella foresta" style={{ transform: `translateY(-100%) scaleX(${s.dir})` }}>
-              <div className={inner}>
-                <AnimalArt a={s.sp} silhouette className="w-full drop-shadow-[0_0_6px_rgba(227,179,65,0.35)]" />
+              <div className={`relative ${inner}`}>
+                {sky && <Wings a={s.sp} silhouette />}
+                <AnimalArt a={s.sp} silhouette className="w-full" />
               </div>
             </button>
           </div>
@@ -348,6 +482,7 @@ export default function Forest() {
       {[[12, 30], [28, 55], [47, 70], [63, 40], [78, 62], [90, 35], [20, 80], [70, 85]].map(([x, y], i) => (
         <span key={i} className="fo-fly absolute size-1.5 rounded-full bg-[#e8ff8a] shadow-[0_0_8px_#e8ff8a]" style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${i * 0.7}s` }} />
       ))}
+      <Front />
       <div className="pointer-events-none absolute inset-y-0 left-0 w-[9%] bg-gradient-to-r from-[#050c08] to-transparent" />
       <div className="pointer-events-none absolute inset-y-0 right-0 w-[9%] bg-gradient-to-l from-[#050c08] to-transparent" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_50%,transparent_55%,rgba(2,8,5,0.55))]" />
