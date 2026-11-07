@@ -5,7 +5,7 @@ import { Eyebrow } from "@/components/common";
 
 export function Panel({ title, hint, action, children, className, testId }: { title: string; hint?: string; action?: ReactNode; children: ReactNode; className?: string; testId?: string }) {
   return (
-    <section className={cn("rounded-xl border border-[#30363D] bg-[#161B22] p-5", className)} data-testid={testId}>
+    <section className={cn("min-w-0 rounded-xl border border-[#30363D] bg-[#161B22] p-4 sm:p-5", className)} data-testid={testId}>
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-sm font-medium">{title}</h2>
@@ -20,7 +20,7 @@ export function Panel({ title, hint, action, children, className, testId }: { ti
 
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <label className="block space-y-1.5">
+    <label className="block min-w-0 space-y-1.5">
       <Eyebrow>{label}</Eyebrow>
       {children}
     </label>
@@ -30,7 +30,7 @@ export function Field({ label, children }: { label: string; children: ReactNode 
 export function NativeSelect({ className, ...props }: ComponentProps<"select">) {
   return (
     <select
-      className={cn("h-9 w-full rounded-lg border border-[#30363D] bg-[#0D1117] px-2.5 text-sm outline-none transition-colors focus-visible:border-[#388BFD] disabled:opacity-50", className)}
+      className={cn("h-10 w-full min-w-0 rounded-lg border border-[#30363D] bg-[#0D1117] px-2.5 text-base outline-none md:h-9 md:text-sm transition-colors focus-visible:border-[#388BFD] disabled:opacity-50", className)}
       {...props}
     />
   );
