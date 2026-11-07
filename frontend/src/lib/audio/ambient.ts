@@ -448,6 +448,37 @@ const build = (id: string, p: Parts): Scape => {
         for (let i = 0; i < 3; i++) window.setTimeout(() => bell(p, s, scale[Math.floor(Math.random() * scale.length)], 0.025, 1.8), i * 260);
       });
       break;
+    case "city-map":
+      wind(p, s, 0.01, 360, 0.04);
+      every(s, 3500, 9000, () => chirp(p, s, 2400 + Math.random() * 800));
+      every(s, 9000, 20000, () => bell(p, s, 880 + Math.random() * 200, 0.008, 2));
+      break;
+    case "city-hall":
+      pad(p, s, [110, 164.8], 0.012, "sine", 400, 0.04);
+      every(s, 12000, 24000, () => bell(p, s, [523.25, 659.25, 784][Math.floor(Math.random() * 3)], 0.01, 2.6));
+      every(s, 5000, 11000, () => click(p, s, 1800, 0.01));
+      break;
+    case "city-water":
+      pad(p, s, [73.4, 110], 0.014, "sine", 320, 0.04);
+      every(s, 700, 2400, () => bubble(p, s));
+      break;
+    case "city-pond":
+      waves(p, s, 0.035);
+      every(s, 1500, 4000, () => cricket(p, s, 0.006));
+      every(s, 5000, 12000, () => frog(p, s));
+      every(s, 6000, 14000, () => chirp(p, s, 2600 + Math.random() * 600));
+      break;
+    case "city-forest":
+      wind(p, s, 0.012, 400, 0.05);
+      every(s, 1200, 3200, () => cricket(p, s, 0.008));
+      every(s, 14000, 28000, () => owl(p, s));
+      every(s, 4000, 10000, () => frog(p, s));
+      break;
+    case "city-meadow":
+      wind(p, s, 0.012, 380, 0.05);
+      every(s, 2200, 6000, () => chirp(p, s, 2200 + Math.random() * 900));
+      every(s, 6000, 14000, () => chirp(p, s, 3000 + Math.random() * 500));
+      break;
     default:
       pad(p, s, [110, 164.8], 0.03, "sine", 500, 0.05);
       wind(p, s, 0.03, 400, 0.06);
@@ -494,6 +525,8 @@ const sync = () => {
 };
 
 let hooked = false;
+
+export const getAmbient = () => wanted;
 
 export const setAmbient = (id: string) => {
   wanted = id;
