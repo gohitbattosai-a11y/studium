@@ -166,9 +166,6 @@ const STAND: Prop[] = ["ficus"];
 export default function Museum({ city, onFish, onAnimals, onBucket, onExit }: { city: CityState; onFish: () => void; onAnimals: () => void; onBucket: () => void; onExit: () => void }) {
   const { ref, g } = useGeo();
   const rooms = useMemo(() => buildRooms(city.species), [city.species]);
-  const done = city.museum.length;
-  const total = city.species.length;
-  const pct = total ? Math.round((done / total) * 100) : 0;
   const all = rooms.flatMap((r) => r.list);
   const owned = new Set(city.museum.map((d) => d.species_id));
   const th = THEMES.lake;
@@ -316,7 +313,6 @@ export default function Museum({ city, onFish, onAnimals, onBucket, onExit }: { 
             const l = wallPt(g, "left", 17, 18);
             const r = wallPt(g, "right", 17, 18);
             const o = floorPt(g, 0.5, 0.42);
-            const sg = floorPt(g, 0.5, 0.2);
             return (
               <>
                 <Chip x={a.x} y={a.y}>Insetti · prossimamente</Chip>
@@ -325,15 +321,6 @@ export default function Museum({ city, onFish, onAnimals, onBucket, onExit }: { 
                 <Chip x={r.x - 40} y={r.y} onClick={onFish} tone="#58A6FF">Pesci →</Chip>
                 <div className="absolute" style={{ left: o.x, top: o.y, width: 130 * o.s * Math.max(0.8, g.w / 1500), transform: "translate(-50%,-100%)" }}>
                   <Owl />
-                </div>
-                <div className="absolute rounded-lg border-[3px] border-[#e3b341] bg-[#2a1d0f]/90 text-center shadow-xl" style={{ left: sg.x, top: sg.y, width: 150 * sg.s * Math.max(0.8, g.w / 1500) * 1.4, transform: "translate(-50%,-100%)", padding: 6 * sg.s }}>
-                  <p className="text-[9px] font-medium tracking-wider text-[#e3cfa0] uppercase">Collezione pesci</p>
-                  <p className="text-xl leading-none font-bold tabular-nums text-[#fff3c4]">
-                    {done}/{total}
-                  </p>
-                  <div className="mx-auto mt-1 h-1.5 w-4/5 overflow-hidden rounded-full bg-black/40">
-                    <div className="h-full rounded-full bg-gradient-to-r from-[#e3b341] to-[#f0883e]" style={{ width: `${pct}%` }} />
-                  </div>
                 </div>
               </>
             );
