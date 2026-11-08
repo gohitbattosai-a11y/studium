@@ -2,7 +2,7 @@ import type { Lesson } from "./lessons";
 
 const M = "matematica";
 
-export const MATH_LESSONS: Lesson[] = [
+const PARTS: Lesson[] = [
   {
     id: "mat-n-peano",
     subject: M,
@@ -552,4 +552,17 @@ export const MATH_LESSONS: Lesson[] = [
       { t: "reveal", prompt: "Qual è, secondo te, il filo che lega tutto questo capitolo?", answer: "Ogni volta che un'operazione «si rompe» (come 3 − 5 in ℕ), la matematica amplia il mondo dei numeri per renderla sempre possibile: da ℕ a ℤ, e presto da ℤ a ℚ per la divisione." },
     ],
   },
+];
+
+const chapter = (id: string, title: string, summary: string, parts: Lesson[]): Lesson => ({
+  id,
+  subject: M,
+  title,
+  summary,
+  blocks: parts.flatMap((l) => [{ t: "section" as const, title: l.title, text: l.summary }, ...l.blocks]),
+});
+
+export const MATH_LESSONS: Lesson[] = [
+  chapter("mat-cap5-naturali", "Capitolo 5 · I numeri naturali, ℕ", "Peano, notazioni, ordine, le quattro operazioni, potenze, primi, MCD e mcm: tutto il capitolo in 8 sezioni.", PARTS.slice(0, 8)),
+  chapter("mat-cap8-interi", "Capitolo 8 · I numeri interi, ℤ", "Da ℕ a ℤ: Cantor, somma e opposti, valore assoluto, regola dei segni, divisione e potenze, più la sfida finale.", PARTS.slice(8)),
 ];
