@@ -112,7 +112,7 @@ export default function CityPanel({ me, onClose }: { me: Me; onClose: () => void
             {view === "forest" && <Forest />}
             {view === "school" && <School memberId={me.member_id} />}
             {view === "dig" && <Dig />}
-            {view === "fossils" && <FossilRoom />}
+            {view === "fossils" && <FossilRoom onAtrium={() => setView("lobby")} />}
             {view === "stadium" && <Stadium />}
             <Bucket open={bucketOpen} onClose={() => setBucketOpen(false)} city={data} />
           </>
