@@ -5,6 +5,7 @@ import { MATH_LESSONS } from "./lessonsMath";
 export type WidgetId = "line" | "dominoes" | "positional" | "order" | "algo" | "area" | "powprops" | "sieve" | "factor" | "gauss" | "cantor" | "abs" | "triangle" | "signs" | "parity" | "venn" | "drill";
 
 export type Block =
+  | { t: "section"; title: string; text?: string }
   | { t: "h"; text: string }
   | { t: "p"; text: string }
   | { t: "list"; items: string[] }
