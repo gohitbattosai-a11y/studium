@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import "./city.css";
 
 export interface Geo {
   w: number;
   h: number;
+  vw: number;
   D: number;
   P: number;
   ox: number;
@@ -17,11 +18,12 @@ export function useGeo() {
     const el = ref.current;
     if (!el) return;
     const upd = () => {
-      const w = el.clientWidth;
+      const vw = el.clientWidth;
       const h = el.clientHeight;
-      if (!w || !h) return;
+      if (!vw || !h) return;
+      const w = Math.max(vw, Math.round(h * 1.15));
       const P = Math.round(Math.max(w, h) * 0.7);
-      setG({ w, h, D: Math.round(P * 0.55), P, ox: w / 2, oy: h * 0.4 });
+      setG({ w, h, vw, D: Math.round(P * 0.55), P, ox: w / 2, oy: h * 0.4 });
     };
     upd();
     const ro = new ResizeObserver(upd);
@@ -32,6 +34,66 @@ export function useGeo() {
 }
 
 const scale = (g: Geo, z: number) => g.P / (g.P + z);
+
+export function Pan({ g, children }: { g: Geo; children: ReactNode }) {
+  const inner = useRef<HTMLDivElement>(null);
+  const off = useRef(-1);
+  const drag = useRef({ moved: false, sx: 0, ox: 0 });
+  const [hint, setHint] = useState(true);
+  const max = Math.max(0, g.w - g.vw);
+  const apply = useCallback(
+    (v: number) => {
+      off.current = Math.max(0, Math.min(max, v));
+      if (inner.current) inner.current.style.transform = `translate3d(${-off.current}px, 0, 0)`;
+    },
+    [max],
+  );
+  useEffect(() => {
+    apply(off.current < 0 ? max / 2 : off.current);
+  }, [apply, max]);
+  const start = off.current < 0 ? max / 2 : Math.min(off.current, max);
+  const down = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (max <= 0 || (e.pointerType === "mouse" && e.button !== 0)) return;
+    const d = drag.current;
+    d.moved = false;
+    d.sx = e.clientX;
+    d.ox = off.current < 0 ? max / 2 : off.current;
+    const move = (ev: PointerEvent) => {
+      const dx = ev.clientX - d.sx;
+      if (!d.moved && Math.abs(dx) > 6) {
+        d.moved = true;
+        setHint(false);
+      }
+      if (d.moved) apply(d.ox - dx);
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+  };
+  const clickCapture = (e: ReactMouseEvent) => {
+    if (!drag.current.moved) return;
+    e.stopPropagation();
+    e.preventDefault();
+    drag.current.moved = false;
+  };
+  return (
+    <div className="absolute inset-0 touch-none overflow-hidden" onPointerDown={down} onClickCapture={clickCapture}>
+      <div ref={inner} className="absolute top-0 left-0" style={{ width: g.w, height: g.h, transform: `translate3d(${-start}px, 0, 0)` }}>
+        {children}
+      </div>
+      {max > 0 && hint && (
+        <div className="pointer-events-none absolute inset-x-0 top-14 flex justify-center">
+          <span className="rounded-full bg-black/60 px-3 py-1 text-xs text-white backdrop-blur">Trascina per guardarti intorno</span>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function floorPt(g: Geo, u: number, zf: number) {
   const s = scale(g, zf * g.D);
