@@ -1,12 +1,20 @@
 import { useCallback, useState } from "react";
 import { readJson, writeJson } from "@/lib/utils/storage";
+import { MATH_LESSONS } from "./lessonsMath";
+
+export type WidgetId = "line" | "dominoes" | "positional" | "order" | "algo" | "area" | "powprops" | "sieve" | "factor" | "gauss" | "cantor" | "abs" | "triangle" | "signs" | "parity" | "venn" | "drill";
 
 export type Block =
   | { t: "h"; text: string }
   | { t: "p"; text: string }
   | { t: "list"; items: string[] }
   | { t: "note"; title?: string; text: string }
-  | { t: "formula"; text: string; caption?: string };
+  | { t: "formula"; text: string; caption?: string }
+  | { t: "steps"; title?: string; items: { title: string; text: string }[] }
+  | { t: "flip"; title?: string; cards: { front: string; back: string }[] }
+  | { t: "quiz"; question: string; options: string[]; answer: number; why: string }
+  | { t: "reveal"; prompt: string; answer: string }
+  | { t: "lab"; w: WidgetId; title?: string; hint?: string; cfg?: Record<string, string | number> };
 
 export interface Subject {
   id: string;
@@ -36,7 +44,7 @@ export const SUBJECTS: Subject[] = [
   { id: "informatica", name: "Informatica", emoji: "💻", color: "#79C0FF" },
 ];
 
-export const LESSONS: Lesson[] = [];
+export const LESSONS: Lesson[] = [...MATH_LESSONS];
 
 export const lessonsOf = (subject: string) => LESSONS.filter((l) => l.subject === subject);
 
