@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Check, Clock, Coins, Lock, ShoppingBag, Sparkles, Trophy } from "lucide-react";
 import { useMyEvents, useShop, useStatus } from "@/lib/api/queries";
-import { featureOpen, featureStage } from "@/lib/runtime/release";
+import { featureOpen } from "@/lib/runtime/release";
 import { useShopActions } from "@/lib/actions/shopActions";
 import { avatarTone, initials, relTime } from "@/lib/utils/format";
 import { isBackgroundId } from "@/lib/domain/theme";
@@ -212,12 +212,11 @@ export default function ShopPanel({ me }: { me: Me }) {
   const isAdmin = (shop.data?.role ?? me.role) === "admin";
   const role = shop.data?.role ?? me.role;
   const petsOpen = featureOpen(status.data, "pets", role);
-  const petsBeta = featureStage(status.data, "pets") === "admins";
   const current: View = (view === "gestione" && !isAdmin) || (view === "pet" && !petsOpen) ? "shop" : view;
 
   const options: { value: View; label: string }[] = [
     { value: "shop", label: "Shop" },
-    ...(petsOpen ? [{ value: "pet" as View, label: petsBeta ? "Pet (beta)" : "Pet" }] : []),
+    ...(petsOpen ? [{ value: "pet" as View, label: "Pet" }] : []),
     { value: "classifica", label: "Classifica" },
     ...(isAdmin ? [{ value: "gestione" as View, label: "Gestione" }] : []),
   ];
