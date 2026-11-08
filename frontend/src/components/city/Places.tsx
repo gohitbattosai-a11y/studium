@@ -1,5 +1,24 @@
 type Place = { x: number; y: number; s: number };
 
+function Tag({ x, y, s, w, label, tone }: Place & { w: number; label: string; tone: string }) {
+  return (
+    <g transform={`translate(${x} ${y}) scale(${s})`} pointerEvents="none">
+      <rect x={-w / 2} y="0" width={w} height="26" rx="13" fill="#161B22" stroke={tone} strokeWidth="2" />
+      <text x="0" y="18" textAnchor="middle" fontSize="16" fontWeight="600" fill="#F0F6FC">
+        {label}
+      </text>
+    </g>
+  );
+}
+
+export function SchoolTag({ x, y, s }: Place) {
+  return <Tag x={x} y={y + 30 * s} s={s} w={100} label="Scuola" tone="#E3B341" />;
+}
+
+export function DigTag({ x, y, s }: Place) {
+  return <Tag x={x} y={y + 50 * s} s={s} w={140} label="Scavo fossili" tone="#C08A4B" />;
+}
+
 export function School3D() {
   return (
     <g>
