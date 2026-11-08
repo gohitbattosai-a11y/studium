@@ -4,7 +4,7 @@ import type { CityState } from "@/lib/domain/city";
 import { Button } from "@/components/ui/button";
 import FishArt from "./FishArt";
 import { BASE_W, PropArt } from "./Props";
-import { Hotspots, Scene3D, floorPt, planePt, quadPts, useGeo, wallPt, type HotDef } from "./Room3D";
+import { Hotspots, Pan, Scene3D, floorPt, planePt, quadPts, useGeo, wallPt, type HotDef } from "./Room3D";
 import { THEMES, type Prop } from "./rooms";
 import { buildRooms } from "./rooms";
 import "./city.css";
@@ -217,6 +217,7 @@ export default function Museum({ city, onFish, onAnimals, onFossils, onBucket, o
   return (
     <div ref={ref} className="ct-dolly absolute inset-0 bg-[#1a0f08]" data-testid="museum-lobby">
       {g && (
+        <Pan g={g}>
         <Scene3D
           g={g}
           wallBack={{ backgroundColor: "#c4b088" }}
@@ -327,6 +328,7 @@ export default function Museum({ city, onFish, onAnimals, onFossils, onBucket, o
             );
           })()}
         </Scene3D>
+        </Pan>
       )}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_45%,transparent_55%,rgba(20,8,4,0.55))]" />
       <div className="pointer-events-none absolute inset-0 bg-[#2a1508]/10" />
