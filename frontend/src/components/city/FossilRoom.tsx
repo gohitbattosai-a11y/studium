@@ -9,7 +9,7 @@ import FossilArt from "./FossilArt";
 import FossilBag from "./FossilBag";
 import { RarityTag, fmtWhen } from "./Bucket";
 import { BASE_W, PropArt } from "./Props";
-import { Scene3D, floorPt, useGeo, wallPt } from "./Room3D";
+import { Pan, Scene3D, floorPt, useGeo, wallPt } from "./Room3D";
 import { THEMES, type Prop } from "./rooms";
 import "./city.css";
 import "./fossil.css";
@@ -251,6 +251,7 @@ export default function FossilRoom({ onAtrium }: { onAtrium?: () => void }) {
   return (
     <div ref={ref} key={hall.id} className="ct-dolly absolute inset-0 bg-[#120c07]" data-testid="fossil-room">
       {g && (
+        <Pan g={g}>
         <Scene3D
           g={g}
           wallBack={def.wall}
@@ -342,6 +343,7 @@ export default function FossilRoom({ onAtrium }: { onAtrium?: () => void }) {
             );
           })()}
         </Scene3D>
+        </Pan>
       )}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_45%,transparent_55%,rgba(20,8,4,0.55))]" />
       <div className="absolute left-3 z-[3] max-w-[min(280px,62vw)] rounded-xl border border-white/15 bg-black/55 p-2.5 text-white shadow-xl backdrop-blur" style={{ bottom: "12px" }}>
