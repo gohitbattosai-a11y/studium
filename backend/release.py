@@ -1,4 +1,4 @@
-IS_UPDATING = True
+IS_UPDATING = False
 
 UPDATE_TYPE = "pets"
 
@@ -9,6 +9,6 @@ UPDATE_MESSAGES = {
 }
 
 FEATURES = {
-    "pets": "admins",
+    "pets": "all",
     "citta": "admins",
 }
