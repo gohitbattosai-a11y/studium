@@ -1,11 +1,12 @@
 import { ArrowLeft, ArrowRight, BookOpenCheck, CheckCircle2, Circle, Lightbulb } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { LESSONS, SUBJECTS, lessonsOf, useStudied, type Block, type Lesson } from "@/lib/domain/lessons";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
 import Interactive from "./LessonWidgets";
 
 function BlockView({ b }: { b: Block }) {
+  if (b.t === "section") return null;
   if (b.t === "h") return <h3 className="mt-6 text-lg font-semibold text-[#fff3c4] first:mt-0">{b.text}</h3>;
   if (b.t === "p") return <p className="mt-3 text-[15px] leading-relaxed text-[#e8efe6]">{b.text}</p>;
   if (b.t === "list")
@@ -38,6 +39,8 @@ function BlockView({ b }: { b: Block }) {
   return <Interactive b={b} />;
 }
 
+const sectionsOf = (l: Lesson) => l.blocks.filter((b) => b.t === "section").length;
+
 const activities = (l: Lesson) => l.blocks.filter((b) => b.t === "lab" || b.t === "quiz" || b.t === "reveal" || b.t === "steps" || b.t === "flip").length;
 
 function Reader({ lesson, siblings, studied, onToggle, onOpen, onBack }: { lesson: Lesson; siblings: Lesson[]; studied: boolean; onToggle: () => void; onOpen: (l: Lesson) => void; onBack: () => void }) {
@@ -45,26 +48,72 @@ function Reader({ lesson, siblings, studied, onToggle, onOpen, onBack }: { lesso
   const prev = idx > 0 ? siblings[idx - 1] : null;
   const next = idx >= 0 && idx < siblings.length - 1 ? siblings[idx + 1] : null;
   const subject = SUBJECTS.find((s) => s.id === lesson.subject);
+  const sections = useMemo(() => {
+    const out: { title: string; text?: string; blocks: Block[] }[] = [];
+    for (const b of lesson.blocks) {
+      if (b.t === "section") out.push({ title: b.title, text: b.text, blocks: [] });
+      else {
+        if (out.length === 0) out.push({ title: lesson.title, text: lesson.summary, blocks: [] });
+        out[out.length - 1].blocks.push(b);
+      }
+    }
+    return out;
+  }, [lesson]);
+  const [sec, setSec] = useState(0);
+  const top = useRef<HTMLDivElement>(null);
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    top.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+  }, [sec]);
+  const at = Math.min(sec, sections.length - 1);
+  const cur = sections[at];
+  const multi = sections.length > 1;
   return (
     <article className="mx-auto w-full max-w-3xl" data-testid="school-reader">
       <button type="button" onClick={onBack} className="mb-3 flex items-center gap-1.5 text-sm text-[#cfe0d3] transition-colors hover:text-white">
         <ArrowLeft className="size-4" /> {subject?.name ?? "Lezioni"}
       </button>
+      <div ref={top} className="scroll-mt-16" />
+      {multi && (
+        <nav className="no-scrollbar -mx-4 mb-3 flex gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:px-0" aria-label="Sezioni">
+          {sections.map((s, i) => (
+            <button key={i} type="button" onClick={() => setSec(i)} className={cn("flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors", i === at ? "border-[#E3B341] bg-[#E3B341]/20 text-[#fff3c4]" : "border-white/20 text-[#d8cdb6] hover:border-white/40")} data-testid={`school-section-${i}`}>
+              <span className="font-bold">{i + 1}</span>
+              <span className="max-w-[9rem] truncate">{s.title}</span>
+            </button>
+          ))}
+        </nav>
+      )}
       <div className="rounded-2xl border-[6px] border-[#6b4a2b] bg-[#1f3a2e] p-5 shadow-2xl sm:p-8" style={{ backgroundImage: "radial-gradient(ellipse at 30% 0%, rgba(255,255,255,0.08), transparent 60%)" }}>
         <p className="text-xs font-medium tracking-wider text-[#9fc2a8] uppercase">
-          {subject?.emoji} {subject?.name}
+          {subject?.emoji} {lesson.title}
+          {multi && ` · sezione ${at + 1} di ${sections.length}`}
         </p>
-        <h2 className="mt-1 text-2xl font-bold text-white">{lesson.title}</h2>
-        <p className="mt-1 text-sm text-[#b8c7bc]">{lesson.summary}</p>
+        <h2 className="mt-1 text-2xl font-bold text-white">{cur.title}</h2>
+        {cur.text && <p className="mt-1 text-sm text-[#b8c7bc]">{cur.text}</p>}
         <div className="mt-5 border-t border-white/15 pt-5">
-          {lesson.blocks.map((b, i) => (
-            <BlockView key={i} b={b} />
+          {cur.blocks.map((b, i) => (
+            <BlockView key={`${at}-${i}`} b={b} />
           ))}
         </div>
       </div>
+      {multi && (
+        <div className="mt-4 flex items-center justify-between gap-2">
+          <Button size="lg" variant="outline" disabled={at === 0} onClick={() => setSec(at - 1)}>
+            <ArrowLeft /> Sezione precedente
+          </Button>
+          <Button size="lg" disabled={at >= sections.length - 1} onClick={() => setSec(at + 1)} data-testid="school-next-section">
+            Sezione successiva <ArrowRight />
+          </Button>
+        </div>
+      )}
       <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
         <Button size="lg" variant={studied ? "secondary" : "default"} onClick={onToggle} data-testid="school-toggle-done">
-          {studied ? <CheckCircle2 /> : <Circle />} {studied ? "Studiata" : "Segna come studiata"}
+          {studied ? <CheckCircle2 /> : <Circle />} {studied ? "Capitolo studiato" : "Segna come studiato"}
         </Button>
         <div className="flex gap-2">
           <Button size="lg" variant="outline" disabled={!prev} onClick={() => prev && onOpen(prev)}>
@@ -150,7 +199,7 @@ export default function School({ memberId }: { memberId: string }) {
                         </span>
                         <span className="mt-1 text-base font-semibold text-white">{l.title}</span>
                         <span className="mt-1 text-sm text-[#b8c7bc]">{l.summary}</span>
-                        <span className="mt-2 text-xs text-[#E3B341]">⚡ {activities(l)} attività interattive</span>
+                        <span className="mt-2 text-xs text-[#E3B341]">{sectionsOf(l) > 1 ? `${sectionsOf(l)} sezioni · ` : ""}⚡ {activities(l)} attività interattive</span>
                       </button>
                     </li>
                   );
