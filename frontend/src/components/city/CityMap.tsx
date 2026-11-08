@@ -1,12 +1,13 @@
-import { useEffect, useState, type KeyboardEvent } from "react";
+import { memo, useCallback, useEffect, useRef, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { Forest3D, ForestNight, Stadium3D, StadiumNight } from "./Landmarks";
-import { Dig3D, DigNight, School3D, SchoolNight } from "./Places";
+import { Dig3D, DigNight, DigTag, School3D, SchoolNight, SchoolTag } from "./Places";
+import { WORLD, WORLD_H, WORLD_W, type House, type Pt } from "./cityWorld";
 import "./city.css";
+import "./wild.css";
 
 type View = "map" | "lobby" | "room" | "pond" | "forest" | "stadium" | "animals" | "school" | "dig" | "fossils";
-type Kind = "oak" | "pine" | "cherry";
-type Pt = { x: number; y: number; s?: number; t?: Kind };
-type House = { x: number; y: number; c: string; w?: string; smoke?: boolean };
+
+const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 
 function Tree({ x, y, s = 1, t = "oak" }: Pt) {
   if (t === "pine")
@@ -95,7 +96,7 @@ function Lamp({ x, y }: { x: number; y: number }) {
 function Cloud({ y, d, begin, s = 1 }: { y: number; d: number; begin: number; s?: number }) {
   return (
     <g transform={`translate(0 ${y}) scale(${s})`} opacity="0.85">
-      <animateTransform attributeName="transform" type="translate" values={`-200 ${y};1100 ${y}`} dur={`${d}s`} begin={`${begin}s`} repeatCount="indefinite" additive="replace" />
+      <animateTransform attributeName="transform" type="translate" values={`-200 ${y};${WORLD_W + 200} ${y}`} dur={`${d}s`} begin={`${begin}s`} repeatCount="indefinite" additive="replace" />
       <ellipse cx="0" cy="0" rx="46" ry="12" fill="#ffffff" />
       <ellipse cx="-18" cy="-8" rx="24" ry="12" fill="#ffffff" />
       <ellipse cx="14" cy="-12" rx="26" ry="14" fill="#ffffff" />
@@ -107,7 +108,7 @@ function Cloud({ y, d, begin, s = 1 }: { y: number; d: number; begin: number; s?
 function Bird({ y, d, begin }: { y: number; d: number; begin: number }) {
   return (
     <g>
-      <animateTransform attributeName="transform" type="translate" values={`1000 ${y};-100 ${y - 40}`} dur={`${d}s`} begin={`${begin}s`} repeatCount="indefinite" />
+      <animateTransform attributeName="transform" type="translate" values={`${WORLD_W + 100} ${y};-100 ${y - 40}`} dur={`${d}s`} begin={`${begin}s`} repeatCount="indefinite" />
       <path d="M-6 0 q3 -5 6 0 q3 -5 6 0" stroke="#1f2937" strokeWidth="1.6" fill="none" strokeLinecap="round">
         <animate attributeName="d" values="M-6 0 q3 -5 6 0 q3 -5 6 0;M-6 -3 q3 3 6 3 q3 0 6 -3;M-6 0 q3 -5 6 0 q3 -5 6 0" dur="0.5s" repeatCount="indefinite" />
       </path>
@@ -215,50 +216,6 @@ function Bridge({ x, y, r }: { x: number; y: number; r: number }) {
     </g>
   );
 }
-
-const LAND = {
-  box: "0 0 800 480",
-  museum: [0, 0],
-  pond: [0, 0],
-  moon: [130, 60],
-  forest: [690, 88, 1],
-  stadium: [415, 415, 1],
-  school: [180, 420, 1],
-  dig: [572, 446, 0.72],
-  roads: ["M250 250 C 330 330, 430 270, 560 330", "M250 250 L 90 400", "M560 330 L 720 420", "M330 150 C 450 100, 560 70, 650 100", "M430 285 C 445 335, 415 360, 418 385", "M118 372 L 172 408", "M566 334 C 560 372, 570 400, 572 430"],
-  stream: "M598 338 C 612 362, 650 356, 640 380 S 626 430, 660 500",
-  bridge: { x: 640, y: 378, r: 29 },
-  fountain: [380, 175],
-  stalls: [{ x: 330, y: 300, c: "#e11d48" }, { x: 372, y: 322, c: "#2563eb" }],
-  lamps: [[270, 268], [350, 300], [440, 288], [500, 330], [120, 372], [680, 400]],
-  flowers: [[185, 300], [300, 170], [430, 220], [60, 280], [620, 120], [740, 220]],
-  bushes: [[330, 120], [100, 120], [470, 180], [30, 380], [620, 400]],
-  walkers: [{ path: "M250 250 C 330 330, 430 270, 560 330", dur: 42, begin: 0, shirt: "#e11d48" }, { path: "M90 400 L 250 250", dur: 36, begin: 6, shirt: "#2563eb" }, { path: "M560 330 L 720 420", dur: 30, begin: 3, shirt: "#16a34a" }],
-  trees: [{ x: 60, y: 70, s: 1.2 }, { x: 130, y: 50, t: "pine" }, { x: 40, y: 170, t: "cherry" }, { x: 700, y: 60, s: 1.3 }, { x: 760, y: 130, t: "pine" }, { x: 420, y: 70 }, { x: 480, y: 110, s: 0.9, t: "cherry" }, { x: 90, y: 330, t: "pine" }, { x: 330, y: 430, s: 1.1 }, { x: 410, y: 440, t: "pine" }, { x: 750, y: 300, s: 1.2 }, { x: 20, y: 440, t: "pine" }, { x: 560, y: 60, t: "pine", s: 1.1 }, { x: 250, y: 60, t: "cherry", s: 0.9 }] as Pt[],
-  houses: [{ x: 80, y: 400, c: "#c2553f", smoke: true }, { x: 130, y: 440, c: "#4d6fb3" }, { x: 720, y: 430, c: "#d29b3a", smoke: true }, { x: 640, y: 440, c: "#8a5ab0", w: "#efe3d0" }, { x: 200, y: 440, c: "#2f8f83", w: "#f1e9d6" }] as House[],
-};
-
-const PORT = {
-  box: "0 0 480 800",
-  museum: [10, 40],
-  pond: [-350, 320],
-  moon: [90, 60],
-  forest: [415, 235, 0.72],
-  stadium: [80, 725, 0.75],
-  school: [120, 440, 0.9],
-  dig: [395, 690, 0.8],
-  roads: ["M240 330 C 300 400, 180 450, 240 500", "M240 330 L 70 400", "M240 500 L 410 560", "M250 320 C 330 300, 380 270, 410 245", "M70 400 C 50 520, 50 640, 78 705", "M118 381 L 122 424", "M410 560 C 420 610, 402 650, 396 676"],
-  stream: "M250 662 C 262 700, 230 730, 246 800",
-  bridge: null as null | { x: number; y: number; r: number },
-  fountain: [370, 390],
-  stalls: [{ x: 330, y: 470, c: "#e11d48" }, { x: 380, y: 480, c: "#2563eb" }],
-  lamps: [[220, 350], [200, 450], [290, 520], [120, 390], [380, 545]],
-  flowers: [[110, 330], [350, 340], [60, 560], [420, 620], [120, 640]],
-  bushes: [[60, 230], [420, 250], [110, 500], [400, 480], [60, 600]],
-  walkers: [{ path: "M240 330 C 300 400, 180 450, 240 500", dur: 36, begin: 0, shirt: "#e11d48" }, { path: "M70 400 L 240 330", dur: 30, begin: 5, shirt: "#2563eb" }, { path: "M240 500 L 410 560", dur: 26, begin: 2, shirt: "#16a34a" }],
-  trees: [{ x: 50, y: 70, s: 1.2 }, { x: 420, y: 60, t: "pine" }, { x: 100, y: 140, t: "cherry" }, { x: 410, y: 170, s: 1.2 }, { x: 40, y: 280, t: "pine" }, { x: 440, y: 330, t: "pine" }, { x: 60, y: 470, t: "cherry" }, { x: 430, y: 700, s: 1.2 }, { x: 70, y: 700, t: "pine" }, { x: 240, y: 760, s: 0.9 }, { x: 20, y: 380, t: "pine" }, { x: 450, y: 520, t: "pine" }] as Pt[],
-  houses: [{ x: 80, y: 400, c: "#c2553f", smoke: true }, { x: 410, y: 450, c: "#4d6fb3" }, { x: 140, y: 760, c: "#d29b3a", smoke: true }, { x: 350, y: 770, c: "#8a5ab0" }, { x: 60, y: 560, c: "#2f8f83", w: "#f1e9d6" }] as House[],
-};
 
 function Museum3D() {
   return (
@@ -414,12 +371,12 @@ function Glow({ x, y, r, d = 0 }: { x: number; y: number; r: number; d?: number 
   return <circle cx={x} cy={y} r={r} fill="url(#cm-lamp)" className="ct-glow" style={{ animationDelay: `${d}s` }} pointerEvents="none" />;
 }
 
-function Night({ L }: { L: typeof LAND | typeof PORT }) {
+function Night({ L }: { L: typeof WORLD }) {
   const [mx, my] = L.moon;
   const [ox, oy] = L.museum;
   const [qx, qy] = L.pond;
-  const stars = Array.from({ length: 46 }, (_, i) => [(i * 137) % 1000, (i * 71) % 260, 0.6 + (i % 3) * 0.4, (i % 7) * 0.4]);
-  const flies = Array.from({ length: 14 }, (_, i) => [((i * 97) % 760) + 20, ((i * 53) % 380) + 90, 3 + (i % 4)]);
+  const stars = Array.from({ length: 150 }, (_, i) => [(i * 137) % WORLD_W, (i * 211) % WORLD_H, 0.6 + (i % 3) * 0.4, (i % 7) * 0.4]);
+  const flies = Array.from({ length: 40 }, (_, i) => [((i * 197) % (WORLD_W - 60)) + 30, ((i * 113) % (WORLD_H - 120)) + 60, 3 + (i % 4)]);
   return (
     <g pointerEvents="none">
       {stars.map(([x, y, r, d], i) => (
@@ -495,24 +452,8 @@ function Night({ L }: { L: typeof LAND | typeof PORT }) {
   );
 }
 
-export default function CityMap({ onGo }: { onGo: (v: View) => void }) {
-  const [portrait, setPortrait] = useState(() => window.innerHeight > window.innerWidth);
-  useEffect(() => {
-    const fn = () => setPortrait(window.innerHeight > window.innerWidth);
-    window.addEventListener("resize", fn);
-    return () => window.removeEventListener("resize", fn);
-  }, []);
-  const base = portrait ? PORT : LAND;
-  const far = (x: number, y: number) => [base.forest, base.stadium, base.school, base.dig].every(([fx, fy, fs]) => Math.hypot(x - fx, y - fy) > 82 * fs);
-  const L = {
-    ...base,
-    trees: base.trees.filter((t) => far(t.x, t.y)),
-    houses: base.houses.filter((h) => far(h.x, h.y)),
-    stalls: base.stalls.filter((t) => far(t.x, t.y)),
-    lamps: base.lamps.filter(([x, y]) => far(x, y)),
-    flowers: base.flowers.filter(([x, y]) => far(x, y)),
-    bushes: base.bushes.filter(([x, y]) => far(x, y)),
-  };
+const Scene = memo(function Scene({ onGo }: { onGo: (v: View) => void }) {
+  const L = WORLD;
   const hot = (v: View, label: string) => ({
     role: "button" as const,
     tabIndex: 0,
@@ -525,9 +466,9 @@ export default function CityMap({ onGo }: { onGo: (v: View) => void }) {
       }
     },
   });
-  const trees = [...L.trees].sort((a, b) => a.y - b.y);
+  const big = { x: -400, y: -400, width: WORLD_W + 800, height: WORLD_H + 800 };
   return (
-    <svg viewBox={L.box} preserveAspectRatio="xMidYMid slice" className="absolute inset-0 size-full bg-[#3b8541]" data-testid="city-map">
+    <>
       <defs>
         <linearGradient id="cm-grass" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#53a653" />
@@ -550,30 +491,29 @@ export default function CityMap({ onGo }: { onGo: (v: View) => void }) {
           <stop offset="0" stopColor="#dbe7ff" stopOpacity="0.55" />
           <stop offset="1" stopColor="#dbe7ff" stopOpacity="0" />
         </radialGradient>
-        <radialGradient id="cm-vig" cx="0.5" cy="0.5" r="0.75">
-          <stop offset="0.6" stopColor="#000000" stopOpacity="0" />
-          <stop offset="1" stopColor="#0b2410" stopOpacity="0.35" />
-        </radialGradient>
         <pattern id="cm-tex" width="22" height="22" patternUnits="userSpaceOnUse">
           <path d="M3 18 q1 -6 3 -8 M12 8 q1 -5 3 -6 M17 20 q1 -5 3 -7" stroke="#2c7433" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.5" />
         </pattern>
       </defs>
-      <rect x="-200" y="-200" width="1400" height="1400" fill="url(#cm-grass)" />
-      <rect x="-200" y="-200" width="1400" height="1400" fill="url(#cm-tex)" />
-      {[[120, 220, 90, 40], [560, 90, 110, 46], [380, 380, 120, 50], [700, 340, 80, 36]].map(([x, y, rx, ry], i) => (
+      <rect {...big} fill="url(#cm-grass)" />
+      <rect {...big} fill="url(#cm-tex)" />
+      {L.patches.map(([x, y, rx, ry], i) => (
         <ellipse key={i} cx={x} cy={y} rx={rx} ry={ry} fill="#5bb25a" opacity="0.35" />
       ))}
-      <path d={L.stream} fill="none" stroke="#2d6f8f" strokeWidth="22" strokeLinecap="round" />
-      <path d={L.stream} fill="none" stroke="#4cb0d4" strokeWidth="16" strokeLinecap="round" />
+      <path d={L.stream} fill="none" stroke="#2d6f8f" strokeWidth="26" strokeLinecap="round" />
+      <path d={L.stream} fill="none" stroke="#4cb0d4" strokeWidth="19" strokeLinecap="round" />
       <path d={L.stream} fill="none" stroke="#ffffff" strokeOpacity="0.35" strokeWidth="2" strokeLinecap="round" className="ct-flow" />
       {L.roads.map((d, i) => (
         <g key={i}>
-          <path d={d} fill="none" stroke="#a98b55" strokeWidth={i === 0 ? 30 : 22} strokeLinecap="round" />
-          <path d={d} fill="none" stroke="#c9a66b" strokeWidth={i === 0 ? 24 : 16} strokeLinecap="round" />
+          <path d={d} fill="none" stroke="#a98b55" strokeWidth={i === 0 ? 34 : 26} strokeLinecap="round" strokeLinejoin="round" />
+          <path d={d} fill="none" stroke="#c9a66b" strokeWidth={i === 0 ? 27 : 19} strokeLinecap="round" strokeLinejoin="round" />
           <path d={d} fill="none" stroke="#e0c690" strokeWidth="12" strokeLinecap="round" strokeDasharray="2 14" />
         </g>
       ))}
-      {L.bridge && <Bridge {...L.bridge} />}
+      <ellipse cx={L.plaza[0]} cy={L.plaza[1] + 10} rx="150" ry="88" fill="#a98b55" />
+      <ellipse cx={L.plaza[0]} cy={L.plaza[1] + 8} rx="142" ry="82" fill="#c9a66b" />
+      <ellipse cx={L.plaza[0]} cy={L.plaza[1] + 8} rx="118" ry="66" fill="none" stroke="#e0c690" strokeWidth="3" strokeDasharray="3 9" strokeLinecap="round" />
+      <Bridge {...L.bridge} />
       {L.flowers.map(([x, y], i) => (
         <Flowers key={i} x={x} y={y} n={6 + (i % 3)} />
       ))}
@@ -581,13 +521,13 @@ export default function CityMap({ onGo }: { onGo: (v: View) => void }) {
         <Bush key={i} x={x} y={y} s={0.9 + (i % 3) * 0.15} />
       ))}
       <Fountain x={L.fountain[0]} y={L.fountain[1]} />
-      {L.stalls.map((s, i) => (
-        <Stall key={i} {...s} />
+      {L.stalls.map((t, i) => (
+        <Stall key={i} {...t} />
       ))}
-      {trees.map((t, i) => (
+      {L.trees.map((t, i) => (
         <Tree key={i} {...t} />
       ))}
-      {[...L.houses].sort((a, b) => a.y - b.y).map((h, i) => (
+      {L.houses.map((h, i) => (
         <Home key={i} {...h} />
       ))}
       {L.lamps.map(([x, y], i) => (
@@ -610,14 +550,14 @@ export default function CityMap({ onGo }: { onGo: (v: View) => void }) {
 
       <g transform={`translate(${L.school[0]} ${L.school[1]}) scale(${L.school[2]})`}>
         <g {...hot("school", "Entra a scuola")} className="group cursor-pointer outline-none" data-testid="city-school">
-          <ellipse cx="0" cy="-10" rx="92" ry="62" className="fill-white opacity-0 transition-opacity duration-200 group-hover:opacity-20 group-focus-visible:opacity-20" />
+          <ellipse cx="0" cy="-4" rx="92" ry="72" className="fill-white opacity-0 transition-opacity duration-200 group-hover:opacity-20 group-focus-visible:opacity-20" />
           <School3D />
         </g>
       </g>
 
       <g transform={`translate(${L.dig[0]} ${L.dig[1]}) scale(${L.dig[2]})`}>
         <g {...hot("dig", "Vai al sito di scavo")} className="group cursor-pointer outline-none" data-testid="city-dig">
-          <ellipse cx="0" cy="6" rx="96" ry="48" className="fill-white opacity-0 transition-opacity duration-200 group-hover:opacity-20 group-focus-visible:opacity-20" />
+          <ellipse cx="0" cy="16" rx="96" ry="62" className="fill-white opacity-0 transition-opacity duration-200 group-hover:opacity-20 group-focus-visible:opacity-20" />
           <Dig3D />
         </g>
       </g>
@@ -639,18 +579,208 @@ export default function CityMap({ onGo }: { onGo: (v: View) => void }) {
       {L.walkers.map((w, i) => (
         <Walker key={i} {...w} />
       ))}
-      <Cloud y={60} d={95} begin={0} />
-      <Cloud y={140} d={130} begin={-40} s={0.8} />
-      <Cloud y={30} d={110} begin={-70} s={1.1} />
-      <Bird y={90} d={34} begin={0} />
-      <Bird y={130} d={46} begin={-18} />
-      <rect x="-200" y="-200" width="1400" height="1400" fill="#070f2c" opacity="0.62" pointerEvents="none" />
-      <rect x="-200" y="-200" width="1400" height="1400" fill="url(#cm-vig)" pointerEvents="none" />
+      <Cloud y={140} d={170} begin={0} />
+      <Cloud y={430} d={230} begin={-70} s={0.8} />
+      <Cloud y={80} d={200} begin={-120} s={1.1} />
+      <Cloud y={760} d={250} begin={-40} s={0.9} />
+      <Cloud y={1120} d={210} begin={-150} s={1} />
+      <Bird y={300} d={60} begin={0} />
+      <Bird y={700} d={80} begin={-30} />
+      <Bird y={1000} d={70} begin={-50} />
+      <rect {...big} fill="#070f2c" opacity="0.62" pointerEvents="none" />
       <Night L={L} />
       <ForestNight x={L.forest[0]} y={L.forest[1]} s={L.forest[2]} />
       <StadiumNight x={L.stadium[0]} y={L.stadium[1]} s={L.stadium[2]} />
       <SchoolNight x={L.school[0]} y={L.school[1]} s={L.school[2]} />
       <DigNight x={L.dig[0]} y={L.dig[1]} s={L.dig[2]} />
-    </svg>
+      <SchoolTag x={L.school[0]} y={L.school[1]} s={L.school[2]} />
+      <DigTag x={L.dig[0]} y={L.dig[1]} s={L.dig[2]} />
+    </>
+  );
+});
+
+export default function CityMap({ onGo }: { onGo: (v: View) => void }) {
+  const view = useRef<HTMLDivElement>(null);
+  const svg = useRef<SVGSVGElement>(null);
+  const hint = useRef<HTMLDivElement>(null);
+  const raf = useRef(0);
+  const cam = useRef({ x: 0, y: 0, vx: 0, vy: 0, k: 1, vw: 0, vh: 0, t: 0, ready: false });
+  const keys = useRef(new Set<string>());
+  const drag = useRef({ on: false, moved: false, sx: 0, sy: 0, cx: 0, cy: 0, lx: 0, ly: 0, lt: 0 });
+
+  const apply = useCallback(() => {
+    const c = cam.current;
+    const w = c.vw / c.k;
+    const h = c.vh / c.k;
+    c.x = clamp(c.x, 0, Math.max(0, WORLD_W - w));
+    c.y = clamp(c.y, 0, Math.max(0, WORLD_H - h));
+    svg.current?.setAttribute("viewBox", `${c.x.toFixed(1)} ${c.y.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)}`);
+  }, []);
+
+  const step = useCallback(
+    (now: number) => {
+      const c = cam.current;
+      const dt = Math.min(0.05, (now - c.t) / 1000);
+      c.t = now;
+      const kk = keys.current;
+      const ax = (kk.has("arrowright") || kk.has("d") ? 1 : 0) - (kk.has("arrowleft") || kk.has("a") ? 1 : 0);
+      const ay = (kk.has("arrowdown") || kk.has("s") ? 1 : 0) - (kk.has("arrowup") || kk.has("w") ? 1 : 0);
+      if (ax || ay) {
+        c.vx += (ax * 800 - c.vx) * Math.min(1, dt * 6);
+        c.vy += (ay * 800 - c.vy) * Math.min(1, dt * 6);
+      } else if (!drag.current.on) {
+        const f = Math.exp(-4 * dt);
+        c.vx *= f;
+        c.vy *= f;
+      }
+      if (!drag.current.on) {
+        c.x += (c.vx * dt) / c.k;
+        c.y += (c.vy * dt) / c.k;
+        apply();
+      }
+      if (ax || ay || Math.hypot(c.vx, c.vy) > 8) raf.current = requestAnimationFrame(step);
+      else {
+        raf.current = 0;
+        c.vx = 0;
+        c.vy = 0;
+      }
+    },
+    [apply],
+  );
+
+  const kick = useCallback(() => {
+    if (raf.current) return;
+    cam.current.t = performance.now();
+    raf.current = requestAnimationFrame(step);
+  }, [step]);
+
+  useEffect(() => {
+    const el = view.current;
+    if (!el) return;
+    const measure = () => {
+      const c = cam.current;
+      const vw = el.clientWidth;
+      const vh = el.clientHeight;
+      if (!vw || !vh) return;
+      const cx = c.ready ? c.x + c.vw / c.k / 2 : WORLD.plaza[0];
+      const cy = c.ready ? c.y + c.vh / c.k / 2 : WORLD.plaza[1] - 40;
+      c.vw = vw;
+      c.vh = vh;
+      c.k = Math.max(clamp(Math.min(vh / 700, vw / 560), 0.75, 1.25), vw / WORLD_W, vh / WORLD_H);
+      c.ready = true;
+      c.x = cx - vw / c.k / 2;
+      c.y = cy - vh / c.k / 2;
+      apply();
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    const wheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (e.ctrlKey) return;
+      cam.current.x += e.deltaX / cam.current.k;
+      cam.current.y += e.deltaY / cam.current.k;
+      apply();
+    };
+    const gesture = (e: Event) => e.preventDefault();
+    el.addEventListener("wheel", wheel, { passive: false });
+    el.addEventListener("gesturestart", gesture);
+    el.addEventListener("gesturechange", gesture);
+    return () => {
+      ro.disconnect();
+      el.removeEventListener("wheel", wheel);
+      el.removeEventListener("gesturestart", gesture);
+      el.removeEventListener("gesturechange", gesture);
+    };
+  }, [apply]);
+
+  useEffect(() => {
+    const kd = (e: globalThis.KeyboardEvent) => {
+      if (document.querySelector("[data-slot='dialog-content']")) return;
+      const k = e.key.toLowerCase();
+      if (["arrowup", "arrowdown", "arrowleft", "arrowright", "w", "a", "s", "d"].includes(k)) {
+        e.preventDefault();
+        keys.current.add(k);
+        kick();
+      }
+    };
+    const ku = (e: globalThis.KeyboardEvent) => keys.current.delete(e.key.toLowerCase());
+    window.addEventListener("keydown", kd);
+    window.addEventListener("keyup", ku);
+    return () => {
+      window.removeEventListener("keydown", kd);
+      window.removeEventListener("keyup", ku);
+      cancelAnimationFrame(raf.current);
+      raf.current = 0;
+    };
+  }, [kick]);
+
+  const onDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    const d = drag.current;
+    const c = cam.current;
+    d.on = true;
+    d.moved = false;
+    d.sx = e.clientX;
+    d.sy = e.clientY;
+    d.cx = c.x;
+    d.cy = c.y;
+    d.lx = e.clientX;
+    d.ly = e.clientY;
+    d.lt = performance.now();
+    c.vx = 0;
+    c.vy = 0;
+    const move = (ev: PointerEvent) => {
+      if (!d.on) return;
+      const dx = ev.clientX - d.sx;
+      const dy = ev.clientY - d.sy;
+      if (!d.moved && Math.hypot(dx, dy) > 6) {
+        d.moved = true;
+        hint.current?.classList.add("opacity-0");
+      }
+      if (!d.moved) return;
+      c.x = d.cx - dx / c.k;
+      c.y = d.cy - dy / c.k;
+      apply();
+      const now = performance.now();
+      const dtm = Math.max(1, now - d.lt) / 1000;
+      c.vx = c.vx * 0.6 + (-(ev.clientX - d.lx) / dtm) * 0.4;
+      c.vy = c.vy * 0.6 + (-(ev.clientY - d.ly) / dtm) * 0.4;
+      d.lx = ev.clientX;
+      d.ly = ev.clientY;
+      d.lt = now;
+    };
+    const up = () => {
+      d.on = false;
+      if (performance.now() - d.lt > 90) {
+        c.vx = 0;
+        c.vy = 0;
+      }
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      kick();
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+  };
+
+  const onClickCapture = (e: React.MouseEvent) => {
+    if (!drag.current.moved) return;
+    e.stopPropagation();
+    e.preventDefault();
+    drag.current.moved = false;
+  };
+
+  return (
+    <div ref={view} className="absolute inset-0 touch-none overflow-hidden bg-[#3b8541] select-none" onPointerDown={onDown} onClickCapture={onClickCapture}>
+      <svg ref={svg} viewBox="0 0 560 700" preserveAspectRatio="none" className="absolute inset-0 size-full" data-testid="city-map">
+        <Scene onGo={onGo} />
+      </svg>
+      <div ref={hint} className="pointer-events-none absolute inset-x-0 bottom-6 flex justify-center transition-opacity duration-500 wl-hint">
+        <span className="rounded-full bg-black/60 px-3 py-1 text-xs text-white backdrop-blur">Trascina per esplorare · tocca un luogo per entrare</span>
+      </div>
+    </div>
   );
 }
