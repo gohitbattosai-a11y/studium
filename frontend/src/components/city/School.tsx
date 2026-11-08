@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { LESSONS, SUBJECTS, lessonsOf, useStudied, type Block, type Lesson } from "@/lib/domain/lessons";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
+import Interactive from "./LessonWidgets";
 
 function BlockView({ b }: { b: Block }) {
   if (b.t === "h") return <h3 className="mt-6 text-lg font-semibold text-[#fff3c4] first:mt-0">{b.text}</h3>;
@@ -27,13 +28,17 @@ function BlockView({ b }: { b: Block }) {
         <p className="mt-1 text-[15px] leading-relaxed text-[#fff3c4]">{b.text}</p>
       </aside>
     );
-  return (
-    <figure className="mt-4 rounded-lg border border-white/15 bg-black/25 px-4 py-3 text-center">
-      <pre className="font-mono text-base whitespace-pre-wrap text-[#9ff0b4]">{b.text}</pre>
-      {b.caption && <figcaption className="mt-1 text-xs text-[#b8c7bc]">{b.caption}</figcaption>}
-    </figure>
-  );
+  if (b.t === "formula")
+    return (
+      <figure className="mt-4 rounded-lg border border-white/15 bg-black/25 px-4 py-3 text-center">
+        <pre className="font-mono text-base whitespace-pre-wrap text-[#9ff0b4]">{b.text}</pre>
+        {b.caption && <figcaption className="mt-1 text-xs text-[#b8c7bc]">{b.caption}</figcaption>}
+      </figure>
+    );
+  return <Interactive b={b} />;
 }
+
+const activities = (l: Lesson) => l.blocks.filter((b) => b.t === "lab" || b.t === "quiz" || b.t === "reveal" || b.t === "steps" || b.t === "flip").length;
 
 function Reader({ lesson, siblings, studied, onToggle, onOpen, onBack }: { lesson: Lesson; siblings: Lesson[]; studied: boolean; onToggle: () => void; onOpen: (l: Lesson) => void; onBack: () => void }) {
   const idx = siblings.findIndex((l) => l.id === lesson.id);
@@ -89,7 +94,7 @@ export default function School({ memberId }: { memberId: string }) {
     <div className="absolute inset-0 overflow-y-auto bg-[#2a1d12] pt-14 pb-10" style={{ backgroundImage: "repeating-linear-gradient(90deg, rgba(0,0,0,0.12) 0 2px, transparent 2px 64px), linear-gradient(180deg, #3a2819, #1d130b)" }} data-testid="school">
       <div className="mx-auto w-full max-w-5xl px-4">
         {open ? (
-          <Reader lesson={open} siblings={lessonsOf(open.subject)} studied={doneSet.has(open.id)} onToggle={() => toggle(open.id)} onOpen={(l) => setOpenId(l.id)} onBack={() => setOpenId(null)} />
+          <Reader key={open.id} lesson={open} siblings={lessonsOf(open.subject)} studied={doneSet.has(open.id)} onToggle={() => toggle(open.id)} onOpen={(l) => setOpenId(l.id)} onBack={() => setOpenId(null)} />
         ) : (
           <>
             <div className="rounded-2xl border-[6px] border-[#6b4a2b] bg-[#1f3a2e] px-5 py-5 text-center shadow-2xl" style={{ backgroundImage: "radial-gradient(ellipse at 30% 0%, rgba(255,255,255,0.08), transparent 60%)" }}>
@@ -145,6 +150,7 @@ export default function School({ memberId }: { memberId: string }) {
                         </span>
                         <span className="mt-1 text-base font-semibold text-white">{l.title}</span>
                         <span className="mt-1 text-sm text-[#b8c7bc]">{l.summary}</span>
+                        <span className="mt-2 text-xs text-[#E3B341]">⚡ {activities(l)} attività interattive</span>
                       </button>
                     </li>
                   );
