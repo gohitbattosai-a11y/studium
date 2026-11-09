@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Crosshair, Package, Volume2, Wind } from "lucide-react";
+import { Bell, Crosshair, Package, Volume2, Wind } from "lucide-react";
 import { toast } from "sonner";
 import { ANIMAL_LIMIT, addAnimal, getSandbox, useSandbox, type AnimalCatch } from "@/lib/runtime/sandbox";
 import { pickAnimal, rollWeight, type AnimalSpecies } from "@/lib/domain/animals";
+import { useCityShop, useShopActions } from "@/lib/domain/shop";
 import { Button } from "@/components/ui/button";
 import AnimalArt from "./AnimalArt";
 import Wings from "./Wings";
@@ -410,6 +411,9 @@ export default function Forest() {
   const paused = !!aim || !!result || bag;
   const root = useRef<HTMLDivElement>(null);
   const [fu, setFu] = useState(1);
+  const shop = useCityShop(true);
+  const shopAct = useShopActions();
+  const whistles = (shop.data?.items ?? []).filter((i) => i.category === "richiamo" && i.owned > 0);
 
   useEffect(() => {
     const el = root.current;
@@ -439,6 +443,17 @@ export default function Forest() {
     setCallAt(Date.now());
     setSpawns((cur) => [...cur.slice(-(MAX_SPAWNS - 1)), makeSpawn(1.6)]);
     toast("Richiamo lanciato: qualcosa si avvicina…");
+  };
+
+  const blow = async (id: string, boost: number) => {
+    if (paused || shopAct.use.isPending) return;
+    try {
+      await shopAct.use.mutateAsync(id);
+    } catch {
+      return;
+    }
+    setSpawns((cur) => [...cur.slice(-(MAX_SPAWNS - 1)), makeSpawn(boost)]);
+    toast("Il fischietto risuona nel bosco…");
   };
 
   const tap = (s: Spawn) => {
@@ -503,6 +518,15 @@ export default function Forest() {
         {streak > 1 && <span className="rounded-full border border-[#3FB950]/50 bg-black/55 px-2.5 py-0.5 text-[11px] font-semibold text-[#7EE787] backdrop-blur">Serie di {streak} colpi perfetti</span>}
         <span className="rounded-full border border-[#E3B341]/50 bg-black/55 px-2.5 py-0.5 text-[10px] font-semibold tracking-wider text-[#E3B341] uppercase backdrop-blur">Test · niente viene salvato</span>
       </div>
+      {whistles.length > 0 && (
+        <div className="absolute bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-3 z-[7] flex gap-2">
+          {whistles.map((w) => (
+            <Button key={w.id} variant="outline" size="lg" disabled={paused || shopAct.use.isPending} onClick={() => blow(w.id, w.boost ?? 2.5)} aria-label={w.name} title={w.name} data-testid={`forest-${w.id}`}>
+              <Bell /> ×{w.owned}
+            </Button>
+          ))}
+        </div>
+      )}
       <div className="absolute right-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-[7] flex gap-2">
         <Button variant="outline" size="lg" onClick={call} disabled={callLeft > 0 || paused} data-testid="forest-call">
           <Volume2 /> {callLeft > 0 ? `Richiamo (${callLeft}s)` : "Richiamo"}
