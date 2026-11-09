@@ -62,6 +62,7 @@ INDEXES: dict[str, list[IndexModel]] = {
         IndexModel([("id", ASCENDING)], name="id", unique=True),
         IndexModel([("member_id", ASCENDING)], name="member"),
     ],
+    "city_wallets": [IndexModel([("member_id", ASCENDING)], name="member", unique=True)],
     "fish_casts": [IndexModel([("member_id", ASCENDING)], name="member", unique=True)],
     "push_subs": [
         IndexModel([("endpoint", ASCENDING)], name="endpoint", unique=True),
