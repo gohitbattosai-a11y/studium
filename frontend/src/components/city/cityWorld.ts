@@ -63,9 +63,10 @@ const POND: P2[] = [[1100, 764], [1290, 700], [1430, 640], [1500, 606]];
 const FOREST: P2[] = [[1100, 764], [1200, 560], [1380, 360], [1600, 252], [1850, 252], [2010, 262]];
 const DIG: P2[] = [[1100, 764], [1085, 920], [1055, 1090], [1050, 1228]];
 const STREAM: P2[] = [[1700, 540], [1770, 700], [1690, 850], [1620, 960], [1530, 1070], [1500, 1250], [1560, 1530]];
-const ROADS = [MAIN, MUSEUM, POND, FOREST, DIG];
+const SHOP: P2[] = [[868, 902], [828, 960], [806, 1004]];
+const ROADS = [MAIN, MUSEUM, POND, FOREST, DIG, SHOP];
 
-const SPOTS: [number, number, number][] = [[620, 430, 200], [1650, 480, 250], [2080, 270, 170], [1900, 1150, 150], [360, 1070, 140], [1050, 1290, 120], [PLAZA[0], PLAZA[1] + 6, 150]];
+const SPOTS: [number, number, number][] = [[620, 430, 200], [1650, 480, 250], [2080, 270, 170], [1900, 1150, 150], [360, 1070, 140], [1050, 1290, 120], [800, 1030, 100], [PLAZA[0], PLAZA[1] + 6, 150]];
 
 const clear = (x: number, y: number, m: number) => SPOTS.every(([a, b, r]) => Math.hypot(x - a, y - b) > r) && ROADS.every((p) => lineDist(p, x, y) > m) && lineDist(STREAM, x, y) > m + 12;
 
@@ -117,7 +118,7 @@ const flowers = scatter(31, 700, 46, 36, 90, 80, [...housePts, ...treePts, ...bu
 const rp = rng(5);
 const patches = Array.from({ length: 16 }, () => [Math.round(rp() * WORLD_W), Math.round(rp() * WORLD_H), 70 + Math.round(rp() * 70), 30 + Math.round(rp() * 30)]);
 
-const lamps = ROADS.flatMap((p) => lampsAlong(p, 200, 30)).filter(([x, y]) => Math.hypot(x - PLAZA[0], y - PLAZA[1]) > 100 && SPOTS.slice(0, 6).every(([a, b]) => Math.hypot(x - a, y - b) > 70));
+const lamps = ROADS.flatMap((p) => lampsAlong(p, 200, 30)).filter(([x, y]) => Math.hypot(x - PLAZA[0], y - PLAZA[1]) > 100 && SPOTS.slice(0, 7).every(([a, b]) => Math.hypot(x - a, y - b) > 70));
 
 const rev = (p: P2[]) => [...p].reverse();
 
@@ -129,6 +130,7 @@ export const WORLD = {
   stadium: [1900, 1150, 1.15] as [number, number, number],
   school: [360, 1060, 1.15] as [number, number, number],
   dig: [1050, 1290, 0.95] as [number, number, number],
+  shop: [800, 1030, 0.95] as [number, number, number],
   plaza: PLAZA,
   roads: ROADS.map(smooth),
   stream: smooth(STREAM),
