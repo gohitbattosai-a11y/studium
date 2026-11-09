@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPoi
 import { Hand, Package, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { useCityActions, type CastInfo, type CatchInfo, type CityState } from "@/lib/domain/city";
+import { levelOf, stockOf, useCityShop, useShopActions } from "@/lib/domain/shop";
+import { FISH_LIMIT, getSandbox } from "@/lib/runtime/sandbox";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
 import { CatchDialog } from "./Bucket";
@@ -365,6 +367,11 @@ export default function Pond({ city, onBucket }: { city: CityState; onBucket: ()
   const [caught, setCaught] = useState<CatchInfo | null>(null);
   const [fight, setFight] = useState({ difficulty: 1, strength: 0.5, dash: 0.5, head: 0 });
   const { cast, reel } = useCityActions();
+  const shop = useCityShop(true);
+  const shopAct = useShopActions();
+  const rodLevel = levelOf(shop.data, "canna");
+  const rodRef = useRef(rodLevel);
+  rodRef.current = rodLevel;
   const cityRef = useRef(city);
   const baitRef = useRef(bait);
   const reelRef = useRef(reel.mutate);
@@ -1166,12 +1173,19 @@ export default function Pond({ city, onBucket }: { city: CityState; onBucket: ()
     w.bob.ty = y;
     w.bob.dip = 0;
     try {
+      if (baitRef.current !== "pane") {
+        if (getSandbox().fishBucket.length >= FISH_LIMIT) {
+          toast.error("Il secchio è pieno: dona o rilascia qualche pesce");
+          throw new Error("full");
+        }
+        await shopAct.use.mutateAsync(baitRef.current);
+      }
       const info = await cast.mutateAsync(baitRef.current);
       const far = randomWater();
       w.shadows = w.shadows.filter((s) => !s.target);
       w.shadows.forEach((s) => (s.interest = 0));
       w.shadows.push(makeShadow(info.length, info.shape as keyof typeof SHAPES, far.x, far.y, true));
-      w.cast = info;
+      w.cast = { ...info, bite_in: info.bite_in * (1 - 0.1 * rodRef.current) };
       w.t0 = performance.now();
       w.reduction = 0;
       w.lastJig = performance.now();
@@ -1299,7 +1313,7 @@ export default function Pond({ city, onBucket }: { city: CityState; onBucket: ()
                 type="button"
                 role="radio"
                 aria-checked={bait === b.id}
-                disabled={phase !== "idle"}
+                disabled={phase !== "idle" || (b.id !== "pane" && stockOf(shop.data, b.id) < 1)}
                 title={b.description}
                 onClick={() => setBait(b.id)}
                 data-testid={`bait-${b.id}`}
@@ -1309,6 +1323,7 @@ export default function Pond({ city, onBucket }: { city: CityState; onBucket: ()
                 )}
               >
                 {b.name}
+                {b.id !== "pane" && <span className="ml-1 tabular-nums opacity-70">×{stockOf(shop.data, b.id)}</span>}
               </button>
             ))}
           </div>
