@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Block } from "@/lib/domain/lessons";
 import { ALGOS, factorString, factorize, fmt, gcd, run, sup, type AlgoId } from "@/lib/domain/lessonAlgos";
 import { cn } from "@/lib/utils/cn";
+import { Fill, Mark, Punct, Seq, Sort } from "./ItalianWidgets";
 
 const BTN = "rounded-lg border border-white/25 bg-white/10 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40";
 const GOLD = "rounded-lg border border-[#E3B341] bg-[#E3B341]/20 px-3 py-1.5 text-sm font-semibold text-[#fff3c4] transition-colors hover:bg-[#E3B341]/35 disabled:cursor-not-allowed disabled:opacity-40";
@@ -1042,6 +1043,16 @@ export default function Interactive({ b }: { b: Block }) {
       return <Quiz b={b} />;
     case "reveal":
       return <Reveal b={b} />;
+    case "sort":
+      return <Sort b={b} />;
+    case "mark":
+      return <Mark b={b} />;
+    case "fill":
+      return <Fill b={b} />;
+    case "punct":
+      return <Punct b={b} />;
+    case "seq":
+      return <Seq b={b} />;
     case "lab":
       return <Lab b={b} />;
     default:
