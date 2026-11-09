@@ -41,7 +41,7 @@ function BlockView({ b }: { b: Block }) {
 
 const sectionsOf = (l: Lesson) => l.blocks.filter((b) => b.t === "section").length;
 
-const activities = (l: Lesson) => l.blocks.filter((b) => b.t === "lab" || b.t === "quiz" || b.t === "reveal" || b.t === "steps" || b.t === "flip").length;
+const activities = (l: Lesson) => l.blocks.filter((b) => b.t === "lab" || b.t === "quiz" || b.t === "reveal" || b.t === "steps" || b.t === "flip" || b.t === "sort" || b.t === "mark" || b.t === "fill" || b.t === "punct" || b.t === "seq").length;
 
 function Reader({ lesson, siblings, studied, onToggle, onOpen, onBack }: { lesson: Lesson; siblings: Lesson[]; studied: boolean; onToggle: () => void; onOpen: (l: Lesson) => void; onBack: () => void }) {
   const idx = siblings.findIndex((l) => l.id === lesson.id);
