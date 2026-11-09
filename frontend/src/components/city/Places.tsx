@@ -214,3 +214,118 @@ export function DigNight({ x, y, s }: Place) {
     </g>
   );
 }
+
+export function Shop3D() {
+  return (
+    <g>
+      <ellipse cx="4" cy="18" rx="66" ry="11" fill="#000000" opacity="0.26" />
+      <rect x="-56" y="12" width="112" height="6" rx="1" fill="#8d887c" />
+      {[-52, -40, -28, -16, 16, 28, 40].map((x) => (
+        <rect key={x} x={x} y="13" width="9" height="4" rx="1" fill="#aaa598" opacity="0.85" />
+      ))}
+      <rect x="-52" y="-22" width="104" height="35" fill="#2f5d73" />
+      <path d="M-52 -12 H52 M-52 -2 H52 M-52 8 H52" stroke="#000000" strokeOpacity="0.1" />
+      <rect x="-52" y="-22" width="104" height="35" fill="url(#cm-shade)" />
+      <rect x="-52" y="-22" width="6" height="35" fill="#f1e3c4" />
+      <rect x="46" y="-22" width="6" height="35" fill="#f1e3c4" />
+      <rect x="-54" y="-36" width="108" height="14" fill="#f1e3c4" />
+      <rect x="-54" y="-36" width="108" height="14" fill="url(#cm-shade)" />
+      <rect x="-54" y="-24" width="108" height="2.4" fill="#000000" opacity="0.18" />
+      <rect x="-56" y="-40" width="112" height="5" rx="1.5" fill="#8a3a30" />
+      <rect x="-56" y="-40" width="112" height="1.6" fill="#ffffff" opacity="0.25" />
+      <circle cx="0" cy="-29" r="9.4" fill="#7a5230" />
+      <circle cx="0" cy="-29" r="8" fill="#f6c453" />
+      <circle cx="0" cy="-29" r="5.8" fill="none" stroke="#b9852f" strokeWidth="1.2" />
+      <path d="M-1.8 -32.4 H1.2 Q2.4 -32.4 2.4 -31 Q2.4 -29.6 1 -29.6 H-1.2 M-0.2 -33.6 V-24.8 M-1.4 -29.6 H1.6 Q3 -29.6 3 -28 Q3 -26.4 1.6 -26.4 H-1.8" stroke="#8a5a14" strokeWidth="1.1" fill="none" strokeLinecap="round" />
+      <path d="M-3 -34.6 q3 -2.6 6 0" stroke="#ffffff" strokeWidth="1" opacity="0.5" fill="none" />
+      {[-48, -37, -26, -15, -4, 7, 18, 29, 40].map((x, i) => (
+        <path key={x} d={`M${x} -22 H${x + 11} V-14 q-5.5 5 -11 0Z`} fill={i % 2 ? "#fff3dc" : "#c2553f"} />
+      ))}
+      <rect x="-54" y="-23" width="108" height="3" fill="#000000" opacity="0.16" />
+      {[-44, 14].map((x) => (
+        <g key={x}>
+          <rect x={x - 2} y="-10" width="34" height="20" rx="2" fill="#f1e3c4" />
+          <rect x={x} y="-8" width="30" height="16" fill="url(#cm-glass)" />
+          <rect x={x} y="-8" width="30" height="5" fill="#ffffff" opacity="0.26" />
+          <rect x={x} y="-1" width="30" height="1.6" fill="#8a5a34" />
+          <rect x={x} y="4.4" width="30" height="1.6" fill="#8a5a34" />
+          <path d={`M${x + 15} -8 V8`} stroke="#f1e3c4" strokeWidth="1.2" />
+          {x < 0 ? (
+            <g>
+              <path d={`M${x + 4} -3.4 q5 -4 10 0 q-5 4 -10 0Z M${x + 14} -3.4 l3.4 -2.6 v5.2Z`} fill="#2a8fb3" />
+              <rect x={x + 21} y="-6" width="4" height="5" rx="1" fill="#e11d48" />
+              <rect x={x + 5} y="2.2" width="5" height="2" rx="1" fill="#84cc16" />
+              <circle cx={x + 18} cy="2.4" r="2" fill="#f59e0b" />
+            </g>
+          ) : (
+            <g>
+              <path d={`M${x + 5} -1 q2.6 -6 5.2 0Z`} fill="#f6c453" />
+              <circle cx={x + 7.6} cy="-6.4" r="0.8" fill="#f6c453" />
+              <rect x={x + 18} y="-6" width="3.4" height="5" rx="1" fill="#a371f7" />
+              <rect x={x + 23} y="-4" width="3.4" height="3" rx="1" fill="#58a6ff" />
+              <circle cx={x + 8} cy="2.8" r="1.8" fill="#7ee787" />
+              <circle cx={x + 22} cy="2.8" r="1.8" fill="#fb923c" />
+            </g>
+          )}
+        </g>
+      ))}
+      <path d="M-9 13 V-2 Q-9 -10 0 -10 Q9 -10 9 -2 V13Z" fill="#f1e3c4" />
+      <path d="M-6.6 13 V-1.4 Q-6.6 -7.6 0 -7.6 Q6.6 -7.6 6.6 -1.4 V13Z" fill="#5a3b20" />
+      <path d="M-5 -1 Q0 -7 5 -1Z" fill="url(#cm-glass)" />
+      <path d="M0 -7 V13" stroke="#3a2616" strokeWidth="0.9" />
+      <circle cx="2.4" cy="5" r="1" fill="#f0c25a" />
+      <circle cx="-2.4" cy="5" r="1" fill="#f0c25a" />
+      <rect x="-12" y="12" width="24" height="3" fill="#bdb29a" />
+      <g transform="translate(-60 8)">
+        <ellipse cx="1" cy="9" rx="8" ry="2.4" fill="#000000" opacity="0.22" />
+        <rect x="-6" y="-6" width="12" height="14" rx="2" fill="#8a5a34" />
+        <path d="M-6 -2 H6 M-6 4 H6" stroke="#4a3320" strokeWidth="1" />
+        <ellipse cx="0" cy="-6" rx="6" ry="2" fill="#a77f50" />
+        <path d="M-3 -8 q3 -5 6 0" stroke="#2a8fb3" strokeWidth="2" fill="none" strokeLinecap="round" />
+      </g>
+      <g transform="translate(60 10)">
+        <ellipse cx="0" cy="6" rx="8" ry="2.4" fill="#000000" opacity="0.22" />
+        <rect x="-7" y="-4" width="14" height="9" rx="1" fill="#8a5a34" />
+        <rect x="-7" y="-4" width="14" height="2" fill="#ffffff" opacity="0.2" />
+        {[[-3, -6], [2, -6.6], [0, -8.6]].map(([a, b], i) => (
+          <circle key={i} cx={a} cy={b} r="2.6" fill="#f6c453" stroke="#b9852f" strokeWidth="0.8" />
+        ))}
+      </g>
+      {[-52, 52].map((x) => (
+        <g key={x}>
+          <rect x={x - 0.8} y="-6" width="1.6" height="10" fill="#3a3f47" />
+          <rect x={x - 3} y="-12" width="6" height="6" rx="1.4" fill="url(#cm-glass)" />
+          <path d={`M${x - 4} -12 L${x} -16 L${x + 4} -12Z`} fill="#2b3038" />
+        </g>
+      ))}
+    </g>
+  );
+}
+
+export function ShopNight({ x, y, s }: Place) {
+  return (
+    <g transform={`translate(${x} ${y}) scale(${s})`} pointerEvents="none">
+      <ellipse cx="0" cy="12" rx="70" ry="16" fill="url(#cm-lamp)" opacity="0.4" />
+      {[-44, 14].map((wx) => (
+        <g key={wx}>
+          <circle cx={wx + 15} cy="0" r="30" fill="url(#cm-lamp)" opacity="0.8" />
+          <rect x={wx} y="-8" width="30" height="16" fill="#ffd36a" opacity="0.92" />
+          <rect x={wx} y="-8" width="30" height="5" fill="#fff6d0" opacity="0.55" />
+          <rect x={wx} y="-1" width="30" height="1.6" fill="#8a5a34" />
+          <rect x={wx} y="4.4" width="30" height="1.6" fill="#8a5a34" />
+          <path d={`M${wx + 15} -8 V8`} stroke="#8a5a34" strokeWidth="1.2" />
+        </g>
+      ))}
+      <circle cx="0" cy="-29" r="26" fill="url(#cm-lamp)" className="ct-glow" />
+      <circle cx="0" cy="-29" r="8" fill="#ffe9a3" opacity="0.7" />
+      {[-52, 52].map((lx) => (
+        <g key={lx}>
+          <circle cx={lx} cy="-9" r="16" fill="url(#cm-lamp)" className="ct-glow" />
+          <circle cx={lx} cy="-9" r="2.8" fill="#fff6d0" />
+        </g>
+      ))}
+      <path d="M-6.6 13 V-1.4 Q-6.6 -7.6 0 -7.6 Q6.6 -7.6 6.6 -1.4 V13Z" fill="#ffb64a" opacity="0.5" />
+      <path d="M-8 14 L-14 24 H14 L8 14Z" fill="#ffb64a" opacity="0.2" />
+    </g>
+  );
+}
