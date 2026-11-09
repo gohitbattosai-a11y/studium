@@ -1,12 +1,11 @@
-import { useEffect, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { Forest3D, ForestNight, Stadium3D, StadiumNight } from "./Landmarks";
 import { Dig3D, DigNight, School3D, SchoolNight, Shop3D, ShopNight } from "./Places";
+import { WORLD, WORLD_H, WORLD_W, type House, type Pt } from "./cityWorld";
 import "./city.css";
+import "./wild.css";
 
 type View = "map" | "lobby" | "room" | "pond" | "forest" | "stadium" | "animals" | "school" | "dig" | "fossils" | "shop";
-type Kind = "oak" | "pine" | "cherry";
-type Pt = { x: number; y: number; s?: number; t?: Kind };
-type House = { x: number; y: number; c: string; w?: string; smoke?: boolean };
 
 const OAK = ["#1f5a2b", "#2f7a3a", "#3f9248", "#66bd68"];
 const CHERRY = ["#b84a7e", "#da6c9d", "#f19cc0", "#ffd3e5"];
@@ -174,7 +173,7 @@ function Lamp({ x, y }: { x: number; y: number }) {
 function Cloud({ y, d, begin, s = 1 }: { y: number; d: number; begin: number; s?: number }) {
   return (
     <g transform={`translate(0 ${y}) scale(${s})`} opacity="0.8">
-      <animateTransform attributeName="transform" type="translate" values={`-200 ${y};1100 ${y}`} dur={`${d}s`} begin={`${begin}s`} repeatCount="indefinite" additive="replace" />
+      <animateTransform attributeName="transform" type="translate" values={`-200 ${y};${WORLD_W + 200} ${y}`} dur={`${d}s`} begin={`${begin}s`} repeatCount="indefinite" additive="replace" />
       <ellipse cx="8" cy="9" rx="44" ry="7" fill="#9fb0cc" opacity="0.45" />
       <ellipse cx="0" cy="0" rx="46" ry="12" fill="#eef3fb" />
       <ellipse cx="-18" cy="-8" rx="24" ry="12" fill="#f6f9ff" />
@@ -187,7 +186,7 @@ function Cloud({ y, d, begin, s = 1 }: { y: number; d: number; begin: number; s?
 function Bird({ y, d, begin }: { y: number; d: number; begin: number }) {
   return (
     <g>
-      <animateTransform attributeName="transform" type="translate" values={`1000 ${y};-100 ${y - 40}`} dur={`${d}s`} begin={`${begin}s`} repeatCount="indefinite" />
+      <animateTransform attributeName="transform" type="translate" values={`${WORLD_W + 100} ${y};-100 ${y - 40}`} dur={`${d}s`} begin={`${begin}s`} repeatCount="indefinite" />
       <path d="M-6 0 q3 -5 6 0 q3 -5 6 0" stroke="#111827" strokeWidth="1.7" fill="none" strokeLinecap="round">
         <animate attributeName="d" values="M-6 0 q3 -5 6 0 q3 -5 6 0;M-6 -3 q3 3 6 3 q3 0 6 -3;M-6 0 q3 -5 6 0 q3 -5 6 0" dur="0.5s" repeatCount="indefinite" />
       </path>
@@ -200,6 +199,7 @@ function Walker({ path, dur, begin, shirt }: { path: string; dur: number; begin:
     <g>
       <animateMotion path={path} dur={`${dur}s`} begin={`${begin}s`} repeatCount="indefinite" />
       <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.05;0.95;1" dur={`${dur}s`} begin={`${begin}s`} repeatCount="indefinite" />
+      <g transform="scale(1.7)">
       <ellipse cx="0.5" cy="2.4" rx="4.4" ry="1.7" fill="#000000" opacity="0.26" />
       <rect x="-2.2" y="-1" width="1.7" height="3.4" rx="0.6" fill="#2b3a55" />
       <rect x="0.5" y="-1" width="1.7" height="3.4" rx="0.6" fill="#2b3a55">
@@ -210,6 +210,7 @@ function Walker({ path, dur, begin, shirt }: { path: string; dur: number; begin:
       <circle cx="0" cy="-12" r="3.1" fill="#f2c9a0" />
       <path d="M-3.4 -12.6 q3.4 -5 6.8 0 q-1 -1.4 -3.4 -1.4 q-2.4 0 -3.4 1.4Z" fill="#3b2415" />
       <circle cx="3.6" cy="-5" r="1.4" fill="#ffd36a" opacity="0.9" />
+      </g>
     </g>
   );
 }
@@ -393,57 +394,6 @@ function Bridge({ x, y, r }: { x: number; y: number; r: number }) {
     </g>
   );
 }
-
-const LAND = {
-  box: "0 0 800 480",
-  museum: [0, 0],
-  pond: [0, 0],
-  moon: [130, 60],
-  forest: [690, 88, 1],
-  stadium: [415, 415, 1],
-  school: [180, 420, 1],
-  dig: [572, 446, 0.72],
-  shop: [52, 262, 0.72],
-  roads: ["M250 250 C 330 330, 430 270, 560 330", "M250 250 L 90 400", "M560 330 L 720 420", "M330 150 C 450 100, 560 70, 650 100", "M430 285 C 445 335, 415 360, 418 385", "M118 372 L 172 408", "M566 334 C 560 372, 570 400, 572 430", "M92 270 C 130 288, 190 272, 250 250"],
-  stream: "M598 338 C 612 362, 650 356, 640 380 S 626 430, 660 500",
-  bridge: { x: 640, y: 378, r: 29 },
-  fountain: [380, 175],
-  benches: [[326, 200], [434, 200]],
-  rocks: [[470, 80], [760, 260], [300, 400], [20, 320], [520, 400]],
-  stalls: [{ x: 330, y: 300, c: "#e11d48" }, { x: 372, y: 322, c: "#2563eb" }],
-  lamps: [[270, 268], [350, 300], [440, 288], [500, 330], [120, 372], [680, 400]],
-  flowers: [[185, 300], [300, 170], [430, 220], [60, 280], [620, 120], [740, 220]],
-  bushes: [[330, 120], [100, 120], [470, 180], [30, 380], [620, 400]],
-  walkers: [{ path: "M250 250 C 330 330, 430 270, 560 330", dur: 42, begin: 0, shirt: "#e11d48" }, { path: "M90 400 L 250 250", dur: 36, begin: 6, shirt: "#2563eb" }, { path: "M560 330 L 720 420", dur: 30, begin: 3, shirt: "#16a34a" }],
-  trees: [{ x: 60, y: 70, s: 1.2 }, { x: 130, y: 50, t: "pine" }, { x: 40, y: 170, t: "cherry" }, { x: 700, y: 60, s: 1.3 }, { x: 760, y: 130, t: "pine" }, { x: 420, y: 70 }, { x: 480, y: 110, s: 0.9, t: "cherry" }, { x: 90, y: 330, t: "pine" }, { x: 330, y: 430, s: 1.1 }, { x: 410, y: 440, t: "pine" }, { x: 750, y: 300, s: 1.2 }, { x: 20, y: 440, t: "pine" }, { x: 560, y: 60, t: "pine", s: 1.1 }, { x: 250, y: 60, t: "cherry", s: 0.9 }] as Pt[],
-  houses: [{ x: 80, y: 400, c: "#c2553f", smoke: true }, { x: 130, y: 440, c: "#4d6fb3" }, { x: 720, y: 430, c: "#d29b3a", smoke: true }, { x: 640, y: 440, c: "#8a5ab0", w: "#efe3d0" }, { x: 200, y: 440, c: "#2f8f83", w: "#f1e9d6" }] as House[],
-};
-
-const PORT = {
-  box: "0 0 480 800",
-  museum: [10, 40],
-  pond: [-350, 320],
-  moon: [90, 60],
-  forest: [415, 235, 0.72],
-  stadium: [80, 725, 0.75],
-  school: [120, 440, 0.9],
-  dig: [395, 690, 0.8],
-  shop: [70, 222, 0.72],
-  roads: ["M240 330 C 300 400, 180 450, 240 500", "M240 330 L 70 400", "M240 500 L 410 560", "M250 320 C 330 300, 380 270, 410 245", "M70 400 C 50 520, 50 640, 78 705", "M118 381 L 122 424", "M410 560 C 420 610, 402 650, 396 676", "M112 234 C 150 262, 200 300, 240 330"],
-  stream: "M250 662 C 262 700, 230 730, 246 800",
-  bridge: null as null | { x: number; y: number; r: number },
-  fountain: [370, 390],
-  benches: [[322, 418], [418, 418]],
-  rocks: [[440, 420], [30, 500], [440, 610], [190, 720], [300, 740]],
-  stalls: [{ x: 330, y: 470, c: "#e11d48" }, { x: 380, y: 480, c: "#2563eb" }],
-  lamps: [[220, 350], [200, 450], [290, 520], [120, 390], [380, 545]],
-  flowers: [[110, 330], [350, 340], [60, 560], [420, 620], [120, 640]],
-  bushes: [[60, 230], [420, 250], [110, 500], [400, 480], [60, 600]],
-  walkers: [{ path: "M240 330 C 300 400, 180 450, 240 500", dur: 36, begin: 0, shirt: "#e11d48" }, { path: "M70 400 L 240 330", dur: 30, begin: 5, shirt: "#2563eb" }, { path: "M240 500 L 410 560", dur: 26, begin: 2, shirt: "#16a34a" }],
-  trees: [{ x: 50, y: 70, s: 1.2 }, { x: 420, y: 60, t: "pine" }, { x: 100, y: 140, t: "cherry" }, { x: 410, y: 170, s: 1.2 }, { x: 40, y: 280, t: "pine" }, { x: 440, y: 330, t: "pine" }, { x: 60, y: 470, t: "cherry" }, { x: 430, y: 700, s: 1.2 }, { x: 70, y: 700, t: "pine" }, { x: 240, y: 760, s: 0.9 }, { x: 20, y: 380, t: "pine" }, { x: 450, y: 520, t: "pine" }] as Pt[],
-  houses: [{ x: 80, y: 400, c: "#c2553f", smoke: true }, { x: 410, y: 450, c: "#4d6fb3" }, { x: 140, y: 760, c: "#d29b3a", smoke: true }, { x: 350, y: 770, c: "#8a5ab0" }, { x: 60, y: 560, c: "#2f8f83", w: "#f1e9d6" }] as House[],
-};
-
 function Museum3D() {
   const cols = [164, 184, 204, 246, 266, 286];
   const tile = (y: number) => {
@@ -709,22 +659,22 @@ function Glow({ x, y, r, d = 0 }: { x: number; y: number; r: number; d?: number 
   return <circle cx={x} cy={y} r={r} fill="url(#cm-lamp)" className="ct-glow" style={{ animationDelay: `${d}s` }} pointerEvents="none" />;
 }
 
-type Spot = { box: string; museum: number[]; pond: number[]; moon: number[]; fountain: number[]; stalls: { x: number; y: number; c: string }[]; lamps: number[][]; houses: House[] };
+type Spot = { museum: number[]; pond: number[]; moon: number[]; fountain: number[]; stalls: { x: number; y: number; c: string }[]; lamps: number[][]; houses: House[] };
 
 function Night({ L }: { L: Spot }) {
   const [mx, my] = L.moon;
   const [ox, oy] = L.museum;
   const [qx, qy] = L.pond;
   const [fx, fy] = L.fountain;
-  const stars = Array.from({ length: 34 }, (_, i) => [(i * 137) % 1000, (i * 71) % 260, 0.6 + (i % 3) * 0.4, (i % 7) * 0.4]);
-  const flies = Array.from({ length: 12 }, (_, i) => [((i * 97) % 760) + 20, ((i * 53) % 380) + 90, 3 + (i % 4)]);
+  const stars = Array.from({ length: 90 }, (_, i) => [(i * 211) % WORLD_W, (i * 97) % 700, 0.8 + (i % 3) * 0.5, (i % 7) * 0.4]);
+  const flies = Array.from({ length: 40 }, (_, i) => [((i * 331) % (WORLD_W - 100)) + 50, ((i * 173) % (WORLD_H - 500)) + 380, 3 + (i % 4)]);
   return (
     <g pointerEvents="none">
       {stars.map(([x, y, r, d], i) => (
         <circle key={i} cx={x} cy={y} r={r} fill="#ffffff" className="ct-twinkle" style={{ animationDelay: `${d}s` }} />
       ))}
-      <ellipse cx={mx} cy={my} rx="520" ry="380" fill="url(#cm-moonlit)" />
-      <circle cx={mx} cy={my} r="86" fill="url(#cm-moon)" />
+      <ellipse cx={mx} cy={my} rx="900" ry="640" fill="url(#cm-moonlit)" />
+      <circle cx={mx} cy={my} r="130" fill="url(#cm-moon)" />
       <circle cx={mx} cy={my} r="25" fill="#f6f2dc" />
       <circle cx={mx - 7} cy={my - 5} r="5" fill="#ddd8bd" />
       <circle cx={mx + 8} cy={my + 7} r="3.4" fill="#ddd8bd" />
@@ -815,31 +765,189 @@ function Night({ L }: { L: Spot }) {
   );
 }
 
+const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
+const DARK = [[120, 120, 220, 110], [2250, 140, 240, 120], [1200, 1440, 260, 100], [2300, 1400, 200, 90]];
+const CLOUDS = [[60, 95, 0, 1], [140, 130, -40, 0.8], [30, 110, -70, 1.1], [320, 150, -20, 1], [620, 120, -90, 0.9], [980, 140, -55, 1.2], [1320, 160, -10, 0.9]];
+const BIRDS = [[160, 34, 0], [260, 46, -18], [520, 40, -9], [880, 52, -30]];
+
 export default function CityMap({ onGo }: { onGo: (v: View) => void }) {
-  const [portrait, setPortrait] = useState(() => window.innerHeight > window.innerWidth);
-  useEffect(() => {
-    const fn = () => setPortrait(window.innerHeight > window.innerWidth);
-    window.addEventListener("resize", fn);
-    return () => window.removeEventListener("resize", fn);
+  const L = WORLD;
+  const view = useRef<HTMLDivElement>(null);
+  const world = useRef<HTMLDivElement>(null);
+  const cam = useRef({ x: 0, y: 0, vx: 0, vy: 0, k: 0.8, vw: 0, vh: 0, ready: false });
+  const keys = useRef(new Set<string>());
+  const drag = useRef({ on: false, moved: false, sx: 0, sy: 0, cx: 0, cy: 0, lx: 0, ly: 0, lt: 0 });
+  const [hint, setHint] = useState(true);
+
+  const clampCam = useCallback(() => {
+    const c = cam.current;
+    c.x = clamp(c.x, 0, Math.max(0, WORLD_W * c.k - c.vw));
+    c.y = clamp(c.y, 0, Math.max(0, WORLD_H * c.k - c.vh));
   }, []);
-  const base = portrait ? PORT : LAND;
-  const far = (x: number, y: number) => [base.forest, base.stadium, base.school, base.dig, base.shop].every(([fx, fy, fs]) => Math.hypot(x - fx, y - fy) > 82 * fs);
-  const L = {
-    ...base,
-    trees: base.trees.filter((t) => far(t.x, t.y)),
-    houses: base.houses.filter((h) => far(h.x, h.y)),
-    stalls: base.stalls.filter((t) => far(t.x, t.y)),
-    lamps: base.lamps.filter(([x, y]) => far(x, y)),
-    flowers: base.flowers.filter(([x, y]) => far(x, y)),
-    bushes: base.bushes.filter(([x, y]) => far(x, y)),
-    rocks: base.rocks.filter(([x, y]) => far(x, y)),
-    benches: base.benches.filter(([x, y]) => far(x, y)),
+
+  const centerOn = useCallback(
+    (lx: number, ly: number) => {
+      const c = cam.current;
+      c.x = lx * c.k - c.vw / 2;
+      c.y = ly * c.k - c.vh / 2;
+      c.vx = 0;
+      c.vy = 0;
+      clampCam();
+    },
+    [clampCam],
+  );
+
+  useEffect(() => {
+    const el = view.current;
+    if (!el) return;
+    const measure = () => {
+      const c = cam.current;
+      const vw = el.clientWidth;
+      const vh = el.clientHeight;
+      if (!vw || !vh) return;
+      const prevCx = c.ready ? (c.x + c.vw / 2) / c.k : L.plaza[0];
+      const prevCy = c.ready ? (c.y + c.vh / 2) / c.k : L.plaza[1] - 40;
+      c.vw = vw;
+      c.vh = vh;
+      c.k = Math.max(clamp(Math.min(vh / 820, vw / 1000), 0.5, 1.15), vw / WORLD_W, vh / WORLD_H);
+      c.ready = true;
+      centerOn(prevCx, prevCy);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    const wheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (e.ctrlKey) return;
+      cam.current.x += e.deltaX;
+      cam.current.y += e.deltaY;
+      clampCam();
+    };
+    const gesture = (e: Event) => e.preventDefault();
+    el.addEventListener("wheel", wheel, { passive: false });
+    el.addEventListener("gesturestart", gesture);
+    el.addEventListener("gesturechange", gesture);
+    return () => {
+      ro.disconnect();
+      el.removeEventListener("wheel", wheel);
+      el.removeEventListener("gesturestart", gesture);
+      el.removeEventListener("gesturechange", gesture);
+    };
+  }, [centerOn, clampCam, L.plaza]);
+
+  useEffect(() => {
+    const kd = (e: globalThis.KeyboardEvent) => {
+      if (document.querySelector("[data-slot='dialog-content']")) return;
+      const k = e.key.toLowerCase();
+      if (["arrowup", "arrowdown", "arrowleft", "arrowright", "w", "a", "s", "d"].includes(k)) {
+        e.preventDefault();
+        keys.current.add(k);
+      }
+    };
+    const ku = (e: globalThis.KeyboardEvent) => keys.current.delete(e.key.toLowerCase());
+    window.addEventListener("keydown", kd);
+    window.addEventListener("keyup", ku);
+    return () => {
+      window.removeEventListener("keydown", kd);
+      window.removeEventListener("keyup", ku);
+    };
+  }, []);
+
+  useEffect(() => {
+    let raf = 0;
+    let last = performance.now();
+    const frame = (now: number) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      const c = cam.current;
+      if (c.ready) {
+        const kk = keys.current;
+        const ax = (kk.has("arrowright") || kk.has("d") ? 1 : 0) - (kk.has("arrowleft") || kk.has("a") ? 1 : 0);
+        const ay = (kk.has("arrowdown") || kk.has("s") ? 1 : 0) - (kk.has("arrowup") || kk.has("w") ? 1 : 0);
+        if (ax || ay) {
+          c.vx += (ax * 900 - c.vx) * Math.min(1, dt * 6);
+          c.vy += (ay * 900 - c.vy) * Math.min(1, dt * 6);
+        }
+        if (!drag.current.on) {
+          c.x += c.vx * dt;
+          c.y += c.vy * dt;
+          if (!ax && !ay) {
+            const f = Math.exp(-4 * dt);
+            c.vx *= f;
+            c.vy *= f;
+          }
+        }
+        clampCam();
+        if (world.current) world.current.style.transform = `translate3d(${-c.x}px, ${-c.y}px, 0) scale(${c.k})`;
+      }
+      raf = requestAnimationFrame(frame);
+    };
+    raf = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(raf);
+  }, [clampCam]);
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setHint(false), 6000);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  const onDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    const d = drag.current;
+    const c = cam.current;
+    d.on = true;
+    d.moved = false;
+    d.sx = e.clientX;
+    d.sy = e.clientY;
+    d.cx = c.x;
+    d.cy = c.y;
+    d.lx = e.clientX;
+    d.ly = e.clientY;
+    d.lt = performance.now();
+    c.vx = 0;
+    c.vy = 0;
+    const move = (ev: PointerEvent) => {
+      if (!d.on) return;
+      const dx = ev.clientX - d.sx;
+      const dy = ev.clientY - d.sy;
+      if (!d.moved && Math.hypot(dx, dy) > 6) d.moved = true;
+      if (!d.moved) return;
+      c.x = d.cx - dx;
+      c.y = d.cy - dy;
+      clampCam();
+      const now = performance.now();
+      const dtm = Math.max(1, now - d.lt) / 1000;
+      c.vx = c.vx * 0.6 + (-(ev.clientX - d.lx) / dtm) * 0.4;
+      c.vy = c.vy * 0.6 + (-(ev.clientY - d.ly) / dtm) * 0.4;
+      d.lx = ev.clientX;
+      d.ly = ev.clientY;
+      d.lt = now;
+    };
+    const up = () => {
+      d.on = false;
+      if (performance.now() - d.lt > 90) {
+        c.vx = 0;
+        c.vy = 0;
+      }
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
   };
+
+  const go = (v: View) => {
+    if (drag.current.moved) return;
+    onGo(v);
+  };
+
   const hot = (v: View, label: string) => ({
     role: "button" as const,
     tabIndex: 0,
     "aria-label": label,
-    onClick: () => onGo(v),
+    onClick: () => go(v),
     onKeyDown: (e: KeyboardEvent) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
@@ -847,211 +955,213 @@ export default function CityMap({ onGo }: { onGo: (v: View) => void }) {
       }
     },
   });
-  const trees = [...L.trees].sort((a, b) => a.y - b.y);
+
   const [fx, fy] = L.fountain;
+  const [px, py] = L.plaza;
+
   return (
-    <svg viewBox={L.box} preserveAspectRatio="xMidYMid slice" className="absolute inset-0 size-full bg-[#3b8541]" data-testid="city-map">
-      <defs>
-        <linearGradient id="cm-grass" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#5bb25a" />
-          <stop offset="0.5" stopColor="#47994a" />
-          <stop offset="1" stopColor="#367c3d" />
-        </linearGradient>
-        <linearGradient id="cm-water" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#47b6d8" />
-          <stop offset="1" stopColor="#1a6a8f" />
-        </linearGradient>
-        <linearGradient id="cm-shade" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stopColor="#ffffff" stopOpacity="0.22" />
-          <stop offset="0.55" stopColor="#ffffff" stopOpacity="0" />
-          <stop offset="1" stopColor="#000000" stopOpacity="0.2" />
-        </linearGradient>
-        <linearGradient id="cm-glass" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#ffeeb0" />
-          <stop offset="1" stopColor="#f2b556" />
-        </linearGradient>
-        <radialGradient id="cm-lamp" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0" stopColor="#ffd36a" stopOpacity="0.9" />
-          <stop offset="0.45" stopColor="#ffb64a" stopOpacity="0.32" />
-          <stop offset="1" stopColor="#ffb64a" stopOpacity="0" />
-        </radialGradient>
-        <radialGradient id="cm-aqua" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0" stopColor="#8fe6ff" stopOpacity="0.55" />
-          <stop offset="0.5" stopColor="#4fb8e6" stopOpacity="0.2" />
-          <stop offset="1" stopColor="#4fb8e6" stopOpacity="0" />
-        </radialGradient>
-        <radialGradient id="cm-fly" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0" stopColor="#e8ff8a" stopOpacity="0.8" />
-          <stop offset="1" stopColor="#e8ff8a" stopOpacity="0" />
-        </radialGradient>
-        <radialGradient id="cm-moon" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0" stopColor="#dbe7ff" stopOpacity="0.6" />
-          <stop offset="1" stopColor="#dbe7ff" stopOpacity="0" />
-        </radialGradient>
-        <radialGradient id="cm-moonlit" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0" stopColor="#bcd2ff" stopOpacity="0.2" />
-          <stop offset="1" stopColor="#bcd2ff" stopOpacity="0" />
-        </radialGradient>
-        <radialGradient id="cm-vig" cx="0.5" cy="0.5" r="0.75">
-          <stop offset="0.55" stopColor="#000000" stopOpacity="0" />
-          <stop offset="1" stopColor="#06180d" stopOpacity="0.45" />
-        </radialGradient>
-        <radialGradient id="cm-patch" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0" stopColor="#8fdc78" stopOpacity="0.5" />
-          <stop offset="1" stopColor="#8fdc78" stopOpacity="0" />
-        </radialGradient>
-        <radialGradient id="cm-dark" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0" stopColor="#0f3a1c" stopOpacity="0.4" />
-          <stop offset="1" stopColor="#0f3a1c" stopOpacity="0" />
-        </radialGradient>
-        <pattern id="cm-tex" width="44" height="44" patternUnits="userSpaceOnUse">
-          <path d="M3 18 q1 -6 3 -8 M12 8 q1 -5 3 -6 M17 20 q1 -5 3 -7 M30 36 q1 -6 3 -8 M38 14 q1 -5 3 -6 M24 40 q1 -5 3 -7" stroke="#2c7433" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.55" />
-          <path d="M8 34 q1 -5 3 -6 M34 24 q1 -5 3 -6 M20 26 q1 -4 2 -5" stroke="#6fcf72" strokeWidth="1.1" fill="none" strokeLinecap="round" opacity="0.45" />
-          <circle cx="28" cy="10" r="1" fill="#fff6c8" opacity="0.7" />
-          <circle cx="6" cy="26" r="0.9" fill="#f9a8d4" opacity="0.7" />
-          <circle cx="36" cy="40" r="0.9" fill="#fde68a" opacity="0.7" />
-          <circle cx="16" cy="38" r="1.2" fill="#2a6a31" opacity="0.4" />
-        </pattern>
-        <pattern id="cm-cobble" width="16" height="12" patternUnits="userSpaceOnUse">
-          <rect width="16" height="12" fill="#c9a66b" />
-          <rect x="0.6" y="0.6" width="7" height="5" rx="1.4" fill="#d6b87e" />
-          <rect x="8.6" y="0.6" width="6.8" height="5" rx="1.4" fill="#c29f64" />
-          <rect x="4.6" y="6.6" width="7" height="5" rx="1.4" fill="#d1b178" />
-          <rect x="-3.4" y="6.6" width="7" height="5" rx="1.4" fill="#c7a56a" />
-          <rect x="12.6" y="6.6" width="6" height="5" rx="1.4" fill="#c7a56a" />
-        </pattern>
-        <pattern id="cm-plaza" width="14" height="10" patternUnits="userSpaceOnUse">
-          <rect width="14" height="10" fill="#b8bec6" />
-          <rect x="0.5" y="0.5" width="6" height="4" rx="1" fill="#cfd4da" />
-          <rect x="7.5" y="0.5" width="6" height="4" rx="1" fill="#c3c9d0" />
-          <rect x="3.5" y="5.5" width="6" height="4" rx="1" fill="#c9ced5" />
-          <rect x="-3.5" y="5.5" width="6" height="4" rx="1" fill="#c3c9d0" />
-          <rect x="10.5" y="5.5" width="6" height="4" rx="1" fill="#cfd4da" />
-        </pattern>
-      </defs>
-      <rect x="-200" y="-200" width="1400" height="1400" fill="url(#cm-grass)" />
-      <rect x="-200" y="-200" width="1400" height="1400" fill="url(#cm-tex)" />
-      {[[120, 220, 110, 50], [560, 90, 130, 56], [380, 380, 140, 60], [700, 340, 100, 44], [240, 100, 90, 40]].map(([x, y, rx, ry], i) => (
-        <ellipse key={i} cx={x} cy={y} rx={rx} ry={ry} fill="url(#cm-patch)" />
-      ))}
-      {[[60, 60, 120, 60], [740, 80, 130, 70], [450, 460, 130, 50]].map(([x, y, rx, ry], i) => (
-        <ellipse key={i} cx={x} cy={y} rx={rx} ry={ry} fill="url(#cm-dark)" />
-      ))}
-      <path d={L.stream} fill="none" stroke="#2a5a2f" strokeOpacity="0.5" strokeWidth="32" strokeLinecap="round" />
-      <path d={L.stream} fill="none" stroke="#bda76d" strokeWidth="27" strokeLinecap="round" />
-      <path d={L.stream} fill="none" stroke="#2d6f8f" strokeWidth="22" strokeLinecap="round" />
-      <path d={L.stream} fill="none" stroke="#4cb0d4" strokeWidth="16" strokeLinecap="round" />
-      <path d={L.stream} fill="none" stroke="#86d8ee" strokeOpacity="0.55" strokeWidth="7" strokeLinecap="round" />
-      <path d={L.stream} fill="none" stroke="#ffffff" strokeOpacity="0.4" strokeWidth="2" strokeLinecap="round" className="ct-flow" />
-      <path d={L.stream} fill="none" stroke="#ffffff" strokeOpacity="0.25" strokeWidth="1.4" strokeLinecap="round" className="ct-flow" style={{ animationDelay: "-1.2s" }} />
-      {L.roads.map((d, i) => {
-        const w = i === 0 ? 30 : 22;
-        return (
-          <g key={i}>
-            <path d={d} fill="none" stroke="#3b2f18" strokeOpacity="0.35" strokeWidth={w + 5} strokeLinecap="round" />
-            <path d={d} fill="none" stroke="#a88a52" strokeWidth={w + 2} strokeLinecap="round" />
-            <path d={d} fill="none" stroke="url(#cm-cobble)" strokeWidth={w - 3} strokeLinecap="round" />
-            <path d={d} fill="none" stroke="#fff3cf" strokeOpacity="0.18" strokeWidth="2" strokeLinecap="round" strokeDasharray="3 12" />
+    <div ref={view} className="absolute inset-0 touch-none overflow-hidden bg-[#3b8541] select-none" onPointerDown={onDown} data-testid="city-map">
+      <div ref={world} className="absolute top-0 left-0 isolate origin-top-left will-change-transform" style={{ width: WORLD_W, height: WORLD_H }}>
+        <svg viewBox={`0 0 ${WORLD_W} ${WORLD_H}`} width={WORLD_W} height={WORLD_H} className="block max-w-none">
+          <defs>
+            <linearGradient id="cm-grass" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#5bb25a" />
+              <stop offset="0.5" stopColor="#47994a" />
+              <stop offset="1" stopColor="#367c3d" />
+            </linearGradient>
+            <linearGradient id="cm-water" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#47b6d8" />
+              <stop offset="1" stopColor="#1a6a8f" />
+            </linearGradient>
+            <linearGradient id="cm-shade" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stopColor="#ffffff" stopOpacity="0.22" />
+              <stop offset="0.55" stopColor="#ffffff" stopOpacity="0" />
+              <stop offset="1" stopColor="#000000" stopOpacity="0.2" />
+            </linearGradient>
+            <linearGradient id="cm-glass" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#ffeeb0" />
+              <stop offset="1" stopColor="#f2b556" />
+            </linearGradient>
+            <radialGradient id="cm-lamp" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stopColor="#ffd36a" stopOpacity="0.9" />
+              <stop offset="0.45" stopColor="#ffb64a" stopOpacity="0.32" />
+              <stop offset="1" stopColor="#ffb64a" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="cm-aqua" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stopColor="#8fe6ff" stopOpacity="0.55" />
+              <stop offset="0.5" stopColor="#4fb8e6" stopOpacity="0.2" />
+              <stop offset="1" stopColor="#4fb8e6" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="cm-fly" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stopColor="#e8ff8a" stopOpacity="0.8" />
+              <stop offset="1" stopColor="#e8ff8a" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="cm-moon" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stopColor="#dbe7ff" stopOpacity="0.6" />
+              <stop offset="1" stopColor="#dbe7ff" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="cm-moonlit" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stopColor="#bcd2ff" stopOpacity="0.2" />
+              <stop offset="1" stopColor="#bcd2ff" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="cm-patch" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stopColor="#8fdc78" stopOpacity="0.5" />
+              <stop offset="1" stopColor="#8fdc78" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="cm-dark" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stopColor="#0f3a1c" stopOpacity="0.4" />
+              <stop offset="1" stopColor="#0f3a1c" stopOpacity="0" />
+            </radialGradient>
+            <pattern id="cm-tex" width="44" height="44" patternUnits="userSpaceOnUse">
+              <path d="M3 18 q1 -6 3 -8 M12 8 q1 -5 3 -6 M17 20 q1 -5 3 -7 M30 36 q1 -6 3 -8 M38 14 q1 -5 3 -6 M24 40 q1 -5 3 -7" stroke="#2c7433" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.55" />
+              <path d="M8 34 q1 -5 3 -6 M34 24 q1 -5 3 -6 M20 26 q1 -4 2 -5" stroke="#6fcf72" strokeWidth="1.1" fill="none" strokeLinecap="round" opacity="0.45" />
+              <circle cx="28" cy="10" r="1" fill="#fff6c8" opacity="0.7" />
+              <circle cx="6" cy="26" r="0.9" fill="#f9a8d4" opacity="0.7" />
+              <circle cx="36" cy="40" r="0.9" fill="#fde68a" opacity="0.7" />
+              <circle cx="16" cy="38" r="1.2" fill="#2a6a31" opacity="0.4" />
+            </pattern>
+            <pattern id="cm-cobble" width="16" height="12" patternUnits="userSpaceOnUse">
+              <rect width="16" height="12" fill="#c9a66b" />
+              <rect x="0.6" y="0.6" width="7" height="5" rx="1.4" fill="#d6b87e" />
+              <rect x="8.6" y="0.6" width="6.8" height="5" rx="1.4" fill="#c29f64" />
+              <rect x="4.6" y="6.6" width="7" height="5" rx="1.4" fill="#d1b178" />
+              <rect x="-3.4" y="6.6" width="7" height="5" rx="1.4" fill="#c7a56a" />
+              <rect x="12.6" y="6.6" width="6" height="5" rx="1.4" fill="#c7a56a" />
+            </pattern>
+            <pattern id="cm-plaza" width="14" height="10" patternUnits="userSpaceOnUse">
+              <rect width="14" height="10" fill="#b8bec6" />
+              <rect x="0.5" y="0.5" width="6" height="4" rx="1" fill="#cfd4da" />
+              <rect x="7.5" y="0.5" width="6" height="4" rx="1" fill="#c3c9d0" />
+              <rect x="3.5" y="5.5" width="6" height="4" rx="1" fill="#c9ced5" />
+              <rect x="-3.5" y="5.5" width="6" height="4" rx="1" fill="#c3c9d0" />
+              <rect x="10.5" y="5.5" width="6" height="4" rx="1" fill="#cfd4da" />
+            </pattern>
+          </defs>
+          <rect width={WORLD_W} height={WORLD_H} fill="url(#cm-grass)" />
+          <rect width={WORLD_W} height={WORLD_H} fill="url(#cm-tex)" />
+          {L.patches.map(([x, y, rx, ry], i) => (
+            <ellipse key={i} cx={x} cy={y} rx={rx * 1.6} ry={ry * 1.6} fill="url(#cm-patch)" />
+          ))}
+          {DARK.map(([x, y, rx, ry], i) => (
+            <ellipse key={i} cx={x} cy={y} rx={rx} ry={ry} fill="url(#cm-dark)" />
+          ))}
+          <path d={L.stream} fill="none" stroke="#2a5a2f" strokeOpacity="0.5" strokeWidth="38" strokeLinecap="round" />
+          <path d={L.stream} fill="none" stroke="#bda76d" strokeWidth="32" strokeLinecap="round" />
+          <path d={L.stream} fill="none" stroke="#2d6f8f" strokeWidth="26" strokeLinecap="round" />
+          <path d={L.stream} fill="none" stroke="#4cb0d4" strokeWidth="19" strokeLinecap="round" />
+          <path d={L.stream} fill="none" stroke="#86d8ee" strokeOpacity="0.55" strokeWidth="8" strokeLinecap="round" />
+          <path d={L.stream} fill="none" stroke="#ffffff" strokeOpacity="0.4" strokeWidth="2" strokeLinecap="round" className="ct-flow" />
+          <path d={L.stream} fill="none" stroke="#ffffff" strokeOpacity="0.25" strokeWidth="1.4" strokeLinecap="round" className="ct-flow" style={{ animationDelay: "-1.2s" }} />
+          {L.roads.map((d, i) => {
+            const w = i === 0 ? 36 : 28;
+            return (
+              <g key={i}>
+                <path d={d} fill="none" stroke="#3b2f18" strokeOpacity="0.35" strokeWidth={w + 5} strokeLinecap="round" />
+                <path d={d} fill="none" stroke="#a88a52" strokeWidth={w + 2} strokeLinecap="round" />
+                <path d={d} fill="none" stroke="url(#cm-cobble)" strokeWidth={w - 3} strokeLinecap="round" />
+                <path d={d} fill="none" stroke="#fff3cf" strokeOpacity="0.18" strokeWidth="2" strokeLinecap="round" strokeDasharray="3 12" />
+              </g>
+            );
+          })}
+          <ellipse cx={px + 2} cy={py + 14} rx="132" ry="52" fill="#000000" opacity="0.18" />
+          <ellipse cx={px} cy={py + 10} rx="130" ry="50" fill="#8c929b" />
+          <ellipse cx={px} cy={py + 8} rx="124" ry="46" fill="url(#cm-plaza)" />
+          <ellipse cx={px} cy={py + 8} rx="104" ry="35" fill="none" stroke="#e8c777" strokeOpacity="0.55" strokeWidth="2.4" strokeDasharray="1 7" strokeLinecap="round" />
+          <ellipse cx={px} cy={py + 8} rx="88" ry="29" fill="none" stroke="#8c929b" strokeOpacity="0.7" strokeWidth="1.4" />
+          {L.bridge && <Bridge {...L.bridge} />}
+          {L.flowers.map(([x, y], i) => (
+            <Flowers key={i} x={x} y={y} n={6 + (i % 3)} />
+          ))}
+          {L.bushes.map(([x, y], i) => (
+            <Bush key={i} x={x} y={y} s={0.9 + (i % 3) * 0.15} />
+          ))}
+          <Fountain x={fx} y={fy} />
+          {L.stalls.map((s, i) => (
+            <Stall key={i} {...s} />
+          ))}
+          {L.trees.map((t: Pt, i) => (
+            <Tree key={i} {...t} />
+          ))}
+          {L.houses.map((h: House, i) => (
+            <Home key={i} {...h} />
+          ))}
+          {L.lamps.map(([x, y], i) => (
+            <Lamp key={i} x={x} y={y} />
+          ))}
+
+          <g transform={`translate(${L.forest[0]} ${L.forest[1]}) scale(${L.forest[2]})`}>
+            <g {...hot("forest", "Vai nella foresta")} className="group cursor-pointer outline-none" data-testid="city-forest">
+              <ellipse cx="0" cy="22" rx="118" ry="80" className="fill-white opacity-0 transition-opacity duration-200 group-hover:opacity-20 group-focus-visible:opacity-20" />
+              <Forest3D />
+            </g>
           </g>
-        );
-      })}
-      <ellipse cx={fx + 2} cy={fy + 12} rx="86" ry="34" fill="#000000" opacity="0.18" />
-      <ellipse cx={fx} cy={fy + 8} rx="84" ry="32" fill="#8c929b" />
-      <ellipse cx={fx} cy={fy + 6} rx="80" ry="29" fill="url(#cm-plaza)" />
-      <ellipse cx={fx} cy={fy + 6} rx="66" ry="22" fill="none" stroke="#e8c777" strokeOpacity="0.55" strokeWidth="2.4" strokeDasharray="1 7" strokeLinecap="round" />
-      <ellipse cx={fx} cy={fy + 6} rx="56" ry="18" fill="none" stroke="#8c929b" strokeOpacity="0.7" strokeWidth="1.4" />
-      {L.bridge && <Bridge {...L.bridge} />}
-      {L.flowers.map(([x, y], i) => (
-        <Flowers key={i} x={x} y={y} n={6 + (i % 3)} />
-      ))}
-      {L.rocks.map(([x, y], i) => (
-        <Rock key={i} x={x} y={y} s={0.8 + (i % 3) * 0.2} />
-      ))}
-      {L.bushes.map(([x, y], i) => (
-        <Bush key={i} x={x} y={y} s={0.9 + (i % 3) * 0.15} />
-      ))}
-      <Fountain x={fx} y={fy} />
-      {L.benches.map(([x, y], i) => (
-        <Bench key={i} x={x} y={y} />
-      ))}
-      {L.stalls.map((s, i) => (
-        <Stall key={i} {...s} />
-      ))}
-      {trees.map((t, i) => (
-        <Tree key={i} {...t} />
-      ))}
-      {[...L.houses].sort((a, b) => a.y - b.y).map((h, i) => (
-        <Home key={i} {...h} />
-      ))}
-      {L.lamps.map(([x, y], i) => (
-        <Lamp key={i} x={x} y={y} />
-      ))}
 
-      <g transform={`translate(${L.forest[0]} ${L.forest[1]}) scale(${L.forest[2]})`}>
-        <g {...hot("forest", "Vai nella foresta")} className="group cursor-pointer outline-none" data-testid="city-forest">
-          <ellipse cx="0" cy="22" rx="118" ry="80" className="fill-white opacity-0 transition-opacity duration-200 group-hover:opacity-20 group-focus-visible:opacity-20" />
-          <Forest3D />
-        </g>
-      </g>
+          <g transform={`translate(${L.stadium[0]} ${L.stadium[1]}) scale(${L.stadium[2]})`}>
+            <g {...hot("stadium", "Vai allo stadio")} className="group cursor-pointer outline-none" data-testid="city-stadium">
+              <ellipse cx="0" cy="14" rx="100" ry="62" className="fill-white opacity-0 transition-opacity duration-200 group-hover:opacity-20 group-focus-visible:opacity-20" />
+              <Stadium3D />
+            </g>
+          </g>
 
-      <g transform={`translate(${L.stadium[0]} ${L.stadium[1]}) scale(${L.stadium[2]})`}>
-        <g {...hot("stadium", "Vai allo stadio")} className="group cursor-pointer outline-none" data-testid="city-stadium">
-          <ellipse cx="0" cy="14" rx="100" ry="62" className="fill-white opacity-0 transition-opacity duration-200 group-hover:opacity-20 group-focus-visible:opacity-20" />
-          <Stadium3D />
-        </g>
-      </g>
+          <g transform={`translate(${L.school[0]} ${L.school[1]}) scale(${L.school[2]})`}>
+            <g {...hot("school", "Entra a scuola")} className="group cursor-pointer outline-none" data-testid="city-school">
+              <ellipse cx="0" cy="-10" rx="92" ry="62" className="fill-white opacity-0 transition-opacity duration-200 group-hover:opacity-20 group-focus-visible:opacity-20" />
+              <School3D />
+            </g>
+          </g>
 
-      <g transform={`translate(${L.school[0]} ${L.school[1]}) scale(${L.school[2]})`}>
-        <g {...hot("school", "Entra a scuola")} className="group cursor-pointer outline-none" data-testid="city-school">
-          <ellipse cx="0" cy="-10" rx="92" ry="62" className="fill-white opacity-0 transition-opacity duration-200 group-hover:opacity-20 group-focus-visible:opacity-20" />
-          <School3D />
-        </g>
-      </g>
+          <g transform={`translate(${L.dig[0]} ${L.dig[1]}) scale(${L.dig[2]})`}>
+            <g {...hot("dig", "Vai al sito di scavo")} className="group cursor-pointer outline-none" data-testid="city-dig">
+              <ellipse cx="0" cy="6" rx="96" ry="48" className="fill-white opacity-0 transition-opacity duration-200 group-hover:opacity-20 group-focus-visible:opacity-20" />
+              <Dig3D />
+            </g>
+          </g>
 
-      <g transform={`translate(${L.dig[0]} ${L.dig[1]}) scale(${L.dig[2]})`}>
-        <g {...hot("dig", "Vai al sito di scavo")} className="group cursor-pointer outline-none" data-testid="city-dig">
-          <ellipse cx="0" cy="6" rx="96" ry="48" className="fill-white opacity-0 transition-opacity duration-200 group-hover:opacity-20 group-focus-visible:opacity-20" />
-          <Dig3D />
-        </g>
-      </g>
+          <g transform={`translate(${L.shop[0]} ${L.shop[1]}) scale(${L.shop[2]})`}>
+            <g {...hot("shop", "Entra nel negozio")} className="group cursor-pointer outline-none" data-testid="city-shop">
+              <ellipse cx="0" cy="-14" rx="64" ry="40" className="fill-white opacity-0 transition-opacity duration-200 group-hover:opacity-20 group-focus-visible:opacity-20" />
+              <Shop3D />
+            </g>
+          </g>
 
-      <g transform={`translate(${L.shop[0]} ${L.shop[1]}) scale(${L.shop[2]})`}>
-        <g {...hot("shop", "Entra nel negozio")} className="group cursor-pointer outline-none" data-testid="city-shop">
-          <ellipse cx="0" cy="-14" rx="64" ry="40" className="fill-white opacity-0 transition-opacity duration-200 group-hover:opacity-20 group-focus-visible:opacity-20" />
-          <Shop3D />
-        </g>
-      </g>
+          <g transform={`translate(${L.museum[0]} ${L.museum[1]})`}>
+            <g {...hot("lobby", "Entra nel museo")} className="group cursor-pointer outline-none" data-testid="city-museum">
+              <ellipse cx="230" cy="215" rx="150" ry="100" className="fill-white opacity-0 transition-opacity duration-200 group-hover:opacity-20 group-focus-visible:opacity-20" />
+              <Museum3D />
+            </g>
+          </g>
 
-      <g transform={`translate(${L.museum[0]} ${L.museum[1]})`}>
-        <g {...hot("lobby", "Entra nel museo")} className="group cursor-pointer outline-none" data-testid="city-museum">
-          <ellipse cx="230" cy="215" rx="150" ry="100" className="fill-white opacity-0 transition-opacity duration-200 group-hover:opacity-20 group-focus-visible:opacity-20" />
-          <Museum3D />
-        </g>
-      </g>
+          <g transform={`translate(${L.pond[0]} ${L.pond[1]})`}>
+            <g {...hot("pond", "Vai al pond")} className="group cursor-pointer outline-none" data-testid="city-pond">
+              <ellipse cx="590" cy="250" rx="165" ry="105" className="fill-white opacity-0 transition-opacity duration-200 group-hover:opacity-20 group-focus-visible:opacity-20" />
+              <Pond3D />
+            </g>
+          </g>
 
-      <g transform={`translate(${L.pond[0]} ${L.pond[1]})`}>
-        <g {...hot("pond", "Vai al pond")} className="group cursor-pointer outline-none" data-testid="city-pond">
-          <ellipse cx="590" cy="250" rx="165" ry="105" className="fill-white opacity-0 transition-opacity duration-200 group-hover:opacity-20 group-focus-visible:opacity-20" />
-          <Pond3D />
-        </g>
-      </g>
-
-      {L.walkers.map((w, i) => (
-        <Walker key={i} {...w} />
-      ))}
-      <Cloud y={60} d={95} begin={0} />
-      <Cloud y={140} d={130} begin={-40} s={0.8} />
-      <Cloud y={30} d={110} begin={-70} s={1.1} />
-      <Bird y={90} d={34} begin={0} />
-      <Bird y={130} d={46} begin={-18} />
-      <rect x="-200" y="-200" width="1400" height="1400" fill="#070f2c" opacity="0.56" pointerEvents="none" />
-      <rect x="-200" y="-200" width="1400" height="1400" fill="url(#cm-vig)" pointerEvents="none" />
-      <Night L={L} />
-      <ForestNight x={L.forest[0]} y={L.forest[1]} s={L.forest[2]} />
-      <StadiumNight x={L.stadium[0]} y={L.stadium[1]} s={L.stadium[2]} />
-      <SchoolNight x={L.school[0]} y={L.school[1]} s={L.school[2]} />
-      <DigNight x={L.dig[0]} y={L.dig[1]} s={L.dig[2]} />
-      <ShopNight x={L.shop[0]} y={L.shop[1]} s={L.shop[2]} />
-    </svg>
+          {L.walkers.map((w, i) => (
+            <Walker key={i} {...w} />
+          ))}
+          {CLOUDS.map(([y, d, b, s], i) => (
+            <Cloud key={i} y={y} d={d * 1.8} begin={b} s={s} />
+          ))}
+          {BIRDS.map(([y, d, b], i) => (
+            <Bird key={i} y={y} d={d * 1.8} begin={b} />
+          ))}
+          <rect width={WORLD_W} height={WORLD_H} fill="#070f2c" opacity="0.56" pointerEvents="none" />
+          <Night L={L} />
+          <ForestNight x={L.forest[0]} y={L.forest[1]} s={L.forest[2]} />
+          <StadiumNight x={L.stadium[0]} y={L.stadium[1]} s={L.stadium[2]} />
+          <SchoolNight x={L.school[0]} y={L.school[1]} s={L.school[2]} />
+          <DigNight x={L.dig[0]} y={L.dig[1]} s={L.dig[2]} />
+          <ShopNight x={L.shop[0]} y={L.shop[1]} s={L.shop[2]} />
+        </svg>
+      </div>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_50%,transparent_60%,rgba(6,24,13,0.5))]" />
+      {hint && (
+        <div className="wl-hint pointer-events-none absolute inset-x-0 bottom-6 flex justify-center">
+          <span className="rounded-full bg-black/60 px-3 py-1 text-xs text-white backdrop-blur">Trascina per esplorare · tocca un luogo per entrare</span>
+        </div>
+      )}
+    </div>
   );
 }
