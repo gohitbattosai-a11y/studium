@@ -1,6 +1,6 @@
-IS_UPDATING = False
+IS_UPDATING = True
 
-UPDATE_TYPE = "pets"
+UPDATE_TYPE = "manutenzione"
 
 UPDATE_MESSAGES = {
     "pets": "Stiamo preparando i Pet e le Box. Torna tra poco!",
