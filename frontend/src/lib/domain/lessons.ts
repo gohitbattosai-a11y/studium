@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { readJson, writeJson } from "@/lib/utils/storage";
 import { MATH_LESSONS } from "./lessonsMath";
+import { ITALIAN_LESSONS } from "./lessonsItaliano";
 
 export type WidgetId = "line" | "dominoes" | "positional" | "order" | "algo" | "area" | "powprops" | "sieve" | "factor" | "gauss" | "cantor" | "abs" | "triangle" | "signs" | "parity" | "venn" | "drill";
 
@@ -15,6 +16,11 @@ export type Block =
   | { t: "flip"; title?: string; cards: { front: string; back: string }[] }
   | { t: "quiz"; question: string; options: string[]; answer: number; why: string }
   | { t: "reveal"; prompt: string; answer: string }
+  | { t: "sort"; title?: string; hint?: string; buckets: string[]; items: { text: string; bucket: number; why?: string }[] }
+  | { t: "mark"; title?: string; prompt: string; words: string[]; correct: number[]; why: string }
+  | { t: "fill"; title?: string; hint?: string; items: { before: string; after: string; options: string[]; answer: number; why: string }[] }
+  | { t: "punct"; title?: string; hint?: string; marks: string[]; items: { words: string[]; solution: string[]; why: string }[] }
+  | { t: "seq"; title?: string; hint?: string; items: string[]; why?: string }
   | { t: "lab"; w: WidgetId; title?: string; hint?: string; cfg?: Record<string, string | number> };
 
 export interface Subject {
@@ -45,7 +51,7 @@ export const SUBJECTS: Subject[] = [
   { id: "informatica", name: "Informatica", emoji: "💻", color: "#79C0FF" },
 ];
 
-export const LESSONS: Lesson[] = [...MATH_LESSONS];
+export const LESSONS: Lesson[] = [...MATH_LESSONS, ...ITALIAN_LESSONS];
 
 export const lessonsOf = (subject: string) => LESSONS.filter((l) => l.subject === subject);
 
