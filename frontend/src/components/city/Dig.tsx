@@ -1,8 +1,9 @@
-import { Brush, Hammer, Package, Radar, RefreshCw, Shovel, Zap, MapPin } from "lucide-react";
+import { Brush, Coffee, GlassWater, Hammer, Package, Radar, RefreshCw, Shovel, Zap, MapPin } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as RPointerEvent } from "react";
 import { CHISEL_COST, FINISH_AT, GH, GW, MOVE_COST, SITES, SONAR_COST, SONAR_LABEL, TOOLS, chiselAt, condition, digAt, isBroken, isExhausted, newField, progress, sonarAt, type Field, type Site, type Tool } from "@/lib/domain/fossils";
 import { FOSSIL_LIMIT, addFossil, getSandbox, useSandbox, type FossilCatch } from "@/lib/runtime/sandbox";
 import { sfx } from "@/lib/audio/sfx";
+import { levelOf, useCityShop, useShopActions } from "@/lib/domain/shop";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
 import FossilArt from "./FossilArt";
@@ -206,6 +207,11 @@ export default function Dig() {
   const [found, setFound] = useState<FossilCatch | null>(null);
   const [msg, setMsg] = useState<{ text: string; tone: string } | null>(null);
   const [, setVer] = useState(0);
+  const shop = useCityShop(true);
+  const shopAct = useShopActions();
+  const palaRef = useRef(0);
+  palaRef.current = levelOf(shop.data, "pala");
+  const energyItems = (shop.data?.items ?? []).filter((i) => i.category === "energia" && i.owned > 0);
 
   const F = useRef<Field | null>(null);
   const sandRef = useRef<HTMLCanvasElement>(null);
@@ -240,6 +246,10 @@ export default function Dig() {
 
   const start = useCallback((s: Site) => {
     F.current = newField(s);
+    if (palaRef.current > 0) {
+      F.current.maxEnergy = Math.round(F.current.maxEnergy * (1 + 0.15 * palaRef.current));
+      F.current.energy = F.current.maxEnergy;
+    }
     sparks.current = [];
     setSite(s);
     setPhase("dig");
@@ -450,6 +460,25 @@ export default function Dig() {
     if (site) start(site);
   };
 
+  const drink = async (id: string, energy: number) => {
+    const field = F.current;
+    if (!field || shopAct.use.isPending || (phase !== "dig" && phase !== "empty")) return;
+    try {
+      await shopAct.use.mutateAsync(id);
+    } catch {
+      return;
+    }
+    field.energy = energy === 0 ? field.maxEnergy : Math.min(field.maxEnergy, field.energy + energy);
+    if (phase === "empty") setPhase("dig");
+    setVer((v) => v + 1);
+  };
+
+  const energyButtons = energyItems.map((i) => (
+    <Button key={i.id} size="sm" variant="outline" disabled={shopAct.use.isPending} onClick={() => drink(i.id, i.energy ?? 0)} data-testid={`dig-${i.id}`}>
+      {i.id === "borraccia" ? <GlassWater /> : <Coffee />} {i.name} ×{i.owned}
+    </Button>
+  ));
+
   const cond = f ? condition(f.integrity) : condition(100);
   const prog = f ? Math.round((phase === "found" ? 1 : Math.min(1, progress(f) / FINISH_AT)) * 100) : 0;
   const blobs = useMemo(() => f?.blobs ?? [], [f, fieldId]);
@@ -524,6 +553,7 @@ export default function Dig() {
             <div className="h-full rounded-full bg-gradient-to-r from-[#e3b341] to-[#f0883e] transition-[width]" style={{ width: `${(f.energy / f.maxEnergy) * 100}%` }} />
           </div>
         </div>
+        {phase === "dig" && energyItems.length > 0 && <div className="flex gap-1.5">{energyButtons}</div>}
         <div className="rounded-full border border-white/20 bg-[#2a1d0f]/85 px-3 py-1.5 text-xs shadow-lg backdrop-blur" style={{ color: f.touched ? cond.color : "#d8cdb6" }}>
           {f.touched ? `Integrità ${Math.round(f.integrity)}% · ${cond.label}` : "Qualcosa è sepolto qui sotto…"}
         </div>
@@ -630,6 +660,7 @@ export default function Dig() {
             <p className="text-4xl">{phase === "broken" ? "💥" : "😮‍💨"}</p>
             <h3 className="mt-2 text-lg font-bold text-[#fff3c4]">{phase === "broken" ? "Il fossile è andato in frantumi" : "Energia finita"}</h3>
             <p className="mt-1 text-sm text-[#d8cdb6]">{phase === "broken" ? "Usa il sonar per trovarlo, il pennello vicino al reperto e scalpella al momento giusto." : "Il fossile è rimasto sepolto. Con il sonar sprechi meno fatica."}</p>
+            {phase === "empty" && energyItems.length > 0 && <div className="mt-4 flex flex-wrap justify-center gap-2">{energyButtons}</div>}
             <Button size="lg" className="mt-4 w-full" onClick={restart}>
               Nuovo scavo
             </Button>
