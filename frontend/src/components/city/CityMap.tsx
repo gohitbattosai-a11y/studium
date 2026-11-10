@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { Forest3D, ForestNight, Stadium3D, StadiumNight } from "./Landmarks";
+import { Dungeon3D, DungeonNight } from "./DungeonGate";
 import { Dig3D, DigNight, School3D, SchoolNight, Shop3D, ShopNight } from "./Places";
 import { WORLD, WORLD_H, WORLD_W, type House, type Pt } from "./cityWorld";
 import "./city.css";
 import "./wild.css";
 
-type View = "map" | "lobby" | "room" | "pond" | "forest" | "stadium" | "animals" | "school" | "dig" | "fossils" | "shop";
+type View = "map" | "lobby" | "room" | "pond" | "forest" | "stadium" | "animals" | "school" | "dig" | "fossils" | "shop" | "dungeon";
 
 const OAK = ["#1f5a2b", "#2f7a3a", "#3f9248", "#66bd68"];
 const CHERRY = ["#b84a7e", "#da6c9d", "#f19cc0", "#ffd3e5"];
@@ -1117,6 +1118,13 @@ export default function CityMap({ onGo }: { onGo: (v: View) => void }) {
             </g>
           </g>
 
+          <g transform={`translate(${L.dungeon[0]} ${L.dungeon[1]}) scale(${L.dungeon[2]})`}>
+            <g {...hot("dungeon", "Entra nella cripta")} className="group cursor-pointer outline-none" data-testid="city-dungeon">
+              <ellipse cx="0" cy="-30" rx="100" ry="80" className="fill-white opacity-0 transition-opacity duration-200 group-hover:opacity-20 group-focus-visible:opacity-20" />
+              <Dungeon3D />
+            </g>
+          </g>
+
           <g transform={`translate(${L.shop[0]} ${L.shop[1]}) scale(${L.shop[2]})`}>
             <g {...hot("shop", "Entra nel negozio")} className="group cursor-pointer outline-none" data-testid="city-shop">
               <ellipse cx="0" cy="-14" rx="64" ry="40" className="fill-white opacity-0 transition-opacity duration-200 group-hover:opacity-20 group-focus-visible:opacity-20" />
@@ -1153,6 +1161,7 @@ export default function CityMap({ onGo }: { onGo: (v: View) => void }) {
           <StadiumNight x={L.stadium[0]} y={L.stadium[1]} s={L.stadium[2]} />
           <SchoolNight x={L.school[0]} y={L.school[1]} s={L.school[2]} />
           <DigNight x={L.dig[0]} y={L.dig[1]} s={L.dig[2]} />
+          <DungeonNight x={L.dungeon[0]} y={L.dungeon[1]} s={L.dungeon[2]} />
           <ShopNight x={L.shop[0]} y={L.shop[1]} s={L.shop[2]} />
         </svg>
       </div>
