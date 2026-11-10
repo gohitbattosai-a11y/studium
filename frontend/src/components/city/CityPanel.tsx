@@ -114,7 +114,7 @@ export default function CityPanel({ me, onClose }: { me: Me; onClose: () => void
             {view === "forest" && <Forest />}
             {view === "school" && <School memberId={me.member_id} />}
             {view === "dig" && <Dig />}
-            {view === "shop" && <Shop city={data} participating={me.participating} />}
+            {view === "shop" && <Shop city={data} participating={me.participating} onExit={() => setView("map")} />}
             {view === "fossils" && <FossilRoom onAtrium={() => setView("lobby")} />}
             {view === "stadium" && <Stadium />}
             {view === "dungeon" && <Dungeon />}
