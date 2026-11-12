@@ -4,6 +4,8 @@ import { Anchor, ArrowRightLeft, Bell, Bug, Coffee, Coins, GlassWater, Landmark,
 import type { CityState } from "@/lib/domain/city";
 import { ANIMAL_BY_ID } from "@/lib/domain/animals";
 import { FOSSIL_BY_ID } from "@/lib/domain/fossils";
+import { useDungeonActions, useDungeonHub } from "@/lib/domain/dungeonApi";
+import { LootIcon } from "./dungeonItems";
 import { addBudget } from "@/lib/domain/football";
 import { fmtMoney, sellValue, spanFactor, useCityShop, useShopActions, type SellLine, type ShopCategory, type ShopItem, type ShopUpgrade } from "@/lib/domain/shop";
 import { discardFossil, releaseAnimal, releaseFish, useSandbox } from "@/lib/runtime/sandbox";
@@ -356,9 +358,11 @@ export default function Shop({ city, participating, onExit }: { city: CityState;
   const [station, setStation] = useState<Station | null>(null);
   const shop = useCityShop(true);
   const act = useShopActions();
+  const dg = useDungeonHub(true);
+  const dact = useDungeonActions();
   const sb = useSandbox();
   const data = shop.data;
-  const busy = act.sell.isPending || act.buy.isPending || act.upgrade.isPending || act.convert.isPending;
+  const busy = act.sell.isPending || act.buy.isPending || act.upgrade.isPending || act.convert.isPending || dact.sell.isPending;
   const th = THEMES.lake;
 
   const speciesById = useMemo(() => new Map(city.species.map((s) => [s.id, s])), [city.species]);
@@ -420,6 +424,21 @@ export default function Shop({ city, participating, onExit }: { city: CityState;
       const res = await act.sell.mutateAsync(rows.map((r) => r.line));
       rows.forEach((r) => r.remove());
       toast.success(`Venduto: +${fmtMoney(res.earned ?? 0)} monete`);
+    } catch {
+      return;
+    }
+  };
+
+  const lootRows = (dg.data?.items ?? []).flatMap((it) => {
+    const qty = dg.data?.bag[it.id] ?? 0;
+    return qty > 0 ? [{ ...it, qty }] : [];
+  });
+
+  const sellLoot = async (lines: { item_id: string; qty: number }[]) => {
+    if (lines.length === 0 || busy) return;
+    try {
+      const res = await dact.sell.mutateAsync(lines);
+      toast.success(`Venduto: +${fmtMoney(res.earned)} monete`);
     } catch {
       return;
     }
@@ -528,6 +547,42 @@ export default function Shop({ city, participating, onExit }: { city: CityState;
               )}
             </section>
           ))}
+          <section>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold tracking-wide text-[#F6D77A] uppercase">Bottino dei sotterranei</h3>
+              {lootRows.length > 1 && (
+                <Button size="sm" variant="outline" disabled={busy} onClick={() => sellLoot(lootRows.map((r) => ({ item_id: r.id, qty: r.qty })))}>
+                  Vendi tutto <Money n={lootRows.reduce((t, r) => t + r.value * r.qty, 0)} />
+                </Button>
+              )}
+            </div>
+            {lootRows.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-white/15 px-3 py-4 text-center text-xs text-[#bfae92]">Niente da vendere qui. Armature e armi si trovano nei sotterranei.</p>
+            ) : (
+              <ul className="space-y-1.5">
+                {lootRows.map((r) => (
+                  <li key={r.id} className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/25 px-3 py-2">
+                    <LootIcon shape={r.shape} color={r.color} size={38} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{r.name}</p>
+                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-[#bfae92]">
+                        <RarityTag rarity={r.rarity} />
+                        <span className="tabular-nums">×{r.qty}</span>
+                      </div>
+                    </div>
+                    {r.qty > 1 && (
+                      <Button size="sm" variant="outline" disabled={busy} onClick={() => sellLoot([{ item_id: r.id, qty: r.qty }])}>
+                        Tutti
+                      </Button>
+                    )}
+                    <Button size="sm" variant="secondary" disabled={busy} onClick={() => sellLoot([{ item_id: r.id, qty: 1 }])} data-testid="shop-sell-loot">
+                      <Money n={r.value} className="text-[#2a1a0e]" />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </div>
       );
     if (station === "tools")
