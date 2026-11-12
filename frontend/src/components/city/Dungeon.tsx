@@ -1,14 +1,13 @@
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Shield } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { COLS, DIE_INFO, FLOOR_NAMES, LAST_FLOOR, ROWS, act, chooseUpgrade, d6roll, lootCount, loadRecord, newRun, rollLoot, saveRecord, type Action, type Dir, type Ev, type Game, type Loot } from "@/lib/domain/dungeon";
-import { FOSSIL_BY_ID } from "@/lib/domain/fossils";
-import { FOSSIL_LIMIT, addFossil, getSandbox, useSandbox } from "@/lib/runtime/sandbox";
+import { COLS, DEF, DIE_INFO, DUNGEONS, ROWS, act, chooseUpgrade, isBoss, newRun, type Action, type DungeonId, type Dir, type Ev, type Game, type Theme } from "@/lib/domain/dungeon";
+import { useDungeonActions, useDungeonHub, type FinishResult } from "@/lib/domain/dungeonApi";
 import { sfx } from "@/lib/audio/sfx";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils/cn";
 import { RarityTag } from "./Bucket";
-import FossilArt from "./FossilArt";
 import { ENEMY_H, EnemyArt, HeroArt, PropArt, Torch } from "./dungeonArt";
+import { LootIcon, TrophyArt } from "./dungeonItems";
 import "./dungeon.css";
 
 const W = 640;
@@ -30,28 +29,135 @@ const at = (c: number, r: number) => {
   const s = S(r + 0.62);
   return { x: X(c + 0.5, r + 0.62), y: Y(r + 0.62), s };
 };
+const hash = (a: number, b: number) => {
+  const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453;
+  return x - Math.floor(x);
+};
 
-interface Theme {
-  bg: string;
-  wall: string;
-  wall2: string;
-  floorA: string;
-  floorB: string;
-  ceil: string;
-  flame: string;
-  glow: string;
+function Decor({ th }: { th: Theme }) {
+  const bx = X(0, 0);
+  const bw = X(COLS, 0) - bx;
+  const by = YT(0);
+  const bh = Y(0) - by;
+  if (th.decor === "crypt") {
+    return (
+      <g>
+        {[0.2, 0.5, 0.8].map((f) => (
+          <g key={f}>
+            <path d={`M${bx + bw * f - 20} ${by + bh} L${bx + bw * f - 20} ${by + bh * 0.42} Q${bx + bw * f} ${by + bh * 0.2} ${bx + bw * f + 20} ${by + bh * 0.42} L${bx + bw * f + 20} ${by + bh}Z`} fill="#000" opacity="0.5" />
+            <path d={`M${bx + bw * f - 20} ${by + bh * 0.42} Q${bx + bw * f} ${by + bh * 0.2} ${bx + bw * f + 20} ${by + bh * 0.42}`} stroke={th.glow} strokeWidth="1.6" fill="none" opacity="0.35" />
+            <circle cx={bx + bw * f} cy={by + bh * 0.62} r="6" fill="#e7e0c8" opacity="0.55" />
+            <rect x={bx + bw * f - 3} y={by + bh * 0.62 + 4} width="6" height="4" fill="#e7e0c8" opacity="0.45" />
+          </g>
+        ))}
+      </g>
+    );
+  }
+  if (th.decor === "cave") {
+    return (
+      <g>
+        {Array.from({ length: 9 }, (_, i) => {
+          const r = 0.3 + i * 0.75;
+          const left = i % 2 === 0;
+          const s = S(r);
+          const x = X(left ? 0 : COLS, r) + (left ? 8 : -8) * s;
+          const y = Y(r) - 6 * s;
+          return (
+            <g key={i} transform={`translate(${x} ${y}) scale(${s * 1.6})`}>
+              <circle cy="-8" r="18" fill={th.glow} opacity="0.14" className="dg-gleam" style={{ animationDelay: `${i * 0.3}s` }} />
+              <path d="M-2 0 L-2 -8 M5 0 L5 -5" stroke="#d1fae5" strokeWidth="2" />
+              <path d="M-9 -8 Q-2 -20 5 -8Z" fill={th.flame} />
+              <path d="M1 -5 Q6 -13 11 -5Z" fill={th.glow} />
+            </g>
+          );
+        })}
+        {[0.15, 0.4, 0.62, 0.85].map((f, i) => (
+          <path key={f} d={`M${bx + bw * f - 9} ${by} L${bx + bw * f} ${by + 26 + i * 6} L${bx + bw * f + 9} ${by}Z`} fill={th.wall2} stroke="#000" strokeOpacity="0.4" />
+        ))}
+      </g>
+    );
+  }
+  if (th.decor === "forge") {
+    return (
+      <g>
+        <rect x={bx + bw * 0.28} y={by + bh * 0.4} width={bw * 0.44} height={bh * 0.6} rx="8" fill="#0b0402" opacity="0.7" />
+        <rect x={bx + bw * 0.3} y={by + bh * 0.62} width={bw * 0.4} height={bh * 0.38} rx="6" fill={th.glow} opacity="0.5" className="dg-gleam" />
+        <ellipse cx={CX} cy={by + bh * 0.9} rx={bw * 0.3} ry={bh * 0.1} fill={th.flame} opacity="0.35" />
+        {[[1, 1], [3, 4], [2, 5], [4, 2], [0, 3]].map(([c, r], i) => {
+          const q = quad(c, r);
+          const cx = (q[0][0] + q[2][0]) / 2;
+          const cy = (q[0][1] + q[2][1]) / 2;
+          const sc = S(r + 0.5);
+          return <path key={i} d={`M${cx - 20 * sc} ${cy - 4 * sc} L${cx - 4 * sc} ${cy + 3 * sc} L${cx + 6 * sc} ${cy - 5 * sc} L${cx + 20 * sc} ${cy + 2 * sc}`} stroke={th.glow} strokeWidth={2.4 * sc} fill="none" opacity="0.85" className="dg-gleam" style={{ animationDelay: `${i * 0.4}s` }} />;
+        })}
+      </g>
+    );
+  }
+  if (th.decor === "lair") {
+    return (
+      <g>
+        {[0.22, 0.78].map((f) => (
+          <g key={f} className="dg-sway">
+            <path d={`M${bx + bw * f - 14} ${by + 6} L${bx + bw * f + 14} ${by + 6} L${bx + bw * f + 14} ${by + 70} L${bx + bw * f} ${by + 58} L${bx + bw * f - 14} ${by + 70}Z`} fill="#7f1d1d" stroke="#450a0a" />
+            <circle cx={bx + bw * f} cy={by + 28} r="6" fill="#fbbf24" opacity="0.8" />
+          </g>
+        ))}
+        {[[0.5, 0.9], [4.1, 0.6], [1.2, 4.2], [3.6, 5.2]].map(([c, r], i) => {
+          const s = S(r + 0.5);
+          return (
+            <g key={i} transform={`translate(${X(c, r + 0.5)} ${Y(r + 0.5)}) scale(${s * 1.3})`} opacity="0.9">
+              <ellipse rx="16" ry="5" fill="#000" opacity="0.3" />
+              <path d="M-12 -2 L8 -8 M-6 -6 L12 0 M-10 -8 L14 -4" stroke="#e7e0c8" strokeWidth="3.2" strokeLinecap="round" />
+              <circle cx="-14" cy="-6" r="4" fill="#e7e0c8" />
+            </g>
+          );
+        })}
+      </g>
+    );
+  }
+  if (th.decor === "web") {
+    const strand = (x: number, y: number, dir: number, k: string) => (
+      <g key={k} className="dg-sway" stroke="#e5e7eb" strokeWidth="1.1" fill="none" opacity="0.55">
+        <path d={`M${x} ${y} L${x + dir * 70} ${y + 8} M${x} ${y} L${x + dir * 60} ${y + 36} M${x} ${y} L${x + dir * 30} ${y + 60} M${x} ${y} L${x} ${y + 66}`} />
+        <path d={`M${x + dir * 22} ${y + 3} Q${x + dir * 26} ${y + 20} ${x + dir * 8} ${y + 22} M${x + dir * 42} ${y + 5} Q${x + dir * 44} ${y + 34} ${x + dir * 16} ${y + 40} M${x + dir * 60} ${y + 7} Q${x + dir * 60} ${y + 50} ${x + dir * 24} ${y + 58}`} />
+      </g>
+    );
+    return (
+      <g>
+        {strand(X(0, 0) + 2, YT(0) + 2, 1, "l")}
+        {strand(X(COLS, 0) - 2, YT(0) + 2, -1, "r")}
+        {[0.3, 0.68].map((f) => (
+          <g key={f} className="dg-sway">
+            <path d={`M${CX + (f - 0.5) * 200} ${YT(0)} L${CX + (f - 0.5) * 200} ${YT(0) + 60}`} stroke="#e5e7eb" strokeWidth="1" opacity="0.6" />
+            <ellipse cx={CX + (f - 0.5) * 200} cy={YT(0) + 78} rx="9" ry="17" fill="#e5e7eb" opacity="0.75" stroke="#9ca3af" />
+          </g>
+        ))}
+      </g>
+    );
+  }
+  return (
+    <g>
+      {[0.18, 0.42, 0.7, 0.88].map((f, i) => (
+        <g key={f} className="dg-gleam" style={{ animationDelay: `${i * 0.5}s` }}>
+          <ellipse cx={bx + bw * f} cy={by + bh * (0.5 + (i % 2) * 0.2)} rx="11" ry="15" fill={th.glow} opacity="0.55" stroke="#000" strokeOpacity="0.4" />
+          <ellipse cx={bx + bw * f - 3} cy={by + bh * (0.5 + (i % 2) * 0.2) - 5} rx="3" ry="5" fill="#fff" opacity="0.45" />
+        </g>
+      ))}
+      {[0.1, 0.55, 0.9].map((f) => (
+        <path key={f} d={`M${bx + bw * f} ${by} Q${bx + bw * f + 4} ${by + 30} ${bx + bw * f} ${by + 46}`} stroke={th.glow} strokeWidth="3" fill="none" opacity="0.5" />
+      ))}
+    </g>
+  );
 }
-const THEMES: Theme[] = [
-  { bg: "#0a0c18", wall: "#3a4263", wall2: "#2c3350", floorA: "#4d5478", floorB: "#444a6b", ceil: "#1a1f36", flame: "#fb923c", glow: "#fb923c" },
-  { bg: "#0a0c18", wall: "#3a4263", wall2: "#2c3350", floorA: "#4d5478", floorB: "#444a6b", ceil: "#1a1f36", flame: "#fb923c", glow: "#fb923c" },
-  { bg: "#06100c", wall: "#2c4b3e", wall2: "#213a30", floorA: "#3a6350", floorB: "#335644", ceil: "#10231c", flame: "#5eead4", glow: "#2dd4bf" },
-  { bg: "#120605", wall: "#5b2c26", wall2: "#47211c", floorA: "#6e3a30", floorB: "#62332a", ceil: "#2a0f0c", flame: "#fdba74", glow: "#f97316" },
-  { bg: "#0b0716", wall: "#3d2c61", wall2: "#2f2250", floorA: "#52407f", floorB: "#483872", ceil: "#160f2c", flame: "#d8b4fe", glow: "#a855f7" },
-];
 
-const Room = memo(function Room({ th }: { th: Theme }) {
+const Room = memo(function Room({ th, rune }: { th: Theme; rune?: string }) {
   const rows = Array.from({ length: ROWS }, (_, r) => r);
   const tiles = rows.flatMap((r) => Array.from({ length: COLS }, (_, c) => ({ c, r })));
+  const bx = X(0, 0);
+  const bw = X(COLS, 0) - bx;
+  const by = YT(0);
+  const bh = Y(0) - by;
+  const courses = [0.17, 0.34, 0.51, 0.68, 0.85];
   return (
     <g>
       <defs>
@@ -59,28 +165,80 @@ const Room = memo(function Room({ th }: { th: Theme }) {
           <stop offset="0" stopColor={th.bg} stopOpacity="0.75" />
           <stop offset="1" stopColor={th.bg} stopOpacity="0" />
         </linearGradient>
+        <pattern id="dg-brick" width="44" height="26" patternUnits="userSpaceOnUse">
+          <path d="M0 0.5H44M0 13.5H44M22 0V13M0 13V26M44 13V26" stroke="#000" strokeOpacity="0.32" fill="none" />
+          <path d="M1 1.5H21M23 14.5H43" stroke="#fff" strokeOpacity="0.08" />
+        </pattern>
+        <radialGradient id="dg-back" cx="0.5" cy="0.62" r="0.7">
+          <stop offset="0" stopColor={th.glow} stopOpacity="0.28" />
+          <stop offset="1" stopColor="#000" stopOpacity="0.5" />
+        </radialGradient>
+        <radialGradient id="dg-pool" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stopColor={th.glow} stopOpacity="0.3" />
+          <stop offset="1" stopColor={th.glow} stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="dg-sidel" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#000" stopOpacity="0.45" />
+          <stop offset="1" stopColor="#000" stopOpacity="0" />
+        </linearGradient>
       </defs>
       <rect width={W} height={H} fill={th.bg} />
       <polygon points={pts([[X(0, 0), YT(0)], [X(COLS, 0), YT(0)], [X(COLS, ROWS), YT(ROWS)], [X(0, ROWS), YT(ROWS)]])} fill={th.ceil} />
       {rows.map((r) => (
-        <line key={r} x1={X(0, r)} y1={YT(r)} x2={X(COLS, r)} y2={YT(r)} stroke="#000" strokeOpacity="0.4" strokeWidth={3 * S(r)} />
-      ))}
-      <rect x={X(0, 0)} y={YT(0)} width={X(COLS, 0) - X(0, 0)} height={Y(0) - YT(0)} fill={th.wall2} />
-      {[0.25, 0.5, 0.75].map((f) => (
-        <line key={f} x1={X(0, 0)} x2={X(COLS, 0)} y1={YT(0) + (Y(0) - YT(0)) * f} y2={YT(0) + (Y(0) - YT(0)) * f} stroke="#000" strokeOpacity="0.22" strokeWidth="2" />
-      ))}
-      {rows.map((r) => (
         <g key={r}>
-          <polygon points={pts([[X(0, r), YT(r)], [X(0, r + 1), YT(r + 1)], [X(0, r + 1), Y(r + 1)], [X(0, r), Y(r)]])} fill={r % 2 ? th.wall2 : th.wall} />
-          <polygon points={pts([[X(COLS, r), YT(r)], [X(COLS, r + 1), YT(r + 1)], [X(COLS, r + 1), Y(r + 1)], [X(COLS, r), Y(r)]])} fill={r % 2 ? th.wall : th.wall2} />
-          <polygon points={pts([[X(0, r), YT(r)], [X(0, r + 1), YT(r + 1)], [X(0, r + 1), Y(r + 1)], [X(0, r), Y(r)]])} fill="#000" opacity="0.18" />
-          <line x1={X(0, r)} y1={YT(r)} x2={X(0, r)} y2={Y(r)} stroke="#000" strokeOpacity="0.45" strokeWidth={3 * S(r)} />
-          <line x1={X(COLS, r)} y1={YT(r)} x2={X(COLS, r)} y2={Y(r)} stroke="#000" strokeOpacity="0.45" strokeWidth={3 * S(r)} />
+          <line x1={X(0, r)} y1={YT(r)} x2={X(COLS, r)} y2={YT(r)} stroke="#000" strokeOpacity="0.5" strokeWidth={4 * S(r)} />
+          <line x1={X(0, r)} y1={YT(r) + 3 * S(r)} x2={X(COLS, r)} y2={YT(r) + 3 * S(r)} stroke="#fff" strokeOpacity="0.05" strokeWidth={2 * S(r)} />
         </g>
       ))}
-      {tiles.map(({ c, r }) => (
-        <polygon key={`${c}-${r}`} points={pts(quad(c, r))} fill={(c + r) % 2 ? th.floorA : th.floorB} stroke="#000" strokeOpacity="0.3" strokeWidth="1.2" />
-      ))}
+      <rect x={bx} y={by} width={bw} height={bh} fill={th.wall2} />
+      <rect x={bx} y={by} width={bw} height={bh} fill="url(#dg-brick)" />
+      <rect x={bx} y={by} width={bw} height={bh} fill="url(#dg-back)" />
+      <Decor th={th} />
+      {rows.map((r) => {
+        const L = (f: number): [number, number, number, number] => [X(0, r), YT(r) + (Y(r) - YT(r)) * f, X(0, r + 1), YT(r + 1) + (Y(r + 1) - YT(r + 1)) * f];
+        const R = (f: number): [number, number, number, number] => [X(COLS, r), YT(r) + (Y(r) - YT(r)) * f, X(COLS, r + 1), YT(r + 1) + (Y(r + 1) - YT(r + 1)) * f];
+        return (
+          <g key={r}>
+            <polygon points={pts([[X(0, r), YT(r)], [X(0, r + 1), YT(r + 1)], [X(0, r + 1), Y(r + 1)], [X(0, r), Y(r)]])} fill={r % 2 ? th.wall2 : th.wall} />
+            <polygon points={pts([[X(COLS, r), YT(r)], [X(COLS, r + 1), YT(r + 1)], [X(COLS, r + 1), Y(r + 1)], [X(COLS, r), Y(r)]])} fill={r % 2 ? th.wall : th.wall2} />
+            <polygon points={pts([[X(0, r), YT(r)], [X(0, r + 1), YT(r + 1)], [X(0, r + 1), Y(r + 1)], [X(0, r), Y(r)]])} fill="#000" opacity="0.18" />
+            {courses.map((f) => {
+              const a = L(f);
+              const b = R(f);
+              return (
+                <g key={f}>
+                  <line x1={a[0]} y1={a[1]} x2={a[2]} y2={a[3]} stroke="#000" strokeOpacity="0.3" strokeWidth={2 * S(r)} />
+                  <line x1={b[0]} y1={b[1]} x2={b[2]} y2={b[3]} stroke="#000" strokeOpacity="0.3" strokeWidth={2 * S(r)} />
+                </g>
+              );
+            })}
+            <line x1={X(0, r)} y1={YT(r)} x2={X(0, r)} y2={Y(r)} stroke="#000" strokeOpacity="0.5" strokeWidth={3 * S(r)} />
+            <line x1={X(COLS, r)} y1={YT(r)} x2={X(COLS, r)} y2={Y(r)} stroke="#000" strokeOpacity="0.5" strokeWidth={3 * S(r)} />
+          </g>
+        );
+      })}
+      {tiles.map(({ c, r }) => {
+        const q = quad(c, r);
+        const h = hash(c, r);
+        const cx = (q[0][0] + q[2][0]) / 2;
+        const cy = (q[0][1] + q[2][1]) / 2;
+        const sc = S(r + 0.5);
+        return (
+          <g key={`${c}-${r}`}>
+            <polygon points={pts(q)} fill={(c + r) % 2 ? th.floorA : th.floorB} stroke="#000" strokeOpacity="0.32" strokeWidth="1.2" />
+            <polygon points={pts(q)} fill="#fff" opacity={0.02 + h * 0.05} />
+            <line x1={q[3][0]} y1={q[3][1]} x2={q[2][0]} y2={q[2][1]} stroke="#fff" strokeOpacity="0.08" strokeWidth={1.6 * sc} />
+            {h > 0.8 && <path d={`M${cx - 14 * sc} ${cy - 3 * sc} L${cx - 2 * sc} ${cy + 2 * sc} L${cx + 4 * sc} ${cy - 4 * sc} L${cx + 15 * sc} ${cy + 3 * sc}`} stroke="#000" strokeOpacity="0.4" strokeWidth={1.3 * sc} fill="none" />}
+            {h < 0.1 && <circle cx={cx} cy={cy} r={3 * sc} fill="#000" opacity="0.2" />}
+          </g>
+        );
+      })}
+      {rune && (
+        <g className="dg-portal" style={{ transformOrigin: `${CX}px ${Y(3.5)}px` }}>
+          <ellipse cx={CX} cy={Y(3.5)} rx={150 * S(3.5)} ry={52 * S(3.5)} fill="none" stroke={rune} strokeWidth={3 * S(3.5)} opacity="0.55" />
+          <ellipse cx={CX} cy={Y(3.5)} rx={108 * S(3.5)} ry={36 * S(3.5)} fill="none" stroke={rune} strokeWidth={2 * S(3.5)} strokeDasharray="6 7" opacity="0.5" />
+        </g>
+      )}
       <rect x="0" y={YT(0)} width={W} height={Y(4) - YT(0)} fill="url(#dg-fog)" pointerEvents="none" />
       {[1, 3, 5].flatMap((r) =>
         [0, COLS].map((c) => {
@@ -89,7 +247,8 @@ const Room = memo(function Room({ th }: { th: Theme }) {
           const y = HOR + 90 * s;
           return (
             <g key={`${c}-${r}`}>
-              <circle cx={x} cy={y - 14 * s} r={95 * s} fill={th.glow} opacity="0.1" />
+              <circle cx={x} cy={y - 14 * s} r={110 * s} fill={th.glow} opacity="0.12" />
+              <ellipse cx={X(c === 0 ? 0.9 : COLS - 0.9, r + 0.5)} cy={Y(r + 0.5)} rx={90 * s} ry={30 * s} fill="url(#dg-pool)" />
               <g transform={`translate(${x} ${y}) scale(${s * 1.35})`}>
                 <Torch flame={th.flame} />
               </g>
@@ -97,6 +256,23 @@ const Room = memo(function Room({ th }: { th: Theme }) {
           );
         }),
       )}
+      {Array.from({ length: 14 }, (_, i) => (
+        <circle key={i} className="dg-mote" cx={90 + hash(i, 1) * 460} cy={220 + hash(i, 2) * 260} r={1 + hash(i, 3) * 1.6} fill={th.mote} style={{ animationDelay: `${hash(i, 4) * 7}s`, animationDuration: `${5 + hash(i, 5) * 5}s` }} />
+      ))}
+    </g>
+  );
+});
+
+const Vignette = memo(function Vignette() {
+  return (
+    <g pointerEvents="none">
+      <defs>
+        <radialGradient id="dg-vig" cx="0.5" cy="0.5" r="0.75">
+          <stop offset="0.55" stopColor="#000" stopOpacity="0" />
+          <stop offset="1" stopColor="#000" stopOpacity="0.6" />
+        </radialGradient>
+      </defs>
+      <rect width={W} height={H} fill="url(#dg-vig)" />
     </g>
   );
 });
@@ -175,7 +351,8 @@ function DiceFace({ v, color = "#f8fafc", className }: { v: number; color?: stri
 }
 
 function Scene({ g, fx, shake, onTap }: { g: Game; fx: Fx[]; shake: number; onTap: (c: number, r: number) => void }) {
-  const th = THEMES[Math.min(g.floor, LAST_FLOOR)];
+  const def = DUNGEONS[g.dungeon];
+  const th = def.themes[Math.min(g.floor, def.last)];
   const danger = useMemo(() => {
     const s = new Set<string>();
     g.enemies.forEach((e) => e.tele?.cells.forEach(([c, r]) => s.add(`${c},${r}`)));
@@ -221,11 +398,11 @@ function Scene({ g, fx, shake, onTap }: { g: Game; fx: Fx[]; shake: number; onTa
         <g transform={`translate(${a.x} ${a.y}) scale(${a.s * 1.12})`}>
           <g key={`${e.c},${e.r}`} className="dg-hop">
             <EnemyArt kind={e.kind} exh={e.exh > 0} />
-            {e.frozen > 0 && <ellipse cx="0" cy={-h / 2} rx={e.kind === "golem" ? 58 : 32} ry={h / 2 + 6} fill="#7dd3fc" opacity="0.4" stroke="#e0f2fe" strokeWidth="2" />}
+            {e.frozen > 0 && <ellipse cx="0" cy={-h / 2} rx={isBoss(e.kind) ? 58 : 32} ry={h / 2 + 6} fill="#7dd3fc" opacity="0.4" stroke="#e0f2fe" strokeWidth="2" />}
           </g>
           <g transform={`translate(0 ${-h - 16})`}>
             <rect x="-20" y="-3" width="40" height="6" rx="3" fill="#000" opacity="0.6" />
-            <rect x="-20" y="-3" width={Math.max(0, (40 * e.hp) / e.max)} height="6" rx="3" fill={e.kind === "golem" ? "#f97316" : "#ef4444"} />
+            <rect x="-20" y="-3" width={Math.max(0, (40 * e.hp) / e.max)} height="6" rx="3" fill={isBoss(e.kind) ? "#f97316" : "#ef4444"} />
           </g>
         </g>
       ),
@@ -250,7 +427,7 @@ function Scene({ g, fx, shake, onTap }: { g: Game; fx: Fx[]; shake: number; onTa
   return (
     <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" className="block size-full" data-testid="dungeon-scene">
       <g key={shake} className={shake ? "dg-shake" : undefined}>
-        <Room th={th} />
+        <Room th={th} rune={g.floor === g.last ? def.accent : undefined} />
         {danger.map(([c, r]) => (
           <g key={`d${c}-${r}`} className="dg-pulse">
             <polygon points={pts(quad(c, r))} fill="#ef4444" opacity="0.5" stroke="#fecaca" strokeWidth="2" />
@@ -262,6 +439,7 @@ function Scene({ g, fx, shake, onTap }: { g: Game; fx: Fx[]; shake: number; onTa
         {fx.map((f) => (
           <FxView key={f.id} f={f} />
         ))}
+        <Vignette />
         {tiles.map(({ c, r }) => (
           <polygon key={`t${c}-${r}`} points={pts(quad(c, r))} fill="transparent" onPointerDown={() => onTap(c, r)} className="cursor-pointer" />
         ))}
@@ -276,8 +454,10 @@ const Pad = ({ onClick, children, label }: { onClick: () => void; children: Reac
   </button>
 );
 
-export default function Dungeon() {
-  const sb = useSandbox();
+export default function Dungeon({ dungeonId, onExit }: { dungeonId: DungeonId; onExit: () => void }) {
+  const def = DUNGEONS[dungeonId];
+  const hub = useDungeonHub();
+  const actions = useDungeonActions();
   const [g, setG] = useState<Game | null>(null);
   const [fx, setFx] = useState<Fx[]>([]);
   const [roll, setRoll] = useState<{ id: number; die: string; v: number; t?: string } | null>(null);
@@ -285,12 +465,21 @@ export default function Dungeon() {
   const [banner, setBanner] = useState<{ id: number; text: string } | null>(null);
   const [runId, setRunId] = useState(0);
   const [endShown, setEndShown] = useState(false);
-  const [rec, setRec] = useState(loadRecord);
+  const [starting, setStarting] = useState(false);
   const [rolling, setRolling] = useState(false);
-  const [loot, setLoot] = useState<{ roll: number; items: Loot[]; lost: number } | null>(null);
+  const [revealed, setRevealed] = useState(false);
+  const [result, setResult] = useState<FinishResult | null>(null);
+  const [failed, setFailed] = useState(false);
   const gRef = useRef<Game | null>(null);
   const lock = useRef(0);
-  const saved = useRef(false);
+  const finished = useRef(false);
+  const token = useRef("");
+
+  const items = useMemo(() => Object.fromEntries((hub.data?.items ?? []).map((i) => [i.id, i])), [hub.data?.items]);
+  const trophies = useMemo(() => Object.fromEntries((hub.data?.trophies ?? []).map((t) => [t.id, t])), [hub.data?.trophies]);
+  const info = hub.data?.dungeons.find((d) => d.id === dungeonId);
+  const bagLeft = hub.data ? hub.data.bag_limit - Object.values(hub.data.bag).reduce((a, b) => a + b, 0) : 0;
+  const myTrophies = (hub.data?.trophies ?? []).filter((t) => t.dungeon === dungeonId);
 
   const dispatch = useCallback((a: Action) => {
     const cur = gRef.current;
@@ -304,17 +493,30 @@ export default function Dungeon() {
     setG(nx);
   }, []);
 
-  const start = () => {
-    const ng = newRun();
-    gRef.current = ng;
-    saved.current = false;
-    setG(ng);
-    setFx([]);
-    setRoll(null);
-    setLoot(null);
-    setEndShown(false);
-    setRunId((n) => n + 1);
-    sfx("open");
+  const start = async () => {
+    if (starting) return;
+    setStarting(true);
+    try {
+      const r = await actions.start.mutateAsync(dungeonId);
+      token.current = r.run_id;
+      const ng = newRun(dungeonId);
+      gRef.current = ng;
+      finished.current = false;
+      setG(ng);
+      setFx([]);
+      setRoll(null);
+      setResult(null);
+      setFailed(false);
+      setRevealed(false);
+      setRolling(false);
+      setEndShown(false);
+      setRunId((n) => n + 1);
+      sfx("open");
+    } catch {
+      sfx("error");
+    } finally {
+      setStarting(false);
+    }
   };
 
   useEffect(() => {
@@ -344,7 +546,7 @@ export default function Dungeon() {
 
   useEffect(() => {
     if (!g || g.phase !== "play" || g.turn !== 0) return;
-    setBanner({ id: Date.now(), text: g.floor === LAST_FLOOR ? "Il Guardiano ti attende" : `Piano ${g.floor} · ${FLOOR_NAMES[g.floor]}` });
+    setBanner({ id: Date.now(), text: g.floor === g.last ? `${DEF[def.boss].name} ti attende` : `Piano ${g.floor} · ${def.floorNames[g.floor]}` });
     const t = window.setTimeout(() => setBanner(null), 1600);
     return () => window.clearTimeout(t);
   }, [g?.floor, runId]);
@@ -354,9 +556,15 @@ export default function Dungeon() {
       setEndShown(false);
       return;
     }
-    if (!saved.current) {
-      saved.current = true;
-      setRec(saveRecord(g));
+    if (!finished.current) {
+      finished.current = true;
+      actions.finish
+        .mutateAsync({ run_id: token.current, cleared: g.cleared, won: g.over === "won", kills: g.killsBy as Record<string, number> })
+        .then((r) => {
+          setResult(r);
+          if (g.cleared < 1) setRevealed(true);
+        })
+        .catch(() => setFailed(true));
     }
     const t = window.setTimeout(() => setEndShown(true), g.over === "won" ? 1300 : 900);
     return () => window.clearTimeout(t);
@@ -403,29 +611,21 @@ export default function Dungeon() {
     if (!g || rolling) return;
     setRolling(true);
     sfx("swoosh");
-    const v = d6roll();
     window.setTimeout(() => {
-      const items = rollLoot(g, v);
-      const kept: Loot[] = [];
-      let lost = 0;
-      for (const it of items) {
-        if (getSandbox().fossilBag.length >= FOSSIL_LIMIT) {
-          lost++;
-          continue;
-        }
-        addFossil(it.id, it.integrity);
-        kept.push(it);
-      }
-      setLoot({ roll: v, items: kept, lost });
       setRolling(false);
-      sfx(kept.length ? "success" : "error");
-    }, 800);
+      setRevealed(true);
+      sfx("success");
+    }, 900);
   };
 
-  const bagLeft = FOSSIL_LIMIT - sb.fossilBag.length;
   const h = g?.hero;
   const pct = h ? Math.max(0, Math.min(100, (h.hp / h.max) * 100)) : 0;
   const rollColor = roll && roll.die !== "d6" ? DIE_INFO[roll.die as keyof typeof DIE_INFO]?.color : "#f8fafc";
+  const lootCounts = useMemo(() => {
+    const m: Record<string, number> = {};
+    result?.loot.forEach((i) => (m[i] = (m[i] ?? 0) + 1));
+    return Object.entries(m);
+  }, [result]);
 
   return (
     <div className="absolute inset-0 flex touch-none flex-col bg-[#05040a] pt-12 text-[#E6EDF3] select-none" data-testid="dungeon">
@@ -438,7 +638,7 @@ export default function Dungeon() {
             </span>
           </div>
           <div className="shrink-0 text-right text-[11px] leading-tight text-[#C9D1D9]">
-            <div className="font-semibold">Piano {g.floor}/{LAST_FLOOR}</div>
+            <div className="font-semibold">Piano {g.floor}/{g.last}</div>
             <div>
               ⚔ {h.atk >= 0 ? `+${h.atk}` : h.atk} · 🧱 {h.armor} · ☠ {g.kills}
             </div>
@@ -485,22 +685,36 @@ export default function Dungeon() {
 
         {!g && (
           <div className="absolute inset-0 grid touch-pan-y place-items-center overflow-y-auto p-3">
-            <div className="dg-pop w-full max-w-md rounded-2xl bg-[#13102a]/95 p-4 ring-1 ring-white/15 backdrop-blur" data-testid="dungeon-intro">
-              <h2 className="text-center text-xl font-extrabold text-amber-200">🎲 Cripta dei Dadi</h2>
-              <p className="mt-1 text-center text-xs text-[#C9D1D9]">Quattro piani, un Guardiano di pietra e tanti dadi da lanciare.</p>
+            <div className="dg-pop w-full max-w-md rounded-2xl bg-[#13102a]/95 p-4 ring-1 ring-white/15 backdrop-blur" data-testid="dungeon-intro" style={{ boxShadow: `0 0 40px ${def.accent}33` }}>
+              <h2 className="text-center text-xl font-extrabold text-amber-200">{def.name}</h2>
+              <p className="mt-1 text-center text-xs text-[#C9D1D9]">{def.blurb}</p>
               <ul className="mt-3 space-y-1.5 text-xs text-[#E6EDF3]">
                 <li>🗡 Cammina contro un nemico per colpirlo: tiri un d6 (con il 6 è critico, danno doppio).</li>
                 <li>🟥 Le caselle rosse sono attacchi in arrivo: spostati prima del turno dopo!</li>
                 <li>🛡 Lo Scudo (Spazio) para tutto per un turno e rimanda 2 danni a chi ti colpisce.</li>
                 <li>🎲 Raccogli i dadi speciali: {Object.values(DIE_INFO).map((d) => d.icon).join(" ")} e lanciali dai tuoi slot (tasti 1-5).</li>
-                <li>🚪 Sconfiggi tutti per aprire la porta, poi scegli un potenziamento.</li>
-                <li>🦴 In premio: reliquie fossili per il tuo zaino. Più piani superi, più sono rare.</li>
+                <li>🛒 In premio: pezzi di armatura, armi e gemme da vendere al negozio, e trofei dei mostri da esporre.</li>
               </ul>
+              {myTrophies.length > 0 && (
+                <div className="mt-3 flex items-center justify-center gap-1.5">
+                  {myTrophies.map((t) => {
+                    const own = hub.data?.mine.includes(t.id);
+                    return (
+                      <span key={t.id} title={own ? t.name : "Trofeo da trovare"} className={cn("grid size-9 place-items-center rounded-lg bg-white/5 ring-1 ring-white/10", !own && "opacity-30 grayscale")}>
+                        <TrophyArt art={t.art} color={t.color} size={28} />
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
               <p className="mt-2 text-center text-[11px] text-[#9AA4B2]">
-                Record: piano {rec.best}/{LAST_FLOOR} · vittorie {rec.wins} · zaino fossili: {bagLeft} posti liberi
+                Record: piano {info?.record.best ?? 0}/{def.last} · vittorie {info?.record.wins ?? 0} · posti liberi nello zaino: {bagLeft}
               </p>
-              <Button size="lg" className="mt-3 w-full" onClick={start} data-testid="dungeon-start">
-                Entra nella cripta
+              <Button size="lg" className="mt-3 w-full" onClick={start} disabled={starting || !hub.data} data-testid="dungeon-start">
+                {starting ? "Si apre il portone…" : `Entra: ${def.name}`}
+              </Button>
+              <Button size="sm" variant="ghost" className="mt-1 w-full" onClick={onExit}>
+                Torna all'ingresso
               </Button>
             </div>
           </div>
@@ -509,54 +723,84 @@ export default function Dungeon() {
         {g?.phase === "end" && endShown && (
           <div className="absolute inset-0 grid touch-pan-y place-items-center overflow-y-auto bg-black/75 p-3 backdrop-blur-sm" data-testid="dungeon-end">
             <div className="dg-pop w-full max-w-md rounded-2xl bg-[#13102a]/95 p-4 text-center ring-1 ring-white/15">
-              <h2 className={cn("text-xl font-extrabold", g.over === "won" ? "text-amber-200" : "text-rose-300")}>{g.over === "won" ? "🏆 Guardiano sconfitto!" : "💀 Sei caduto nella cripta"}</h2>
+              <h2 className={cn("text-xl font-extrabold", g.over === "won" ? "text-amber-200" : "text-rose-300")}>{g.over === "won" ? `🏆 ${DEF[def.boss].name} sconfitto!` : `💀 Sei caduto: ${def.name}`}</h2>
               <p className="mt-1 text-xs text-[#C9D1D9]">
-                Piani superati: {g.cleared}/{LAST_FLOOR} · Nemici sconfitti: {g.kills}
+                Piani superati: {g.cleared}/{g.last} · Nemici sconfitti: {g.kills}
               </p>
-              {!loot && g.cleared < 1 && <p className="mt-3 text-sm text-[#C9D1D9]">Nessun tesoro: supera almeno un piano per portare a casa qualcosa.</p>}
-              {!loot && g.cleared >= 1 && (
+              {failed && <p className="mt-3 text-sm text-rose-300">Non sono riuscito a salvare il bottino. Controlla la connessione.</p>}
+              {!failed && g.cleared < 1 && !result && <p className="mt-3 text-sm text-[#C9D1D9]">Conto il bottino…</p>}
+              {!failed && g.cleared < 1 && result && !result.trophies.length && <p className="mt-3 text-sm text-[#C9D1D9]">Nessun tesoro: supera almeno un piano per portare a casa qualcosa.</p>}
+              {!failed && g.cleared >= 1 && !revealed && (
                 <div className="mt-3">
-                  <p className="text-sm text-[#E6EDF3]">Il forziere del bottino si apre con un dado: più alto tiri, più reliquie rare ottieni.</p>
-                  <p className="mt-1 text-[11px] text-[#9AA4B2]">Reliquie garantite: da {lootCount(g, 1)} a {lootCount(g, 6)} · posti liberi nello zaino: {bagLeft}</p>
+                  <p className="text-sm text-[#E6EDF3]">Il forziere si apre con un dado: il bottino è già nel tuo zaino, ma il tiro decide cosa hai trovato.</p>
                   <div className="mt-3 flex items-center justify-center gap-3">
                     <DiceFace v={rolling ? 6 : 1} className={cn("size-16", rolling && "dg-roll")} color="#fde68a" />
-                    <Button size="lg" onClick={claim} disabled={rolling} data-testid="dungeon-claim">
-                      Lancia il dado del tesoro
+                    <Button size="lg" onClick={claim} disabled={rolling || !result} data-testid="dungeon-claim">
+                      {result ? "Lancia il dado del tesoro" : "Conto il bottino…"}
                     </Button>
                   </div>
                 </div>
               )}
-              {loot && (
+              {revealed && result && (
                 <div className="mt-3">
-                  <div className="flex items-center justify-center gap-2 text-sm">
-                    <DiceFace v={loot.roll} className="size-9" color="#fde68a" />
-                    <span>Hai tirato {loot.roll}!</span>
-                  </div>
+                  {g.cleared >= 1 && (
+                    <div className="flex items-center justify-center gap-2 text-sm">
+                      <DiceFace v={result.roll} className="size-9" color="#fde68a" />
+                      <span>Hai tirato {result.roll}!</span>
+                    </div>
+                  )}
+                  {result.trophies.length > 0 && (
+                    <div className="mt-2 grid gap-2">
+                      {result.trophies.map((id, i) => {
+                        const t = trophies[id];
+                        if (!t) return null;
+                        return (
+                          <div key={id} style={{ animationDelay: `${i * 160}ms`, borderColor: t.color }} className="dg-pop flex items-center gap-3 rounded-xl border bg-white/5 p-2 text-left">
+                            <TrophyArt art={t.art} color={t.color} size={52} />
+                            <div className="min-w-0 flex-1">
+                              <div className="text-[10px] font-bold tracking-wide text-amber-300 uppercase">Nuovo trofeo!</div>
+                              <div className="truncate text-sm font-semibold">{t.name}</div>
+                              <div className="text-[11px] text-[#9AA4B2]">Ora è esposto nella Sala dei Cacciatori.</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                   <div className="mt-2 grid gap-2">
-                    {loot.items.map((it, i) => {
-                      const sp = FOSSIL_BY_ID[it.id];
+                    {lootCounts.map(([id, n], i) => {
+                      const it = items[id];
+                      if (!it) return null;
                       return (
-                        <div key={i} style={{ animationDelay: `${i * 140}ms` }} className="dg-pop flex items-center gap-3 rounded-xl bg-white/5 p-2 text-left ring-1 ring-white/10">
-                          <FossilArt s={sp} bare className="h-14 w-16 shrink-0" />
+                        <div key={id} style={{ animationDelay: `${(i + result.trophies.length) * 140}ms` }} className="dg-pop flex items-center gap-3 rounded-xl bg-white/5 p-2 text-left ring-1 ring-white/10">
+                          <LootIcon shape={it.shape} color={it.color} size={46} />
                           <div className="min-w-0 flex-1">
-                            <div className="truncate text-sm font-semibold">{sp.name}</div>
+                            <div className="truncate text-sm font-semibold">
+                              {it.name}
+                              {n > 1 ? ` ×${n}` : ""}
+                            </div>
                             <div className="mt-0.5 flex items-center gap-2">
-                              <RarityTag rarity={sp.rarity} />
-                              <span className="text-[11px] text-[#9AA4B2]">integrità {it.integrity}%</span>
+                              <RarityTag rarity={it.rarity} />
+                              <span className="text-[11px] text-[#9AA4B2]">vale {it.value} monete</span>
                             </div>
                           </div>
                         </div>
                       );
                     })}
                   </div>
-                  {loot.lost > 0 && <p className="mt-2 text-xs text-amber-300">Zaino pieno: {loot.lost} reliquie perse. Svuotalo prima della prossima discesa!</p>}
-                  {loot.items.length > 0 && <p className="mt-2 text-[11px] text-[#9AA4B2]">Le reliquie sono nel tuo zaino fossili: donale al museo o vendile.</p>}
+                  {result.lost > 0 && <p className="mt-2 text-xs text-amber-300">Zaino pieno: {result.lost} oggetti persi. Vendili al negozio prima della prossima discesa!</p>}
+                  {result.loot.length > 0 && <p className="mt-2 text-[11px] text-[#9AA4B2]">Trovi tutto nello zaino del dungeon: puoi venderlo nel negozio della città.</p>}
                 </div>
               )}
-              {(loot || g.cleared < 1) && (
-                <Button size="lg" variant="outline" className="mt-3 w-full" onClick={start} data-testid="dungeon-retry">
-                  Scendi di nuovo
-                </Button>
+              {(failed || (g.cleared < 1 && result) || revealed) && (
+                <div className="mt-3 grid gap-2">
+                  <Button size="lg" onClick={start} disabled={starting} data-testid="dungeon-retry">
+                    Scendi di nuovo
+                  </Button>
+                  <Button size="lg" variant="outline" onClick={onExit}>
+                    Torna all'ingresso
+                  </Button>
+                </div>
               )}
             </div>
           </div>
