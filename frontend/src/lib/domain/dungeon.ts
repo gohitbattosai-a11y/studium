@@ -1,13 +1,11 @@
-import { FOSSILS } from "@/lib/domain/fossils";
-import type { Rarity } from "@/lib/api/types";
-
 export const COLS = 5;
 export const ROWS = 7;
-export const LAST_FLOOR = 4;
 
 export type Dir = "n" | "s" | "e" | "w";
 export type DieKind = "fire" | "ice" | "heal" | "bolt";
-export type EnemyKind = "slime" | "skeleton" | "bat" | "wraith" | "golem";
+export type EnemyKind = "slime" | "skeleton" | "bat" | "wraith" | "golem" | "goblin" | "orc" | "warlord" | "spider" | "broodmother";
+export type DungeonId = "covo" | "cripta" | "antro";
+export type Ai = "slime" | "skeleton" | "bat" | "wraith" | "rush" | "boss";
 export type PropKind = "chest" | "spikes" | "potion" | "die" | "door";
 export type Cell = [number, number];
 
@@ -70,6 +68,9 @@ export interface Ev {
   cells?: Cell[];
 }
 export interface Game {
+  dungeon: DungeonId;
+  last: number;
+  killsBy: Partial<Record<EnemyKind, number>>;
   floor: number;
   phase: "play" | "upgrade" | "end";
   over: null | "dead" | "won";
@@ -88,28 +89,117 @@ export interface Game {
 }
 export type Action = { t: "move"; d: Dir } | { t: "guard" } | { t: "die"; i: number };
 
-export const DEF: Record<EnemyKind, { hp: number; dmg: number; name: string }> = {
-  slime: { hp: 4, dmg: 2, name: "Slime" },
-  skeleton: { hp: 6, dmg: 3, name: "Scheletro" },
-  bat: { hp: 3, dmg: 2, name: "Pipistrello" },
-  wraith: { hp: 5, dmg: 3, name: "Spettro" },
-  golem: { hp: 34, dmg: 0, name: "Golem di pietra" },
+export const DEF: Record<EnemyKind, { hp: number; dmg: number; name: string; ai: Ai }> = {
+  slime: { hp: 4, dmg: 2, name: "Slime", ai: "slime" },
+  skeleton: { hp: 6, dmg: 3, name: "Scheletro", ai: "skeleton" },
+  bat: { hp: 3, dmg: 2, name: "Pipistrello", ai: "bat" },
+  wraith: { hp: 5, dmg: 3, name: "Spettro", ai: "wraith" },
+  golem: { hp: 34, dmg: 0, name: "Golem di pietra", ai: "boss" },
+  goblin: { hp: 5, dmg: 3, name: "Goblin", ai: "rush" },
+  orc: { hp: 13, dmg: 5, name: "Orco", ai: "slime" },
+  warlord: { hp: 38, dmg: 0, name: "Re Orco", ai: "boss" },
+  spider: { hp: 4, dmg: 2, name: "Ragno", ai: "bat" },
+  broodmother: { hp: 44, dmg: 0, name: "Regina Ragno", ai: "boss" },
 };
+
+export const isBoss = (k: EnemyKind) => DEF[k].ai === "boss";
+
+export interface Theme {
+  bg: string;
+  wall: string;
+  wall2: string;
+  floorA: string;
+  floorB: string;
+  ceil: string;
+  flame: string;
+  glow: string;
+  mote: string;
+  decor: "crypt" | "cave" | "forge" | "lair" | "web" | "hive";
+}
+
+export interface DungeonDef {
+  id: DungeonId;
+  name: string;
+  tag: string;
+  blurb: string;
+  last: number;
+  floorNames: string[];
+  floors: EnemyKind[][];
+  boss: EnemyKind;
+  minion: EnemyKind;
+  themes: Theme[];
+  accent: string;
+}
+
+const T = (bg: string, wall: string, wall2: string, floorA: string, floorB: string, ceil: string, flame: string, glow: string, mote: string, decor: Theme["decor"]): Theme => ({ bg, wall, wall2, floorA, floorB, ceil, flame, glow, mote, decor });
+
+export const DUNGEONS: Record<DungeonId, DungeonDef> = {
+  covo: {
+    id: "covo",
+    name: "Covo dei Goblin",
+    tag: "Facile",
+    blurb: "Tre piani di tane scavate nella roccia, goblin veloci e un Re Orco con la corona.",
+    last: 3,
+    floorNames: ["", "Tane di fango", "Fucina degli orchi", "Trono del Re Orco"],
+    floors: [[], ["goblin", "goblin", "goblin"], ["goblin", "goblin", "orc", "goblin"]],
+    boss: "warlord",
+    minion: "goblin",
+    accent: "#84cc16",
+    themes: [
+      T("#0c0f06", "#4a5a2c", "#3a4723", "#6a6a3c", "#5f5f36", "#1b2310", "#fdba74", "#f59e0b", "#d9f99d", "lair"),
+      T("#0c0f06", "#4a5a2c", "#3a4723", "#6a6a3c", "#5f5f36", "#1b2310", "#fdba74", "#f59e0b", "#d9f99d", "lair"),
+      T("#140a05", "#6b4a2a", "#563a20", "#7d5a36", "#70502f", "#25160a", "#fb923c", "#ea580c", "#fdba74", "forge"),
+      T("#120606", "#6b2a24", "#541f1b", "#7a3b30", "#6e342a", "#240c0a", "#fca5a5", "#dc2626", "#fecaca", "forge"),
+    ],
+  },
+  cripta: {
+    id: "cripta",
+    name: "Cripta dei Dadi",
+    tag: "Media",
+    blurb: "Quattro piani di sepolcri, dadi magici e il Guardiano di pietra.",
+    last: 4,
+    floorNames: ["", "Cripta", "Caverna fungina", "Forgia di lava", "Sala del Guardiano"],
+    floors: [[], ["slime", "slime", "skeleton"], ["slime", "skeleton", "skeleton", "bat"], ["skeleton", "bat", "bat", "wraith", "slime"]],
+    boss: "golem",
+    minion: "slime",
+    accent: "#a855f7",
+    themes: [
+      T("#0a0c18", "#3a4263", "#2c3350", "#4d5478", "#444a6b", "#1a1f36", "#fb923c", "#fb923c", "#c7d2fe", "crypt"),
+      T("#0a0c18", "#3a4263", "#2c3350", "#4d5478", "#444a6b", "#1a1f36", "#fb923c", "#fb923c", "#c7d2fe", "crypt"),
+      T("#06100c", "#2c4b3e", "#213a30", "#3a6350", "#335644", "#10231c", "#5eead4", "#2dd4bf", "#99f6e4", "cave"),
+      T("#120605", "#5b2c26", "#47211c", "#6e3a30", "#62332a", "#2a0f0c", "#fdba74", "#f97316", "#fdba74", "forge"),
+      T("#0b0716", "#3d2c61", "#2f2250", "#52407f", "#483872", "#160f2c", "#d8b4fe", "#a855f7", "#e9d5ff", "crypt"),
+    ],
+  },
+  antro: {
+    id: "antro",
+    name: "Antro del Ragno",
+    tag: "Difficile",
+    blurb: "Cinque piani di ragnatele e veleno, fino alla Regina che aspetta nel buio.",
+    last: 5,
+    floorNames: ["", "Ingresso tessuto", "Gallerie velenose", "Camera delle uova", "Pozzo di seta", "Nido della Regina"],
+    floors: [[], ["spider", "spider", "bat"], ["spider", "spider", "spider", "slime"], ["spider", "spider", "wraith", "bat", "spider"], ["spider", "spider", "spider", "wraith", "wraith", "bat"]],
+    boss: "broodmother",
+    minion: "spider",
+    accent: "#f43f5e",
+    themes: [
+      T("#0a0a10", "#3b3b4d", "#2c2c3b", "#4a4a5e", "#41415a", "#16161f", "#e5e7eb", "#94a3b8", "#e2e8f0", "web"),
+      T("#0a0a10", "#3b3b4d", "#2c2c3b", "#4a4a5e", "#41415a", "#16161f", "#e5e7eb", "#94a3b8", "#e2e8f0", "web"),
+      T("#070f09", "#2a4a2a", "#203a20", "#3a5f36", "#325430", "#0f2210", "#bef264", "#84cc16", "#d9f99d", "web"),
+      T("#100a0a", "#4d2c34", "#3d2229", "#63404a", "#583842", "#220f14", "#fda4af", "#f43f5e", "#fecdd3", "hive"),
+      T("#0b0a14", "#34285a", "#281f48", "#463a78", "#3e336c", "#140f2a", "#c4b5fd", "#8b5cf6", "#ddd6fe", "web"),
+      T("#12050a", "#5a1f33", "#451828", "#6e2a42", "#622539", "#240a14", "#fb7185", "#e11d48", "#fda4af", "hive"),
+    ],
+  },
+};
+
+export const DUNGEON_LIST: DungeonDef[] = [DUNGEONS.covo, DUNGEONS.cripta, DUNGEONS.antro];
 
 export const DIE_INFO: Record<DieKind, { name: string; icon: string; text: string; color: string }> = {
   fire: { name: "Dado di fuoco", icon: "🔥", text: "Brucia tutti i nemici nella tua colonna davanti a te (d6+2)", color: "#f97316" },
   ice: { name: "Dado di ghiaccio", icon: "❄️", text: "Congela tutti i nemici per 2 turni (3 con 5 o 6)", color: "#38bdf8" },
   heal: { name: "Dado di cura", icon: "💚", text: "Ti cura di d6+3", color: "#4ade80" },
   bolt: { name: "Dado del fulmine", icon: "⚡", text: "Colpisce fino a 3 nemici a caso (d6+1)", color: "#facc15" },
-};
-
-export const FLOOR_NAMES = ["", "Cripta", "Caverna fungina", "Forgia di lava", "Sala del Guardiano"];
-
-const FLOORS: Record<number, EnemyKind[]> = {
-  1: ["slime", "slime", "skeleton"],
-  2: ["slime", "skeleton", "skeleton", "bat"],
-  3: ["skeleton", "bat", "bat", "wraith", "slime"],
-  4: ["golem"],
 };
 
 const UPGRADES: (Upgrade & { max: number })[] = [
@@ -151,6 +241,7 @@ const makeEnemy = (g: Game, kind: EnemyKind, c: number, r: number): Enemy => ({ 
 
 export function genFloor(g: Game) {
   const f = g.floor;
+  const def = DUNGEONS[g.dungeon];
   g.enemies = [];
   g.props = [];
   g.hero.c = 2;
@@ -171,10 +262,10 @@ export function genFloor(g: Game) {
   const prop = (kind: PropKind, cell: Cell | null, die?: DieKind) => {
     if (cell) g.props.push({ id: ++g.nid, kind, c: cell[0], r: cell[1], die });
   };
-  if (f === LAST_FLOOR) {
+  if (f === g.last) {
     g.door = -1;
     taken.add("2,1");
-    g.enemies.push(makeEnemy(g, "golem", 2, 1));
+    g.enemies.push(makeEnemy(g, def.boss, 2, 1));
     prop("potion", free(3, 5));
     prop("die", free(3, 5), pick(DIE_KINDS));
     prop("die", free(3, 5), pick(DIE_KINDS));
@@ -183,7 +274,7 @@ export function genFloor(g: Game) {
   g.door = rnd(COLS);
   taken.add(`${g.door},0`);
   g.props.push({ id: ++g.nid, kind: "door", c: g.door, r: 0 });
-  FLOORS[f].forEach((k) => {
+  def.floors[f].forEach((k) => {
     const cell = free(1, 4);
     if (cell) g.enemies.push(makeEnemy(g, k, cell[0], cell[1]));
   });
@@ -194,8 +285,11 @@ export function genFloor(g: Game) {
   if (f > 1) prop("potion", free(2, 5));
 }
 
-export function newRun(): Game {
+export function newRun(dungeon: DungeonId): Game {
   const g: Game = {
+    dungeon,
+    last: DUNGEONS[dungeon].last,
+    killsBy: {},
     floor: 1,
     phase: "play",
     over: null,
@@ -222,13 +316,14 @@ const dropDie = (g: Game, c: number, r: number) => {
 
 const kill = (g: Game, e: Enemy) => {
   g.kills++;
-  txt(g, e.c, e.r, e.kind === "golem" ? "Distrutto!" : "Sconfitto!");
+  g.killsBy[e.kind] = (g.killsBy[e.kind] ?? 0) + 1;
+  txt(g, e.c, e.r, isBoss(e.kind) ? "Distrutto!" : "Sconfitto!");
   if (g.hero.vamp && g.hero.hp > 0) {
     g.hero.hp = Math.min(g.hero.max, g.hero.hp + g.hero.vamp);
     push(g, { k: "heal", c: g.hero.c, r: g.hero.r, v: g.hero.vamp });
   }
-  if (e.kind === "golem") {
-    g.cleared = LAST_FLOOR;
+  if (isBoss(e.kind)) {
+    g.cleared = g.last;
     g.over = "won";
     g.phase = "end";
     push(g, { k: "win", c: e.c, r: e.r });
@@ -387,7 +482,7 @@ const doDie = (g: Game, i: number): Res => {
   if (k === "ice") {
     push(g, { k: "ice", c: h.c, r: h.r });
     alive.forEach((e) => {
-      e.frozen = e.kind === "golem" ? (v >= 5 ? 2 : 1) : v >= 5 ? 3 : 2;
+      e.frozen = isBoss(e.kind) ? (v >= 5 ? 2 : 1) : v >= 5 ? 3 : 2;
       e.tele = null;
       txt(g, e.c, e.r, "Congelato");
     });
@@ -455,7 +550,7 @@ const fireTele = (g: Game, e: Enemy) => {
   push(g, { k: "slam", c: e.c, r: e.r, cells: t.cells });
   if (t.cells.some(([c, r]) => c === g.hero.c && r === g.hero.r)) hurt(g, t.dmg);
   e.tele = null;
-  if (e.kind === "golem") e.exh = 1;
+  if (isBoss(e.kind)) e.exh = 1;
 };
 
 const bossTurn = (g: Game, e: Enemy) => {
@@ -471,7 +566,7 @@ const bossTurn = (g: Game, e: Enemy) => {
     for (let r = 1; r <= 3; r++) for (let c = 0; c < COLS; c++) if (freeCell(g, c, r)) spots.push([c, r]);
     for (let n = 0; n < 2 && spots.length; n++) {
       const [c, r] = spots.splice(rnd(spots.length), 1)[0];
-      g.enemies.push(makeEnemy(g, "slime", c, r));
+      g.enemies.push(makeEnemy(g, DUNGEONS[g.dungeon].minion, c, r));
     }
     txt(g, e.c, e.r, "Evoca!");
     return;
@@ -483,8 +578,19 @@ const bossTurn = (g: Game, e: Enemy) => {
 
 const enemyTurn = (g: Game, e: Enemy) => {
   const dmg = DEF[e.kind].dmg;
-  if (e.kind === "golem") return bossTurn(g, e);
-  if (e.kind === "slime") {
+  const ai = DEF[e.kind].ai;
+  if (ai === "boss") return bossTurn(g, e);
+  if (ai === "rush") {
+    for (let n = 0; n < 2 && !g.over && e.hp > 0; n++) {
+      if (adjacent(g, e)) {
+        hurt(g, dmg, e);
+        break;
+      }
+      step(g, e);
+    }
+    return;
+  }
+  if (ai === "slime") {
     if (adjacent(g, e)) hurt(g, dmg, e);
     else if (e.cd === 0) {
       step(g, e);
@@ -492,12 +598,12 @@ const enemyTurn = (g: Game, e: Enemy) => {
     } else e.cd = 0;
     return;
   }
-  if (e.kind === "skeleton") {
+  if (ai === "skeleton") {
     if (adjacent(g, e)) hurt(g, dmg, e);
     else step(g, e);
     return;
   }
-  if (e.kind === "bat") {
+  if (ai === "bat") {
     for (let n = 0; n < 2 && !g.over && e.hp > 0; n++) {
       if (adjacent(g, e)) {
         hurt(g, dmg, e);
@@ -588,55 +694,4 @@ export function chooseUpgrade(g0: Game, id: string): Game | null {
   return g;
 }
 
-const ODDS: Record<Rarity, number> = { comune: 52, non_comune: 28, raro: 14, epico: 4.5, leggendario: 1.2, mitico: 0.3 };
-const RARITIES: Rarity[] = ["comune", "non_comune", "raro", "epico", "leggendario", "mitico"];
-
-export interface Loot {
-  id: string;
-  integrity: number;
-}
-
-export const lootCount = (g: Game, roll: number) => {
-  if (g.cleared < 1) return 0;
-  return 1 + (g.cleared >= 3 ? 1 : 0) + (g.over === "won" ? 1 : 0) + (roll >= 5 ? 1 : 0);
-};
-
-export function rollLoot(g: Game, roll: number): Loot[] {
-  const boost = 0.08 * g.cleared + 0.06 * (roll - 1) + (g.over === "won" ? 0.25 : 0);
-  const w = (r: Rarity) => ODDS[r] * Math.pow(1 + boost, RARITIES.indexOf(r));
-  const total = RARITIES.reduce((s, r) => s + w(r), 0);
-  return Array.from({ length: lootCount(g, roll) }, () => {
-    let x = Math.random() * total;
-    const rarity = RARITIES.find((r) => (x -= w(r)) <= 0) ?? "comune";
-    const sp = pick(FOSSILS.filter((f) => f.rarity === rarity));
-    const base = g.over === "won" ? 80 : 60;
-    return { id: sp.id, integrity: Math.min(100, Math.round(base + Math.random() * (g.over === "won" ? 20 : 40))) };
-  });
-}
-
 export const d6roll = d6;
-
-const KEY = "studium-dungeon";
-export interface DungeonRecord {
-  best: number;
-  wins: number;
-  runs: number;
-}
-export const loadRecord = (): DungeonRecord => {
-  try {
-    const p = JSON.parse(localStorage.getItem(KEY) ?? "{}") as Partial<DungeonRecord>;
-    return { best: p.best ?? 0, wins: p.wins ?? 0, runs: p.runs ?? 0 };
-  } catch {
-    return { best: 0, wins: 0, runs: 0 };
-  }
-};
-export const saveRecord = (g: Game): DungeonRecord => {
-  const r = loadRecord();
-  const next = { best: Math.max(r.best, g.cleared), wins: r.wins + (g.over === "won" ? 1 : 0), runs: r.runs + 1 };
-  try {
-    localStorage.setItem(KEY, JSON.stringify(next));
-  } catch {
-    /* storage non disponibile */
-  }
-  return next;
-};
