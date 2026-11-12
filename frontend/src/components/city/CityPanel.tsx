@@ -20,18 +20,21 @@ import School from "./School";
 import Dig from "./Dig";
 import Shop from "./Shop";
 import Dungeon from "./Dungeon";
+import DungeonHub from "./DungeonHub";
+import { DUNGEONS, type DungeonId } from "@/lib/domain/dungeon";
 import FossilRoom from "./FossilRoom";
 import { ROOMS } from "./rooms";
 
-type View = "map" | "lobby" | "room" | "pond" | "forest" | "stadium" | "animals" | "school" | "dig" | "fossils" | "shop" | "dungeon";
+type View = "map" | "lobby" | "room" | "pond" | "forest" | "stadium" | "animals" | "school" | "dig" | "fossils" | "shop" | "dungeon" | "dungeonrun";
 
-const TITLES: Record<View, string> = { map: "Città", lobby: "Museo", room: "Sala", pond: "Il Pond", forest: "La Foresta", stadium: "Lo Stadio", animals: "Sala animali", school: "Scuola", dig: "Sito di scavo", fossils: "Sala fossili", shop: "Negozio", dungeon: "Cripta dei Dadi" };
-const PARENT: Record<View, View | null> = { map: null, lobby: "map", room: "lobby", pond: "map", forest: "map", stadium: "map", animals: "lobby", school: "map", dig: "map", fossils: "lobby", shop: "map", dungeon: "map" };
-const SCAPE: Record<View, string> = { map: "city-map", lobby: "city-hall", room: "city-water", pond: "city-pond", forest: "city-forest", stadium: "city-map", animals: "city-meadow", school: "city-hall", dig: "city-meadow", fossils: "city-hall", shop: "city-hall", dungeon: "city-hall" };
-const BACK_LABEL: Record<View, string> = { map: "Esci", lobby: "Città", room: "Atrio", pond: "Città", forest: "Città", stadium: "Città", animals: "Atrio", school: "Città", dig: "Città", fossils: "Atrio", shop: "Città", dungeon: "Città" };
+const TITLES: Record<View, string> = { map: "Città", lobby: "Museo", room: "Sala", pond: "Il Pond", forest: "La Foresta", stadium: "Lo Stadio", animals: "Sala animali", school: "Scuola", dig: "Sito di scavo", fossils: "Sala fossili", shop: "Negozio", dungeon: "Sotterranei", dungeonrun: "Sotterranei" };
+const PARENT: Record<View, View | null> = { map: null, lobby: "map", room: "lobby", pond: "map", forest: "map", stadium: "map", animals: "lobby", school: "map", dig: "map", fossils: "lobby", shop: "map", dungeon: "map", dungeonrun: "dungeon" };
+const SCAPE: Record<View, string> = { map: "city-map", lobby: "city-hall", room: "city-water", pond: "city-pond", forest: "city-forest", stadium: "city-map", animals: "city-meadow", school: "city-hall", dig: "city-meadow", fossils: "city-hall", shop: "city-hall", dungeon: "city-hall", dungeonrun: "city-hall" };
+const BACK_LABEL: Record<View, string> = { map: "Esci", lobby: "Città", room: "Atrio", pond: "Città", forest: "Città", stadium: "Città", animals: "Atrio", school: "Città", dig: "Città", fossils: "Atrio", shop: "Città", dungeon: "Città", dungeonrun: "Ingresso" };
 
 export default function CityPanel({ me, onClose }: { me: Me; onClose: () => void }) {
   const [view, setView] = useState<View>("map");
+  const [dungeonId, setDungeonId] = useState<DungeonId>("cripta");
   const [roomId, setRoomId] = useState(ROOMS[0].id);
   const [bucketOpen, setBucketOpen] = useState(false);
   const city = useCity(true);
@@ -85,7 +88,7 @@ export default function CityPanel({ me, onClose }: { me: Me; onClose: () => void
           <ArrowLeft /> {BACK_LABEL[view]}
         </Button>
         <h1 className="min-w-0 flex-1 truncate text-center text-sm font-semibold sm:text-base" data-testid="city-title">
-          {view === "room" ? roomName : TITLES[view]}
+          {view === "room" ? roomName : view === "dungeonrun" ? DUNGEONS[dungeonId].name : TITLES[view]}
         </h1>
         <Button variant="ghost" size="icon-lg" onClick={onClose} aria-label="Chiudi la città" data-testid="city-close">
           <X />
@@ -117,7 +120,8 @@ export default function CityPanel({ me, onClose }: { me: Me; onClose: () => void
             {view === "shop" && <Shop city={data} participating={me.participating} onExit={() => setView("map")} />}
             {view === "fossils" && <FossilRoom onAtrium={() => setView("lobby")} />}
             {view === "stadium" && <Stadium />}
-            {view === "dungeon" && <Dungeon />}
+            {view === "dungeon" && <DungeonHub memberId={me.member_id} onRun={(id) => { setDungeonId(id); setView("dungeonrun"); }} onShop={() => setView("shop")} />}
+            {view === "dungeonrun" && <Dungeon key={dungeonId} dungeonId={dungeonId} onExit={() => setView("dungeon")} />}
             <Bucket open={bucketOpen} onClose={() => setBucketOpen(false)} city={data} />
           </>
         )}
