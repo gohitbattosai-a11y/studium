@@ -1119,8 +1119,8 @@ export default function CityMap({ onGo }: { onGo: (v: View) => void }) {
           </g>
 
           <g transform={`translate(${L.dungeon[0]} ${L.dungeon[1]}) scale(${L.dungeon[2]})`}>
-            <g {...hot("dungeon", "Entra nella cripta")} className="group cursor-pointer outline-none" data-testid="city-dungeon">
-              <ellipse cx="0" cy="-30" rx="100" ry="80" className="fill-white opacity-0 transition-opacity duration-200 group-hover:opacity-20 group-focus-visible:opacity-20" />
+            <g {...hot("dungeon", "Entra nei sotterranei")} className="group cursor-pointer outline-none" data-testid="city-dungeon">
+              <ellipse cx="0" cy="-40" rx="124" ry="100" className="fill-white opacity-0 transition-opacity duration-200 group-hover:opacity-20 group-focus-visible:opacity-20" />
               <Dungeon3D />
             </g>
           </g>
