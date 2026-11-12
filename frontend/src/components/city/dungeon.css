@@ -243,3 +243,90 @@
     animation: none;
   }
 }
+
+.dg-hop-loop {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: dg-hoploop 0.8s ease-in-out infinite;
+}
+.dg-mote {
+  animation: dg-mote 7s linear infinite;
+  pointer-events: none;
+}
+.dg-sway {
+  transform-box: fill-box;
+  transform-origin: 50% 0%;
+  animation: dg-sway 4.5s ease-in-out infinite;
+}
+.dg-fog {
+  animation: dg-fog 14s linear infinite;
+  pointer-events: none;
+}
+.dg-portal {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: dg-portal 3.4s ease-in-out infinite;
+}
+.dg-gleam {
+  animation: dg-gleam 2.6s ease-in-out infinite;
+}
+@keyframes dg-hoploop {
+  0%,
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  50% {
+    transform: translateY(-5px) scale(0.97, 1.04);
+  }
+}
+@keyframes dg-mote {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-120px);
+    opacity: 0;
+  }
+}
+@keyframes dg-sway {
+  50% {
+    transform: rotate(2.4deg);
+  }
+}
+@keyframes dg-fog {
+  from {
+    transform: translateX(-40px);
+  }
+  to {
+    transform: translateX(40px);
+  }
+}
+@keyframes dg-portal {
+  50% {
+    transform: scale(1.08);
+    opacity: 0.7;
+  }
+}
+@keyframes dg-gleam {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dg-hop-loop,
+  .dg-mote,
+  .dg-sway,
+  .dg-fog,
+  .dg-portal,
+  .dg-gleam {
+    animation: none;
+  }
+}
