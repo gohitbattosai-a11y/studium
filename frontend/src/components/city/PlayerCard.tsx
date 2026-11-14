@@ -71,16 +71,18 @@ export default function PlayerCard({ p, size = 1, color = "#2563eb", selected, d
   const box = { width: 100 * size, height: 136 * size };
   const filter = selected ? "drop-shadow(0 0 3px #E3B341) drop-shadow(0 0 7px #E3B341)" : p.ovr >= 91 ? "drop-shadow(0 0 6px #f0abfcaa) drop-shadow(0 0 10px #fbbf2488)" : p.ovr >= 85 ? "drop-shadow(0 0 5px #67e8f9aa)" : "drop-shadow(0 2px 3px #0008)";
   const loaned = !!p.loan;
-  const inner = <span className="block size-full [&>svg]:block [&>svg]:size-full" style={{ filter, opacity: dim ? 0.55 : 1 }} dangerouslySetInnerHTML={{ __html: svg }} />;
+  const inner = <span className="block size-full [&>svg]:block [&>svg]:size-full" style={{ filter, opacity: dim || p.out ? 0.5 : 1 }} dangerouslySetInnerHTML={{ __html: svg }} />;
   return onClick ? (
     <button type="button" onClick={onClick} className="relative block shrink-0 outline-none transition-transform hover:-translate-y-0.5" style={box} aria-label={p.name}>
       {inner}
       {loaned && <span className="st-loan-tag">PRESTITO</span>}
+      {p.out && <span className="absolute -top-1 -right-1 z-10 flex items-center gap-0.5 rounded-full bg-black/85 px-1.5 py-0.5 text-[10px] font-bold text-white ring-1 ring-white/30">{p.out.kind === "red" ? "🟥" : "🚑"}{p.out.left}</span>}
     </button>
   ) : (
     <div className="relative shrink-0" style={box}>
       {inner}
       {loaned && <span className="st-loan-tag">PRESTITO</span>}
+      {p.out && <span className="absolute -top-1 -right-1 z-10 flex items-center gap-0.5 rounded-full bg-black/85 px-1.5 py-0.5 text-[10px] font-bold text-white ring-1 ring-white/30">{p.out.kind === "red" ? "🟥" : "🚑"}{p.out.left}</span>}
     </div>
   );
 }
