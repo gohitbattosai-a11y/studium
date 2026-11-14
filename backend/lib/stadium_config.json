@@ -1,0 +1,100 @@
+{
+  "league": {
+    "matchIntervalMinutes": 30,
+    "alignToInterval": true,
+    "startDelayMinutes": 10,
+    "minTeams": 4,
+    "maxTeams": 12,
+    "defaultTeams": 8,
+    "maxLeaguesOwned": 2,
+    "fillWithBots": true,
+    "walkoverGoals": 3,
+    "autoSubstitute": false,
+    "schedulerTickSeconds": 15,
+    "winPoints": 3,
+    "drawPoints": 1,
+    "rewards": {
+      "win": 4.0,
+      "draw": 1.5,
+      "loss": 0.5,
+      "perGoal": 0.2,
+      "walkoverWin": 3.0,
+      "prizes": [20, 12, 8, 5]
+    }
+  },
+  "serieA": {
+    "teams": 10,
+    "matchIntervalMinutes": 30,
+    "maxHumans": 8,
+    "relegated": 2,
+    "seasonBreakMinutes": 60,
+    "rewards": {
+      "win": 7.0,
+      "draw": 2.5,
+      "loss": 1.0,
+      "perGoal": 0.4,
+      "walkoverWin": 5.0,
+      "prizes": [80, 45, 25, 15]
+    }
+  },
+  "discipline": {
+    "injuryChance": 0.012,
+    "injuryMatches": [1, 4],
+    "redChance": 0.035,
+    "redMatches": [1, 2],
+    "yellowsForBan": 3,
+    "yellowBanMatches": 1
+  },
+  "squad": {
+    "max": 24,
+    "packOverflow": 12,
+    "randomPlayerMaxOvr": 92,
+    "trainingOvrMargin": 3
+  },
+  "packs": {
+    "pityThreshold": 8,
+    "pityMinRarity": "epico",
+    "list": [
+      {"id": "bronzo", "name": "Pack Bronzo", "price": 25, "cards": 3, "tone": "#CD7F32", "blurb": "Tre carte per cominciare.", "guarantee": null, "exclusiveChance": 0, "odds": {"comune": 70, "non_comune": 24, "raro": 5.5, "epico": 0.5}},
+      {"id": "argento", "name": "Pack Argento", "price": 70, "cards": 4, "tone": "#C0C8D4", "blurb": "Quattro carte, buone chance di un raro.", "guarantee": null, "exclusiveChance": 0.01, "odds": {"comune": 30, "non_comune": 45, "raro": 20, "epico": 4.5, "leggendario": 0.5}},
+      {"id": "oro", "name": "Pack Oro", "price": 160, "cards": 5, "tone": "#F5C542", "blurb": "Cinque carte, almeno un raro garantito.", "guarantee": "raro", "exclusiveChance": 0.06, "odds": {"non_comune": 30, "raro": 45, "epico": 20, "leggendario": 4.5, "mitico": 0.5}},
+      {"id": "elite", "name": "Pack Élite", "price": 380, "cards": 5, "tone": "#38BDF8", "blurb": "Almeno un epico garantito e giocatori esclusivi.", "guarantee": "epico", "exclusiveChance": 0.18, "odds": {"raro": 35, "epico": 45, "leggendario": 17, "mitico": 3}},
+      {"id": "icone", "name": "Pack Icone", "price": 800, "cards": 3, "tone": "#E879F9", "blurb": "Tre carte da leggenda: solo qui trovi le Icone.", "guarantee": "leggendario", "exclusiveChance": 0.45, "odds": {"epico": 40, "leggendario": 50, "mitico": 10}}
+    ],
+    "rarityOvr": {
+      "comune": [52, 66],
+      "non_comune": [66, 75],
+      "raro": [75, 80],
+      "epico": [81, 85],
+      "leggendario": [86, 92],
+      "mitico": [93, 97]
+    },
+    "exclusive": [
+      {"id": "x-maradona", "name": "Diego Maradona", "pos": "ATT", "ovr": 97, "rarity": "mitico", "card": "icona", "skin": "#e0a97f", "hair": "#1a1410", "style": 2},
+      {"id": "x-pele", "name": "Pelé", "pos": "ATT", "ovr": 97, "rarity": "mitico", "card": "icona", "skin": "#5c3a21", "hair": "#1a1a1a", "style": 0},
+      {"id": "x-cruyff", "name": "Johan Cruyff", "pos": "ATT", "ovr": 95, "rarity": "mitico", "card": "icona", "skin": "#f1c9a5", "hair": "#6b4423", "style": 3},
+      {"id": "x-zidane", "name": "Zinedine Zidane", "pos": "CEN", "ovr": 96, "rarity": "mitico", "card": "icona", "skin": "#c68a5e", "hair": "#1a1410", "style": 4},
+      {"id": "x-maldini", "name": "Paolo Maldini", "pos": "DIF", "ovr": 95, "rarity": "mitico", "card": "icona", "skin": "#e0a97f", "hair": "#3b2a1a", "style": 1},
+      {"id": "x-baresi", "name": "Franco Baresi", "pos": "DIF", "ovr": 94, "rarity": "mitico", "card": "icona", "skin": "#e0a97f", "hair": "#3b2a1a", "style": 2},
+      {"id": "x-buffon", "name": "Gianluigi Buffon", "pos": "POR", "ovr": 95, "rarity": "mitico", "card": "icona", "skin": "#f1c9a5", "hair": "#1a1410", "style": 1},
+      {"id": "x-yashin", "name": "Lev Yashin", "pos": "POR", "ovr": 94, "rarity": "mitico", "card": "icona", "skin": "#f1c9a5", "hair": "#6b4423", "style": 3},
+      {"id": "x-ronaldo", "name": "Ronaldo il Fenomeno", "pos": "ATT", "ovr": 96, "rarity": "mitico", "card": "icona", "skin": "#c68a5e", "hair": "#1a1410", "style": 4},
+      {"id": "x-baggio", "name": "Roberto Baggio", "pos": "ATT", "ovr": 95, "rarity": "mitico", "card": "icona", "skin": "#e0a97f", "hair": "#1a1410", "style": 0},
+      {"id": "x-pirlo", "name": "Andrea Pirlo", "pos": "CEN", "ovr": 94, "rarity": "mitico", "card": "icona", "skin": "#f1c9a5", "hair": "#3b2a1a", "style": 2},
+      {"id": "x-cannavaro", "name": "Fabio Cannavaro", "pos": "DIF", "ovr": 94, "rarity": "mitico", "card": "icona", "skin": "#e0a97f", "hair": "#1a1410", "style": 4},
+      {"id": "x-quaderno", "name": "Capitan Quaderno", "pos": "CEN", "ovr": 91, "rarity": "leggendario", "card": "eroe", "skin": "#f1c9a5", "hair": "#c9a24b", "style": 1},
+      {"id": "x-professore", "name": "Il Professore", "pos": "CEN", "ovr": 92, "rarity": "leggendario", "card": "eroe", "skin": "#e0a97f", "hair": "#e5e7eb", "style": 2},
+      {"id": "x-bidello", "name": "Bidello Gigi", "pos": "POR", "ovr": 91, "rarity": "leggendario", "card": "eroe", "skin": "#c68a5e", "hair": "#3b2a1a", "style": 3},
+      {"id": "x-cattedra", "name": "Muro Cattedra", "pos": "DIF", "ovr": 91, "rarity": "leggendario", "card": "eroe", "skin": "#a06a43", "hair": "#1a1410", "style": 0},
+      {"id": "x-zaino", "name": "Zaino Veloce", "pos": "ATT", "ovr": 92, "rarity": "leggendario", "card": "eroe", "skin": "#f1c9a5", "hair": "#8a2d1a", "style": 4},
+      {"id": "x-preside", "name": "Preside Tuono", "pos": "ATT", "ovr": 93, "rarity": "leggendario", "card": "eroe", "skin": "#7a4a2b", "hair": "#1a1410", "style": 1},
+      {"id": "x-banco", "name": "Banco Blindato", "pos": "DIF", "ovr": 92, "rarity": "leggendario", "card": "eroe", "skin": "#e0a97f", "hair": "#6b4423", "style": 3},
+      {"id": "x-matricola", "name": "Matricola Prodigio", "pos": "ATT", "ovr": 86, "rarity": "epico", "card": "speciale", "skin": "#f1c9a5", "hair": "#3b2a1a", "style": 0},
+      {"id": "x-rappresentante", "name": "Rappresentante Libero", "pos": "DIF", "ovr": 86, "rarity": "epico", "card": "speciale", "skin": "#c68a5e", "hair": "#1a1410", "style": 2},
+      {"id": "x-ripetente", "name": "Ripetente Fantasma", "pos": "CEN", "ovr": 85, "rarity": "epico", "card": "speciale", "skin": "#e0a97f", "hair": "#6b4423", "style": 4},
+      {"id": "x-secchione", "name": "Secchione Portiere", "pos": "POR", "ovr": 86, "rarity": "epico", "card": "speciale", "skin": "#f1c9a5", "hair": "#c9a24b", "style": 1},
+      {"id": "x-gita", "name": "Gita Scolastica", "pos": "CEN", "ovr": 87, "rarity": "epico", "card": "speciale", "skin": "#a06a43", "hair": "#1a1410", "style": 3},
+      {"id": "x-ricreazione", "name": "Ricreazione Express", "pos": "ATT", "ovr": 87, "rarity": "epico", "card": "speciale", "skin": "#e0a97f", "hair": "#8a2d1a", "style": 2}
+    ]
+  }
+}
