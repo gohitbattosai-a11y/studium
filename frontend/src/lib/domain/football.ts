@@ -6,10 +6,11 @@ export type Pos = "POR" | "DIF" | "CEN" | "ATT";
 export type StatKey = "rit" | "tir" | "pas" | "dri" | "dif" | "fis";
 export type Stats = Record<StatKey, number>;
 export type TrainKind = "fisico" | "tecnica" | "tiro" | "difesa";
-export type LogType = "kickoff" | "goal" | "save" | "post" | "off" | "yellow" | "half" | "end";
+export type LogType = "kickoff" | "goal" | "save" | "post" | "off" | "yellow" | "red" | "injury" | "half" | "end";
 
 export interface Player {
   id: string;
+  out?: { kind: "injury" | "red"; left: number };
   name: string;
   pos: Pos;
   ovr: number;
@@ -133,7 +134,6 @@ export const START_BUDGET = CFG.economy.startBudget;
 export const SQUAD_MAX = CFG.economy.squadMax;
 export const SQUAD_MIN = CFG.economy.squadMin;
 export const TEAMS = 8;
-export const TOTAL_DAYS = (TEAMS - 1) * 2;
 export const MARKET_SIZE = 120;
 export const COLORS = CFG.teamColors;
 export const POS_LABEL: Record<Pos, string> = { POR: "Portiere", DIF: "Difensore", CEN: "Centrocampista", ATT: "Attaccante" };
@@ -169,8 +169,6 @@ const OFFSETS: Record<Pos, Stats> = {
 };
 const AW: Record<Pos, number> = { ATT: 1, CEN: 0.5, DIF: 0.1, POR: 0 };
 const DW: Record<Pos, number> = { POR: 1.5, DIF: 1, CEN: 0.5, ATT: 0.05 };
-const GW: Record<Pos, number> = { ATT: 6, CEN: 2.5, DIF: 0.8, POR: 0 };
-const PRIZES = CFG.economy.prizes;
 const FIRST = ["Luca", "Marco", "Matteo", "Andrea", "Davide", "Simone", "Federico", "Alessio", "Giorgio", "Riccardo", "Tommaso", "Nicolò", "Edoardo", "Filippo", "Samuele", "Lorenzo", "Gabriele", "Emanuele", "Stefano", "Diego", "Pietro", "Jacopo", "Mattia", "Leonardo", "Carlos", "Mateo", "Hugo", "Lucas", "Noah", "Kylian", "Jules", "Thomas", "Yannick", "Joshua", "Emre", "Karim", "Omar", "Sven", "Jonas", "Rafael"];
 const LAST = ["Rossi", "Bianchi", "Ferrari", "Esposito", "Romano", "Colombo", "Ricci", "Marino", "Greco", "Bruno", "Gallo", "Conti", "De Luca", "Costa", "Giordano", "Mancini", "Rizzo", "Lombardi", "Moretti", "Barbieri", "Fontana", "Santoro", "Mariani", "Rinaldi", "Caruso", "Ferraro", "Galli", "Martini", "Leone", "Longo", "Silva", "Garcia", "Lopez", "Dubois", "Martin", "Müller", "Schmidt", "Kovač", "Nowak", "Haddad", "Yilmaz", "Santos", "Oliveira", "Costa Lima", "Moreau", "Bernard", "Fischer", "Novak", "Petrov", "Jansen"];
 const BOT_NAMES = ["Real Studium", "Atletico Banco", "Inter Compiti", "Dinamo Cattedra", "Juve Lavagna", "Sporting Quaderno", "Borussia Zaino", "Milan Ricreazione", "Olimpia Interrogati", "Torino Verifica", "Napoli Appunti", "Roma Merenda"];
@@ -236,7 +234,7 @@ function mkSquad(base: number): Player[] {
 
 export function autoXI(players: Player[], formation: string): (string | null)[] {
   const slots = FORMATIONS[formation];
-  const pool = [...players].sort((a, b) => b.ovr - a.ovr);
+  const pool = players.filter((p) => !p.out).sort((a, b) => b.ovr - a.ovr);
   const used = new Set<string>();
   const xi: (string | null)[] = slots.map(() => null);
   slots.forEach(([pos], i) => {
@@ -261,7 +259,7 @@ function fillEmpty(t: Team) {
   const used = new Set(t.xi.filter(Boolean) as string[]);
   FORMATIONS[t.formation].forEach(([pos], i) => {
     if (t.xi[i]) return;
-    const p = t.players.filter((x) => x.pos === pos && !used.has(x.id)).sort((a, b) => b.ovr - a.ovr)[0];
+    const p = t.players.filter((x) => x.pos === pos && !x.out && !used.has(x.id)).sort((a, b) => b.ovr - a.ovr)[0];
     if (p) {
       t.xi[i] = p.id;
       used.add(p.id);
@@ -289,26 +287,6 @@ function mkMarket(owned: Set<string> = new Set()): Player[] {
 
 const ownedIds = (s: StadiumState) => new Set(s.teams.flatMap((t) => t.players.map((p) => p.id)));
 
-function schedule(ids: string[]): Fixture[] {
-  const n = ids.length;
-  const arr = [...ids];
-  const rounds: [string, string][][] = [];
-  for (let r = 0; r < n - 1; r++) {
-    const m: [string, string][] = [];
-    for (let i = 0; i < n / 2; i++) {
-      const a = arr[i];
-      const b = arr[n - 1 - i];
-      m.push(r % 2 === 0 ? [a, b] : [b, a]);
-    }
-    rounds.push(m);
-    arr.splice(1, 0, arr.pop() as string);
-  }
-  const out: Fixture[] = [];
-  rounds.forEach((m, r) => m.forEach(([h, a]) => out.push({ day: r + 1, home: h, away: a, hg: null, ag: null, events: [], log: [] })));
-  rounds.forEach((m, r) => m.forEach(([h, a]) => out.push({ day: n - 1 + r + 1, home: a, away: h, hg: null, ag: null, events: [], log: [] })));
-  return out;
-}
-
 function fresh(): StadiumState {
   const names = [...BOT_NAMES].sort(() => Math.random() - 0.5).slice(0, TEAMS - 1);
   const s: StadiumState = { budget: START_BUDGET, myId: null, teams: names.map(mkBot), market: [], fixtures: [], day: 0, season: 1, champion: null, rewarded: false, prize: 0, auctions: [], offers: [], ledger: [] };
@@ -333,156 +311,7 @@ export function strength(team: Team) {
   return { att: wavg(slots, AW), def: wavg(slots, DW), ovr: round1(slots.reduce((s, x) => s + x.eff, 0) / slots.length) };
 }
 
-export const isReady = (t: Team | undefined) => !!t && t.xi.length === 11 && t.xi.every((id) => !!id && t.players.some((p) => p.id === id));
-
-const poisson = (l: number) => {
-  const L = Math.exp(-l);
-  let k = 0;
-  let p = 1;
-  do {
-    k++;
-    p *= Math.random();
-  } while (p > L);
-  return k - 1;
-};
-
-const lambda = (att: number, def: number, home: boolean) => clamp(1.35 * Math.exp((att - def) / 30) * (home ? 1.1 : 0.95), 0.25, 4.2);
-
-const shooter = (team: Team) => {
-  const slots = lineup(team).filter((s) => s.player && GW[s.pos] > 0);
-  const total = slots.reduce((s, x) => s + GW[x.pos], 0);
-  return () => {
-    let r = Math.random() * total;
-    return (slots.find((s) => (r -= GW[s.pos]) <= 0) ?? slots[0])?.player ?? null;
-  };
-};
-
-const anyPlayer = (team: Team) => {
-  const field = lineup(team).filter((s) => s.player && s.pos !== "POR");
-  return pick(field.length ? field : lineup(team).filter((s) => s.player)).player as Player;
-};
-
-const GOAL_T = [
-  (p: string, t: string) => `GOL! ${p} la mette dentro per ${t}!`,
-  (p: string, t: string) => `Rete di ${p}! ${t} colpisce!`,
-  (p: string, t: string) => `${p} non sbaglia: gol per ${t}!`,
-];
-const SAVE_T = [
-  { v: "parry", t: (p: string) => `${p} calcia forte, ma il portiere respinge!` },
-  { v: "parry", t: (p: string) => `Tiro di ${p}: grande parata!` },
-  { v: "caught", t: (p: string) => `Tiro di ${p}: presa sicura del portiere.` },
-];
-const OFF_T = [
-  { v: "wide", t: (p: string) => `${p} ci prova, palla fuori di poco.` },
-  { v: "over", t: (p: string) => `Conclusione di ${p} che sorvola la traversa.` },
-];
-const MINUTE_ZONES: [number, number][] = [[4, 40], [50, 85]];
-const MIN_GAP = 4;
-
-function takeMinute(taken: number[], gap: number): number | null {
-  const pool: number[] = [];
-  MINUTE_ZONES.forEach(([a, b]) => {
-    for (let m = a; m <= b; m++) if (taken.every((x) => Math.abs(x - m) >= gap)) pool.push(m);
-  });
-  if (!pool.length) return null;
-  const m = pick(pool);
-  taken.push(m);
-  return m;
-}
-
-function simulate(f: Fixture, teams: Map<string, Team>) {
-  const h = teams.get(f.home) as Team;
-  const a = teams.get(f.away) as Team;
-  const sh = strength(h);
-  const sa = strength(a);
-  const lh = lambda(sh.att, sa.def, true);
-  const la = lambda(sa.att, sh.def, false);
-  f.hg = poisson(lh);
-  f.ag = poisson(la);
-  const goals: MatchEvent[] = [];
-  const raw: Omit<LogEntry, "id">[] = [];
-  const taken: number[] = [];
-  const sides: [Team, number, number][] = [[h, f.hg, lh], [a, f.ag, la]];
-  sides.forEach(([team, g]) => {
-    const shoot = shooter(team);
-    for (let i = 0; i < g; i++) {
-      const p = shoot();
-      if (p) p.goals += 1;
-      const min = takeMinute(taken, MIN_GAP) ?? takeMinute(taken, 2) ?? takeMinute(taken, 1) ?? rnd(4, 40);
-      const name = p?.name ?? "Sconosciuto";
-      goals.push({ min, teamId: team.id, player: name });
-      raw.push({ min, type: "goal", teamId: team.id, player: name, text: pick(GOAL_T)(name, team.name) });
-    }
-  });
-  sides.forEach(([team, , lam]) => {
-    const shoot = shooter(team);
-    const chances = clamp(Math.round(lam * 1.3 + rnd(0, 2)), 1, 5);
-    for (let i = 0; i < chances; i++) {
-      const p = shoot();
-      const min = takeMinute(taken, MIN_GAP);
-      if (!p || min === null) continue;
-      const r = Math.random();
-      if (r < 0.5) {
-        const v = pick(SAVE_T);
-        raw.push({ min, type: "save", teamId: team.id, player: p.name, text: v.t(p.name), variant: v.v });
-      } else if (r < 0.65) raw.push({ min, type: "post", teamId: team.id, player: p.name, text: `Palo clamoroso di ${p.name}!` });
-      else {
-        const v = pick(OFF_T);
-        raw.push({ min, type: "off", teamId: team.id, player: p.name, text: v.t(p.name), variant: v.v });
-      }
-    }
-  });
-  sides.forEach(([team]) => {
-    for (let i = rnd(0, 2); i > 0; i--) {
-      const min = takeMinute(taken, MIN_GAP);
-      if (min === null) break;
-      const p = anyPlayer(team);
-      raw.push({ min, type: "yellow", teamId: team.id, player: p.name, text: `Cartellino giallo per ${p.name} (${team.name}).` });
-    }
-  });
-  const h1 = goals.filter((g) => g.min <= 45 && g.teamId === h.id).length;
-  const a1 = goals.filter((g) => g.min <= 45 && g.teamId === a.id).length;
-  const order = (e: Omit<LogEntry, "id">) => (e.type === "kickoff" ? -1 : e.type === "half" || e.type === "end" ? 1 : 0);
-  const all: Omit<LogEntry, "id">[] = [
-    { min: 0, type: "kickoff", teamId: h.id, player: "", text: `Fischio d'inizio: ${h.name} - ${a.name}` },
-    ...raw,
-    { min: 45, type: "half", teamId: h.id, player: "", text: `Fine primo tempo: ${h.name} ${h1}-${a1} ${a.name}` },
-    { min: 90, type: "end", teamId: h.id, player: "", text: `Finita: ${h.name} ${f.hg}-${f.ag} ${a.name}` },
-  ];
-  f.log = all.sort((x, y) => x.min - y.min || order(x) - order(y)).map((e, i) => ({ ...e, id: i }));
-  f.events = goals.sort((x, y) => x.min - y.min);
-}
-
-export function table(s: StadiumState): Row[] {
-  const rows = new Map<string, Row>(s.teams.map((t) => [t.id, { team: t, p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 }]));
-  for (const f of s.fixtures) {
-    if (f.hg === null || f.ag === null) continue;
-    const h = rows.get(f.home);
-    const a = rows.get(f.away);
-    if (!h || !a) continue;
-    h.p++;
-    a.p++;
-    h.gf += f.hg;
-    h.ga += f.ag;
-    a.gf += f.ag;
-    a.ga += f.hg;
-    if (f.hg > f.ag) {
-      h.w++;
-      a.l++;
-      h.pts += 3;
-    } else if (f.hg < f.ag) {
-      a.w++;
-      h.l++;
-      a.pts += 3;
-    } else {
-      h.d++;
-      a.d++;
-      h.pts++;
-      a.pts++;
-    }
-  }
-  return [...rows.values()].sort((x, y) => y.pts - x.pts || y.gf - y.ga - (x.gf - x.ga) || y.gf - x.gf || x.team.name.localeCompare(y.team.name));
-}
+export const isReady = (t: Team | undefined) => !!t && t.xi.length === 11 && t.xi.every((id) => !!id && t.players.some((p) => p.id === id && !p.out));
 
 export const myTeam = (s: StadiumState) => s.teams.find((t) => t.id === s.myId);
 
@@ -532,7 +361,6 @@ export function createTeam(name: string, color: string): string | null {
   const team: Team = { id: uid("t"), name: clean, color, players: [], mine: true, formation: "4-3-3", xi: Array(11).fill(null), budget: 0 };
   s.teams.push(team);
   s.myId = team.id;
-  s.fixtures = schedule(s.teams.map((t) => t.id));
   s.day = 0;
   commit(s);
   return null;
@@ -550,7 +378,6 @@ export function buyTeam(id: string): string | null {
   s.myId = id;
   s.budget = round1(s.budget - price);
   refill(s);
-  s.fixtures = schedule(s.teams.map((x) => x.id));
   s.day = 0;
   commit(s);
   return null;
@@ -581,6 +408,7 @@ export function sellPlayer(pid: string): string | null {
   const p = mine?.players.find((x) => x.id === pid);
   if (!mine || !p) return "Giocatore non trovato";
   if (p.loan) return "Un giocatore in prestito non si può vendere";
+  if (p.id.startsWith("pk-")) return "Le carte dei pack si svincolano dalla scheda del giocatore";
   if (state.auctions.some((a) => a.pid === pid)) return "Giocatore già all'asta";
   if (mine.players.length <= SQUAD_MIN) return `Rosa troppo corta: servono almeno ${SQUAD_MIN} giocatori`;
   const s = structuredClone(state);
@@ -621,7 +449,9 @@ export function setSlot(i: number, pid: string | null): string | null {
   if (pid === null) {
     t.xi[i] = null;
   } else {
-    if (!t.players.some((p) => p.id === pid)) return "Giocatore non trovato";
+    const cand = t.players.find((p) => p.id === pid);
+    if (!cand) return "Giocatore non trovato";
+    if (cand.out) return cand.out.kind === "red" ? "Squalificato: salta ancora delle partite" : "Infortunato: non può giocare";
     const j = t.xi.indexOf(pid);
     if (j >= 0) t.xi[j] = t.xi[i];
     t.xi[i] = pid;
@@ -697,78 +527,44 @@ export function resetTraining() {
   commit(s);
 }
 
-function runDay(s: StadiumState) {
-  const map = new Map(s.teams.map((t) => [t.id, t]));
-  s.fixtures.filter((f) => f.day === s.day + 1).forEach((f) => {
-    simulate(f, map);
-    if (!s.myId || (f.home !== s.myId && f.away !== s.myId) || f.hg === null || f.ag === null) return;
-    const mineGoals = f.home === s.myId ? f.hg : f.ag;
-    const oppGoals = f.home === s.myId ? f.ag : f.hg;
-    const base = mineGoals > oppGoals ? CFG.economy.winReward : mineGoals === oppGoals ? CFG.economy.drawReward : CFG.economy.lossReward;
-    f.reward = round1(base + CFG.economy.goalBonus * mineGoals);
-    s.budget = round1(s.budget + f.reward);
-    note(s, mineGoals > oppGoals ? "Vittoria in campionato" : mineGoals === oppGoals ? "Pareggio in campionato" : "Sconfitta in campionato", f.reward);
+export interface ServerCard {
+  id: string;
+  player: Player;
+}
+
+export function applyServer(status: Record<string, { kind: "injury" | "red"; left: number }>, cards: ServerCard[]) {
+  const s = structuredClone(state);
+  const t = myTeam(s);
+  if (!t) return;
+  const ids = new Set(cards.map((c) => c.id));
+  t.players = t.players.filter((p) => !p.id.startsWith("pk-") || ids.has(p.id));
+  t.xi = t.xi.map((id) => (id && t.players.some((p) => p.id === id) ? id : null));
+  cards.forEach((c) => {
+    const have = t.players.find((p) => p.id === c.id);
+    if (!have) t.players.push({ ...c.player, trained: -1, training: null, goals: c.player.goals ?? 0 });
+    else if (have.name !== c.player.name || have.card !== c.player.card) Object.assign(have, { name: c.player.name, card: c.player.card, look: c.player.look });
   });
-  s.day += 1;
-  dayEnd(s);
-  if (s.day >= TOTAL_DAYS && !s.rewarded) {
-    const rows = table(s);
-    const idx = rows.findIndex((r) => r.team.id === s.myId);
-    s.champion = rows[0].team.id;
-    s.prize = idx >= 0 ? PRIZES[idx] ?? 2 : 0;
-    s.budget = round1(s.budget + s.prize);
-    s.rewarded = true;
-  }
-}
-
-function playable(): string | null {
-  const mine = myTeam(state);
-  if (!mine) return "Prima crea o compra una squadra";
-  if (!isReady(mine)) return "Formazione incompleta: servono 11 titolari in campo (vai in Rosa)";
-  if (state.day >= TOTAL_DAYS) return "Campionato finito: avvia una nuova stagione";
-  return null;
-}
-
-export function playDay(): string | null {
-  const err = playable();
-  if (err) return err;
-  const s = structuredClone(state);
-  runDay(s);
+  t.players.forEach((p) => {
+    const st = status[p.id];
+    if (st) p.out = { kind: st.kind, left: st.left };
+    else delete p.out;
+  });
+  t.xi = t.xi.map((id) => (id && t.players.some((p) => p.id === id && !p.out) ? id : null));
+  fillEmpty(t);
+  if (JSON.stringify(s.teams) === JSON.stringify(state.teams)) return;
   commit(s);
-  return null;
 }
 
-export function playSeason(): string | null {
-  const err = playable();
-  if (err) return err;
+export function syncDay(played: number) {
+  if (played === state.day) return;
   const s = structuredClone(state);
-  while (s.day < TOTAL_DAYS) runDay(s);
+  if (played > s.day && played - s.day <= 60) {
+    while (s.day < played) {
+      s.day += 1;
+      dayEnd(s);
+    }
+  } else s.day = played;
   commit(s);
-  return null;
-}
-
-export function newSeason(): string | null {
-  if (!state.myId) return "Prima crea o compra una squadra";
-  const s = structuredClone(state);
-  s.teams.forEach((t) =>
-    t.players.forEach((p) => {
-      const sh = rnd(-2, 3);
-      STAT_KEYS.forEach((k) => (p.stats[k] = clamp(p.stats[k] + sh, 20, 99)));
-      p.ovr = calcOvr(p.pos, p.stats);
-      p.pot = Math.max(p.pot, p.ovr);
-      p.goals = 0;
-      p.trained = -1;
-      p.training = null;
-    }),
-  );
-  s.fixtures = schedule(s.teams.map((t) => t.id));
-  s.day = 0;
-  s.season += 1;
-  s.champion = null;
-  s.rewarded = false;
-  s.prize = 0;
-  commit(s);
-  return null;
 }
 
 export function addBudget(n: number) {
@@ -788,7 +584,7 @@ export const auctionStep = (price: number) => Math.max(CFG.auction.minStep, roun
 export const auctionStart = (p: Player) => Math.max(CFG.auction.minStep, round1(playerPrice(p) * CFG.auction.startRatio));
 export const borrowFee = (p: Player, days: number) => round1(Math.max(CFG.loan.minFee, playerPrice(p) * CFG.loan.borrowRatio * days));
 export const auctionOf = (s: StadiumState, pid: string) => s.auctions.find((a) => a.pid === pid);
-export const isFree = (s: StadiumState, p: Player) => !p.loan && !auctionOf(s, p.id);
+export const isFree = (s: StadiumState, p: Player) => !p.loan && !p.id.startsWith("pk-") && !auctionOf(s, p.id);
 
 const note = (s: StadiumState, text: string, amount: number) => {
   s.ledger = [{ at: Date.now(), day: s.day, text, amount }, ...s.ledger].slice(0, 40);
@@ -852,6 +648,7 @@ export function openAuction(pid: string, amount: number): string | null {
   const found = locate(state, pid);
   if (!found) return "Giocatore non disponibile";
   if (found.p.loan) return "Un giocatore in prestito non si può mettere all'asta";
+  if (found.p.id.startsWith("pk-")) return "Le carte dei pack non si possono mettere all'asta";
   if (auctionOf(state, pid)) return "Già all'asta";
   if (state.auctions.length >= CFG.auction.maxActive) return `Massimo ${CFG.auction.maxActive} aste contemporanee`;
   const now = Date.now();
