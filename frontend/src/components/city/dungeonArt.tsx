@@ -3,31 +3,112 @@ import { DIE_INFO } from "@/lib/domain/dungeon";
 
 const Shadow = ({ rx = 22 }: { rx?: number }) => <ellipse cx="0" cy="2" rx={rx} ry={rx * 0.3} fill="#000" opacity="0.38" />;
 
-export function HeroArt({ guard }: { guard: boolean }) {
+const CLS_TUNIC: Record<string, [string, string]> = { guerriero: ["#8d9ab8", "#6b7794"], mago: ["#5b3fa8", "#46308a"], ranger: ["#2f7a45", "#25603a"], ladro: ["#3b3f4c", "#2a2d37"] };
+
+function Weapon({ cls }: { cls: string }) {
+  if (cls === "mago") {
+    return (
+      <g transform="rotate(10 28 -50)">
+        <rect x="25" y="-108" width="4" height="64" rx="2" fill="#7c5a2b" />
+        <circle cx="27" cy="-112" r="7" fill="#c4b5fd" stroke="#7c3aed" strokeWidth="2" />
+        <circle cx="25" cy="-114" r="2.4" fill="#fff" opacity="0.8" />
+      </g>
+    );
+  }
+  if (cls === "ranger") {
+    return (
+      <g>
+        <path d="M30 -100 Q52 -70 30 -34" fill="none" stroke="#7c5a2b" strokeWidth="4.5" strokeLinecap="round" />
+        <path d="M30 -100 L30 -34" stroke="#e5e7eb" strokeWidth="1.2" />
+        <path d="M30 -67 L10 -67" stroke="#a16207" strokeWidth="2" />
+      </g>
+    );
+  }
+  if (cls === "ladro") {
+    return (
+      <g>
+        <rect x="24" y="-76" width="4" height="28" rx="2" fill="#eef2fb" transform="rotate(14 26 -54)" />
+        <rect x="21" y="-52" width="10" height="3.5" rx="1.5" fill="#d4a63c" transform="rotate(14 26 -54)" />
+        <rect x="-36" y="-70" width="4" height="26" rx="2" fill="#cbd5e1" transform="rotate(-18 -34 -56)" />
+      </g>
+    );
+  }
+  return (
+    <g>
+      <rect x="24" y="-100" width="5" height="46" rx="2" fill="#eef2fb" transform="rotate(14 26 -54)" />
+      <rect x="19" y="-58" width="16" height="4" rx="2" fill="#d4a63c" transform="rotate(14 26 -54)" />
+      <rect x="-37" y="-62" width="16" height="30" rx="7" fill="#2563eb" />
+      <rect x="-35" y="-60" width="12" height="26" rx="5" fill="#3b82f6" />
+      <path d="M-29 -56 L-29 -38 M-34 -47 L-24 -47" stroke="#fde68a" strokeWidth="2.4" strokeLinecap="round" />
+    </g>
+  );
+}
+
+function Head({ cls, skin, hair, style }: { cls: string; skin: string; hair: string; style: number }) {
+  return (
+    <g>
+      <circle cx="0" cy="-76" r="13" fill={skin} />
+      <circle cx="-4.5" cy="-76" r="1.7" fill="#1a1410" />
+      <circle cx="4.5" cy="-76" r="1.7" fill="#1a1410" />
+      <path d="M-3 -70 Q0 -68 3 -70" stroke="#7a3b2b" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+      {cls === "guerriero" && (
+        <g>
+          <path d="M-14 -78 Q0 -96 14 -78 L14 -72 Q0 -76 -14 -72Z" fill="#aab6d3" />
+          <path d="M-2 -90 L-2 -82 M2 -90 L2 -82" stroke="#8a97b6" strokeWidth="2" />
+          <path d="M-3 -89 Q-12 -105 4 -109 Q-2 -99 6 -91Z" fill="#e11d48" />
+        </g>
+      )}
+      {cls === "mago" && (
+        <g>
+          <path d="M-17 -82 L0 -118 L17 -82 Q0 -76 -17 -82Z" fill="#5b3fa8" />
+          <path d="M-17 -82 Q0 -76 17 -82" stroke="#fbbf24" strokeWidth="3" fill="none" />
+          <circle cx="0" cy="-92" r="2.4" fill="#fde68a" />
+        </g>
+      )}
+      {cls === "ranger" && (
+        <g>
+          <path d="M-15 -78 Q0 -100 15 -78 L19 -74 Q0 -80 -19 -74Z" fill="#25603a" />
+          <path d="M8 -90 L22 -104" stroke="#e5e7eb" strokeWidth="2.4" strokeLinecap="round" />
+        </g>
+      )}
+      {cls === "ladro" && (
+        <g>
+          <path d="M-14 -80 Q0 -98 14 -80 L14 -70 Q0 -74 -14 -70Z" fill="#2a2d37" />
+          <rect x="-13" y="-78" width="26" height="6" rx="3" fill="#111827" />
+          <circle cx="-4.5" cy="-75" r="1.5" fill="#fde68a" />
+          <circle cx="4.5" cy="-75" r="1.5" fill="#fde68a" />
+        </g>
+      )}
+      {cls !== "guerriero" && cls !== "mago" && cls !== "ranger" && cls !== "ladro" && <path d="M-13 -78 Q0 -94 13 -78 Q0 -84 -13 -78Z" fill={hair} />}
+      {(cls === "mago" || cls === "ranger") && style % 2 === 0 && <path d="M-13 -74 Q-16 -62 -10 -58 L-10 -72Z" fill={hair} />}
+      {cls === "guerriero" && style % 2 === 1 && <path d="M-13 -74 Q-15 -64 -9 -62 L-10 -73Z" fill={hair} />}
+      {cls === "ladro" && style >= 2 && <path d="M13 -74 Q16 -62 10 -58 L10 -72Z" fill={hair} />}
+    </g>
+  );
+}
+
+export function HeroArt({ guard, cls = "guerriero", look, ward = false }: { guard: boolean; cls?: string; look?: { skin: string; hair: string; cape: string; style: number } | null; ward?: boolean }) {
+  const [t1, t2] = CLS_TUNIC[cls] ?? CLS_TUNIC.guerriero;
+  const skin = look?.skin ?? "#f1c9a5";
+  const hair = look?.hair ?? "#3b2a1a";
+  const cape = look?.cape ?? "#b3202f";
   return (
     <g>
       <Shadow rx={24} />
       <g className="dg-bob">
+        <path d="M-18 -62 L18 -62 L30 -8 Q0 2 -30 -8Z" fill={cape} opacity="0.85" />
         <rect x="-13" y="-24" width="10" height="24" rx="3" fill="#3b4a6b" />
         <rect x="3" y="-24" width="10" height="24" rx="3" fill="#33415f" />
         <rect x="-15" y="-7" width="13" height="8" rx="3" fill="#232840" />
         <rect x="2" y="-7" width="13" height="8" rx="3" fill="#1d2237" />
-        <path d="M-21 -64 L21 -64 L28 -12 Q0 -2 -28 -12 Z" fill="#b3202f" />
-        <path d="M-21 -64 L-6 -64 L-8 -8 Q-18 -9 -28 -12 Z" fill="#8f1624" />
-        <path d="M0 -64 L0 -6" stroke="#6e101b" strokeWidth="2" opacity="0.7" />
-        <rect x="-17" y="-66" width="34" height="14" rx="6" fill="#8d9ab8" />
-        <ellipse cx="-20" cy="-60" rx="9" ry="7" fill="#aab6d3" />
-        <ellipse cx="20" cy="-60" rx="9" ry="7" fill="#aab6d3" />
-        <ellipse cx="-20" cy="-62" rx="5" ry="2.4" fill="#d6deef" opacity="0.7" />
-        <circle cx="0" cy="-76" r="13" fill="#b9c4de" />
-        <path d="M-13 -76 Q0 -92 13 -76 L13 -70 Q0 -74 -13 -70Z" fill="#d7dff2" />
-        <path d="M0 -89 L0 -64" stroke="#8a97b6" strokeWidth="2.4" />
-        <path d="M-3 -88 Q-12 -104 4 -108 Q-2 -98 6 -90Z" fill="#e11d48" />
-        <rect x="24" y="-100" width="5" height="46" rx="2" fill="#eef2fb" transform="rotate(14 26 -54)" />
-        <rect x="19" y="-58" width="16" height="4" rx="2" fill="#d4a63c" transform="rotate(14 26 -54)" />
-        <rect x="-37" y="-62" width="16" height="30" rx="7" fill="#2563eb" />
-        <rect x="-35" y="-60" width="12" height="26" rx="5" fill="#3b82f6" />
-        <path d="M-29 -56 L-29 -38 M-34 -47 L-24 -47" stroke="#fde68a" strokeWidth="2.4" strokeLinecap="round" />
+        <path d="M-21 -64 L21 -64 L26 -14 Q0 -4 -26 -14 Z" fill={t1} />
+        <path d="M-21 -64 L-6 -64 L-8 -10 Q-18 -10 -26 -14 Z" fill={t2} />
+        <rect x="-17" y="-66" width="34" height="9" rx="4" fill={cape} />
+        <path d="M0 -58 L0 -8" stroke="#000" strokeWidth="1.6" opacity="0.25" />
+        <rect x="-21" y="-30" width="42" height="5" fill="#7c5a2b" opacity="0.9" />
+        <rect x="-3" y="-31" width="6" height="7" rx="1" fill="#d4a63c" />
+        <Head cls={cls} skin={skin} hair={hair} style={look?.style ?? 0} />
+        <Weapon cls={cls} />
       </g>
       {guard && (
         <g className="dg-guard">
@@ -35,7 +116,21 @@ export function HeroArt({ guard }: { guard: boolean }) {
           <ellipse cx="0" cy="-48" rx="40" ry="54" fill="none" stroke="#a5f3fc" strokeWidth="3" />
         </g>
       )}
+      {ward && (
+        <g className="dg-guard">
+          <ellipse cx="0" cy="-48" rx="44" ry="58" fill="#fde68a" opacity="0.16" />
+          <ellipse cx="0" cy="-48" rx="44" ry="58" fill="none" stroke="#fbbf24" strokeWidth="3" strokeDasharray="6 4" />
+        </g>
+      )}
     </g>
+  );
+}
+
+export function HeroPortrait({ cls, look, size = 120 }: { cls: string; look?: { skin: string; hair: string; cape: string; style: number } | null; size?: number }) {
+  return (
+    <svg viewBox="-50 -125 100 135" width={size} height={(size * 135) / 100} aria-hidden>
+      <HeroArt guard={false} cls={cls} look={look} />
+    </svg>
   );
 }
 
