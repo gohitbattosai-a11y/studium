@@ -417,7 +417,7 @@ function Scene({ g, fx, shake, onTap }: { g: Game; fx: Fx[]; shake: number; onTa
       <g transform={`translate(${ha.x} ${ha.y}) scale(${ha.s * 1.12})`}>
         <circle cx="0" cy="-40" r="70" fill={th.glow} opacity="0.1" />
         <g key={`${g.hero.c},${g.hero.r}`} className="dg-hop">
-          <HeroArt guard={g.hero.guard} />
+          <HeroArt guard={g.hero.guard} cls={g.hero.cls} look={g.hero.look} ward={g.hero.ward > 0} />
         </g>
       </g>
     ),
@@ -499,7 +499,7 @@ export default function Dungeon({ dungeonId, onExit }: { dungeonId: DungeonId; o
     try {
       const r = await actions.start.mutateAsync(dungeonId);
       token.current = r.run_id;
-      const ng = newRun(dungeonId);
+      const ng = newRun(dungeonId, r.loadout);
       gRef.current = ng;
       finished.current = false;
       setG(ng);
@@ -582,6 +582,7 @@ export default function Dungeon({ dungeonId, onExit }: { dungeonId: DungeonId; o
         e.preventDefault();
         dispatch({ t: "guard" });
       } else if (/^[1-5]$/.test(k)) dispatch({ t: "die", i: Number(k) - 1 });
+      else if ("qwer".includes(k) && k.length === 1) dispatch({ t: "ab", i: "qwer".indexOf(k) });
     };
     window.addEventListener("keydown", kd);
     return () => window.removeEventListener("keydown", kd);
@@ -749,6 +750,34 @@ export default function Dungeon({ dungeonId, onExit }: { dungeonId: DungeonId; o
                       <span>Hai tirato {result.roll}!</span>
                     </div>
                   )}
+                  {result.xp > 0 && (
+                    <div className="dg-pop mt-2 rounded-xl bg-violet-500/15 p-2 text-sm ring-1 ring-violet-300/30">
+                      <span className="font-semibold text-violet-200">+{result.xp} XP</span>
+                      {result.leveled && <span className="ml-2 font-bold text-amber-300">Livello {result.level}!</span>}
+                      {result.new_abilities.map((id) => {
+                        const ab = hub.data?.abilities.find((x) => x.id === id);
+                        return ab ? (
+                          <div key={id} className="mt-1 text-xs text-[#E6EDF3]">
+                            {ab.icon} Nuova abilità: <b>{ab.name}</b> (ricarica {ab.cd} turni)
+                          </div>
+                        ) : null;
+                      })}
+                    </div>
+                  )}
+                  {result.gear.map((id) => {
+                    const gi = hub.data?.gear.find((x) => x.id === id);
+                    return gi ? (
+                      <div key={id} style={{ borderColor: gi.color }} className="dg-pop mt-2 flex items-center gap-3 rounded-xl border bg-white/5 p-2 text-left">
+                        <LootIcon shape={gi.shape} color={gi.color} size={48} />
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[10px] font-bold tracking-wide text-amber-300 uppercase">Equipaggiamento raro trovato!</div>
+                          <div className="truncate text-sm font-semibold">{gi.name}</div>
+                          <RarityTag rarity={gi.rarity} />
+                        </div>
+                      </div>
+                    ) : null;
+                  })}
+                  {result.gear_refund > 0 && <p className="mt-2 text-xs text-amber-300">Duplicati convertiti in {result.gear_refund} monete.</p>}
                   {result.trophies.length > 0 && (
                     <div className="mt-2 grid gap-2">
                       {result.trophies.map((id, i) => {
@@ -826,6 +855,24 @@ export default function Dungeon({ dungeonId, onExit }: { dungeonId: DungeonId; o
             </Pad>
           </div>
           <div className="flex min-w-0 flex-1 flex-col items-end gap-2">
+            {h.abs.length > 0 && (
+              <div className="flex flex-wrap justify-end gap-1.5">
+                {h.abs.map((a, i) => (
+                  <button
+                    key={a.def.id}
+                    type="button"
+                    title={`${a.def.name}: ${a.def.text}`}
+                    aria-label={a.def.name}
+                    onClick={() => dispatch({ t: "ab", i })}
+                    className={cn("relative grid size-12 touch-manipulation place-items-center overflow-hidden rounded-xl border-2 text-2xl transition-transform active:scale-90 sm:size-11", a.left > 0 ? "border-white/15 bg-white/5" : "border-amber-300 bg-amber-300/20 shadow-[0_0_12px_#fbbf2466]")}
+                  >
+                    <span className={cn(a.left > 0 && "opacity-35")}>{a.def.icon}</span>
+                    {a.left > 0 && <span className="absolute inset-0 grid place-items-center text-lg font-extrabold text-white drop-shadow">{a.left}</span>}
+                    <span className="absolute -top-1 -left-1 grid size-4 place-items-center rounded-full bg-black/70 text-[9px] text-white/80 uppercase">{"qwer"[i]}</span>
+                  </button>
+                ))}
+              </div>
+            )}
             <div className="flex flex-wrap justify-end gap-1.5">
               {Array.from({ length: h.slots }, (_, i) => {
                 const k = h.dice[i];
