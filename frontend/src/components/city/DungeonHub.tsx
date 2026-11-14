@@ -1,4 +1,4 @@
-import { Coins, Lock, ShoppingBag, Swords, Trophy, Users } from "lucide-react";
+import { Coins, Lock, ShoppingBag, Swords, Trophy, User, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { DEF, DUNGEON_LIST, type DungeonId } from "@/lib/domain/dungeon";
 import { useDungeonHub, type LootDef, type TrophyDef } from "@/lib/domain/dungeonApi";
@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils/cn";
 import { RarityTag } from "./Bucket";
 import { ENEMY_H, EnemyArt } from "./dungeonArt";
+import HeroPanel from "./HeroPanel";
 import { LootIcon, TrophyArt } from "./dungeonItems";
 import "./dungeon.css";
 
 const RC: Record<string, string> = { comune: "#9ca3af", non_comune: "#4ade80", raro: "#60a5fa", epico: "#c084fc", leggendario: "#fbbf24", mitico: "#f43f5e" };
 
-type Tab = "gates" | "hall" | "bag";
+type Tab = "gates" | "hero" | "hall" | "bag";
 
 function Plaque({ t, owned, size = 56, onClick, count }: { t: TrophyDef; owned: boolean; size?: number; onClick?: () => void; count?: number }) {
   return (
@@ -130,6 +131,7 @@ export default function DungeonHub({ memberId, onRun, onShop }: { memberId: stri
 
   const tabs: { id: Tab; label: string; icon: typeof Swords }[] = [
     { id: "gates", label: "Sotterranei", icon: Swords },
+    { id: "hero", label: data.char ? "Eroe" : "Crea eroe", icon: User },
     { id: "hall", label: "Cacciatori", icon: Trophy },
     { id: "bag", label: `Zaino ${bagCount}/${data.bag_limit}`, icon: ShoppingBag },
   ];
@@ -149,10 +151,12 @@ export default function DungeonHub({ memberId, onRun, onShop }: { memberId: stri
           <div className="mx-auto grid max-w-5xl gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {data.dungeons.map((d) => {
               const ts = data.trophies.filter((t) => t.dungeon === d.id);
-              return <GateCard key={d.id} id={d.id as DungeonId} name={d.name} tag={d.tag} blurb={d.blurb} floors={d.floors} record={d.record} got={ts.filter((t) => mine.has(t.id)).length} total={ts.length} onGo={() => onRun(d.id as DungeonId)} />;
+              return <GateCard key={d.id} id={d.id as DungeonId} name={d.name} tag={d.tag} blurb={d.blurb} floors={d.floors} record={d.record} got={ts.filter((t) => mine.has(t.id)).length} total={ts.length} onGo={() => (data.char ? onRun(d.id as DungeonId) : setTab("hero"))} />;
             })}
           </div>
         )}
+
+        {tab === "hero" && <HeroPanel data={data} />}
 
         {tab === "hall" && (
           <div className="mx-auto max-w-2xl space-y-4">
