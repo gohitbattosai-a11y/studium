@@ -33,6 +33,48 @@ export interface Prop {
   r: number;
   die?: DieKind;
 }
+export interface Look {
+  skin: string;
+  hair: string;
+  cape: string;
+  style: number;
+}
+export type AbilityKind = "strike" | "bolt" | "nova" | "cleave" | "pierce" | "chain" | "meteor" | "drain" | "execute" | "dash" | "heal" | "ward" | "freeze" | "rage";
+export interface AbilityDef {
+  id: string;
+  name: string;
+  icon: string;
+  kind: AbilityKind;
+  power: number;
+  cd: number;
+  amount: number;
+  turns: number;
+  n: number;
+  radius: number;
+  range: number;
+  text: string;
+}
+export interface Loadout {
+  name: string;
+  cls: string;
+  look: Look;
+  level: number;
+  hp: number;
+  atk: number;
+  armor: number;
+  crit: number;
+  vamp: number;
+  regen: number;
+  guard: number;
+  slots: number;
+  abilities: AbilityDef[];
+  weapon: string | null;
+  armor_id: string | null;
+}
+export interface HeroAbility {
+  def: AbilityDef;
+  left: number;
+}
 export interface Hero {
   c: number;
   r: number;
@@ -47,6 +89,14 @@ export interface Hero {
   guardMax: number;
   vamp: number;
   lucky: boolean;
+  crit: number;
+  regen: number;
+  ward: number;
+  rage: number;
+  rageAtk: number;
+  abs: HeroAbility[];
+  cls: string;
+  look: Look | null;
 }
 export interface Upgrade {
   id: string;
@@ -87,7 +137,7 @@ export interface Game {
   choices: Upgrade[];
   ups: Record<string, number>;
 }
-export type Action = { t: "move"; d: Dir } | { t: "guard" } | { t: "die"; i: number };
+export type Action = { t: "move"; d: Dir } | { t: "guard" } | { t: "die"; i: number } | { t: "ab"; i: number };
 
 export const DEF: Record<EnemyKind, { hp: number; dmg: number; name: string; ai: Ai }> = {
   slime: { hp: 4, dmg: 2, name: "Slime", ai: "slime" },
@@ -285,7 +335,7 @@ export function genFloor(g: Game) {
   if (f > 1) prop("potion", free(2, 5));
 }
 
-export function newRun(dungeon: DungeonId): Game {
+export function newRun(dungeon: DungeonId, lo?: Loadout | null): Game {
   const g: Game = {
     dungeon,
     last: DUNGEONS[dungeon].last,
@@ -293,7 +343,29 @@ export function newRun(dungeon: DungeonId): Game {
     floor: 1,
     phase: "play",
     over: null,
-    hero: { c: 2, r: ROWS - 1, hp: 24, max: 24, atk: 0, armor: 0, slots: 3, dice: ["heal"], guard: false, guardCd: 0, guardMax: 3, vamp: 0, lucky: false },
+    hero: {
+      c: 2,
+      r: ROWS - 1,
+      hp: lo?.hp ?? 24,
+      max: lo?.hp ?? 24,
+      atk: lo?.atk ?? 0,
+      armor: lo?.armor ?? 0,
+      slots: lo?.slots ?? 3,
+      dice: ["heal"],
+      guard: false,
+      guardCd: 0,
+      guardMax: Math.max(1, 3 - (lo?.guard ?? 0)),
+      vamp: lo?.vamp ?? 0,
+      lucky: false,
+      crit: lo?.crit ?? 0,
+      regen: lo?.regen ?? 0,
+      ward: 0,
+      rage: 0,
+      rageAtk: 0,
+      abs: (lo?.abilities ?? []).map((def) => ({ def, left: 0 })),
+      cls: lo?.cls ?? "guerriero",
+      look: lo?.look ?? null,
+    },
     enemies: [],
     props: [],
     door: 0,
@@ -343,6 +415,10 @@ const hitEnemy = (g: Game, e: Enemy, dmg: number, crit = false, kind: EvKind = "
 const hurt = (g: Game, dmg: number, src?: Enemy) => {
   const h = g.hero;
   if (g.over) return;
+  if (h.ward > 0) {
+    txt(g, h.c, h.r, "Invulnerabile");
+    return;
+  }
   if (h.guard) {
     txt(g, h.c, h.r, "Parata!");
     if (src && src.hp > 0) hitEnemy(g, src, 2);
@@ -365,8 +441,8 @@ const melee = (g: Game, e: Enemy) => {
   let v = first;
   if (h.lucky && v <= 2) v = d6();
   push(g, { k: "roll", c: h.c, r: h.r, die: "d6", v, t: v !== first ? "rilancio" : undefined });
-  const crit = v === 6;
-  let dmg = v + h.atk;
+  const crit = v >= Math.max(3, 6 - h.crit);
+  let dmg = v + h.atk + (h.rage > 0 ? h.rageAtk : 0);
   if (crit) dmg *= 2;
   if (e.exh > 0) {
     dmg += 3;
@@ -439,7 +515,9 @@ const doMove = (g: Game, d: Dir): Res => {
   }
   h.c = nc;
   h.r = nr;
-  if (p?.kind === "spikes") {
+  if (p?.kind === "spikes" && h.ward > 0) {
+    txt(g, nc, nr, "Invulnerabile");
+  } else if (p?.kind === "spikes") {
     const v = Math.max(1, 3 - h.armor);
     h.hp -= v;
     push(g, { k: "num", c: nc, r: nr, v });
@@ -500,6 +578,108 @@ const doDie = (g: Game, i: number): Res => {
       hitEnemy(g, e, v + 1, false, "bolt");
     }
   }
+  return "used";
+};
+
+const dist = (g: Game, e: Enemy) => Math.abs(g.hero.c - e.c) + Math.abs(g.hero.r - e.r);
+const nearest = (g: Game) => {
+  const alive = g.enemies.filter((e) => e.hp > 0);
+  alive.sort((a, b) => dist(g, a) - dist(g, b) || a.id - b.id);
+  return alive[0];
+};
+
+const doAbility = (g: Game, i: number): Res => {
+  const h = g.hero;
+  const ab = h.abs[i];
+  if (!ab) return "invalid";
+  if (ab.left > 0) {
+    txt(g, h.c, h.r, `Ricarica ${ab.left}`);
+    return "msg";
+  }
+  const d = ab.def;
+  const alive = g.enemies.filter((e) => e.hp > 0);
+  const needs = d.kind !== "heal" && d.kind !== "ward" && d.kind !== "rage";
+  if (needs && !alive.length) {
+    txt(g, h.c, h.r, "Nessun bersaglio");
+    return "msg";
+  }
+  const bonus = h.atk + (h.rage > 0 ? h.rageAtk : 0);
+  const t = nearest(g);
+  push(g, { k: "txt", c: h.c, r: h.r, t: `${d.icon} ${d.name}` });
+  if (d.kind === "strike") hitEnemy(g, t, d.amount + bonus);
+  if (d.kind === "bolt") hitEnemy(g, t, d.amount, false, "bolt");
+  if (d.kind === "drain") {
+    hitEnemy(g, t, d.amount, false, "bolt");
+    heal(g, d.amount);
+  }
+  if (d.kind === "nova") {
+    const cells: Cell[] = [];
+    for (let r = t.r - d.radius; r <= t.r + d.radius; r++) for (let c = t.c - d.radius; c <= t.c + d.radius; c++) if (inside(c, r)) cells.push([c, r]);
+    push(g, { k: "fire", c: t.c, r: t.r, cells });
+    alive.filter((e) => Math.abs(e.c - t.c) <= d.radius && Math.abs(e.r - t.r) <= d.radius).forEach((e) => hitEnemy(g, e, d.amount, false, "fire"));
+  }
+  if (d.kind === "cleave") {
+    const cells: Cell[] = [];
+    for (let r = h.r - 1; r <= h.r + 1; r++) for (let c = h.c - 1; c <= h.c + 1; c++) if (inside(c, r) && !(c === h.c && r === h.r)) cells.push([c, r]);
+    push(g, { k: "slam", c: h.c, r: h.r, cells });
+    alive.filter((e) => Math.abs(e.c - h.c) <= 1 && Math.abs(e.r - h.r) <= 1).forEach((e) => hitEnemy(g, e, d.amount + bonus));
+  }
+  if (d.kind === "pierce") {
+    const cells: Cell[] = [];
+    for (let r = 0; r < h.r; r++) cells.push([h.c, r]);
+    push(g, { k: "fire", c: h.c, r: h.r, cells });
+    alive.filter((e) => e.c === h.c && e.r < h.r).forEach((e) => hitEnemy(g, e, d.amount + bonus, false, "fire"));
+  }
+  if (d.kind === "chain") {
+    const pool = [...alive];
+    for (let n = 0; n < d.n && pool.length; n++) hitEnemy(g, pool.splice(rnd(pool.length), 1)[0], d.amount, false, "bolt");
+  }
+  if (d.kind === "meteor") {
+    push(g, { k: "slam", c: h.c, r: h.r, cells: alive.map((e): Cell => [e.c, e.r]) });
+    alive.forEach((e) => hitEnemy(g, e, d.amount, false, "bolt"));
+  }
+  if (d.kind === "execute") {
+    const w = [...alive].sort((a, b) => a.hp / a.max - b.hp / b.max || a.id - b.id)[0];
+    const dmg = d.amount + bonus;
+    hitEnemy(g, w, w.hp * 2 <= w.max ? dmg * 2 : dmg);
+  }
+  if (d.kind === "dash") {
+    if (dist(g, t) > d.range + 1) {
+      txt(g, h.c, h.r, "Troppo lontano");
+      return "msg";
+    }
+    for (let n = 0; n < d.range && dist(g, t) > 1; n++) {
+      const dr = t.r - h.r;
+      const dc = t.c - h.c;
+      const opts: Cell[] = Math.abs(dr) >= Math.abs(dc) ? [[h.c, h.r + Math.sign(dr)], [h.c + Math.sign(dc), h.r]] : [[h.c + Math.sign(dc), h.r], [h.c, h.r + Math.sign(dr)]];
+      const to = opts.find(([c, r]) => (c !== h.c || r !== h.r) && freeCell(g, c, r));
+      if (!to) break;
+      h.c = to[0];
+      h.r = to[1];
+    }
+    if (dist(g, t) > 1) {
+      txt(g, h.c, h.r, "Via bloccata");
+    } else hitEnemy(g, t, d.amount + bonus);
+  }
+  if (d.kind === "heal") heal(g, d.amount);
+  if (d.kind === "ward") {
+    h.ward = d.turns;
+    txt(g, h.c, h.r, "Barriera!");
+  }
+  if (d.kind === "freeze") {
+    push(g, { k: "ice", c: h.c, r: h.r });
+    alive.forEach((e) => {
+      e.frozen = isBoss(e.kind) ? Math.max(1, d.turns - 1) : d.turns;
+      e.tele = null;
+      txt(g, e.c, e.r, "Congelato");
+    });
+  }
+  if (d.kind === "rage") {
+    h.rage = d.turns + 1;
+    h.rageAtk = d.amount;
+    txt(g, h.c, h.r, `+${d.amount} attacco`);
+  }
+  ab.left = d.cd + 1;
   return "used";
 };
 
@@ -648,14 +828,21 @@ export function act(g0: Game, a: Action): Game | null {
   const g = clone(g0);
   g.ev = [];
   g.hero.guard = false;
-  const res = a.t === "move" ? doMove(g, a.d) : a.t === "guard" ? doGuard(g) : doDie(g, a.i);
+  const res = a.t === "move" ? doMove(g, a.d) : a.t === "guard" ? doGuard(g) : a.t === "ab" ? doAbility(g, a.i) : doDie(g, a.i);
   if (res === "invalid") return null;
   g.enemies = g.enemies.filter((e) => e.hp > 0);
   if (res === "msg" || g.phase !== "play") return g;
   enemyPhase(g);
   g.enemies = g.enemies.filter((e) => e.hp > 0);
   g.turn++;
-  if (g.hero.guardCd > 0) g.hero.guardCd--;
+  const h = g.hero;
+  if (h.guardCd > 0) h.guardCd--;
+  if (h.ward > 0) h.ward--;
+  if (h.rage > 0) h.rage--;
+  h.abs.forEach((a) => {
+    if (a.left > 0) a.left--;
+  });
+  if (h.regen && h.hp > 0 && !g.over && g.turn % 2 === 0 && h.hp < h.max) heal(g, h.regen);
   return g;
 }
 
