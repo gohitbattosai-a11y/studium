@@ -1,0 +1,332 @@
+.dg-bob,
+.dg-hover,
+.dg-squish,
+.dg-dizzy,
+.dg-flap,
+.dg-flicker,
+.dg-spin,
+.dg-glow,
+.dg-hop,
+.dg-pulse {
+  transform-box: fill-box;
+}
+.dg-bob {
+  transform-origin: 50% 100%;
+  animation: dg-bob 1.6s ease-in-out infinite;
+}
+.dg-dizzy {
+  transform-origin: 50% 100%;
+  animation: dg-dizzy 0.5s ease-in-out infinite;
+}
+.dg-hover {
+  animation: dg-hover 1.3s ease-in-out infinite;
+}
+.dg-squish {
+  transform-origin: 50% 100%;
+  animation: dg-squish 1.2s ease-in-out infinite;
+}
+.dg-flap {
+  animation: dg-flap 0.32s ease-in-out infinite alternate;
+}
+.dg-flicker {
+  animation: dg-flicker 0.7s ease-in-out infinite alternate;
+}
+.dg-glow {
+  animation: dg-glow 1.4s ease-in-out infinite;
+}
+.dg-spin {
+  animation: dg-spin 1.6s linear infinite;
+}
+.dg-hop {
+  transform-origin: 50% 100%;
+  animation: dg-hop 0.22s ease-out;
+}
+.dg-pulse {
+  animation: dg-pulse 0.7s ease-in-out infinite;
+}
+.dg-guard {
+  animation: dg-glow 0.9s ease-in-out infinite;
+}
+.dg-shake {
+  animation: dg-shake 0.34s linear;
+}
+.dg-fx {
+  animation: dg-rise 1s ease-out forwards;
+  pointer-events: none;
+}
+.dg-slash {
+  animation: dg-slash 0.34s ease-out forwards;
+  pointer-events: none;
+}
+.dg-burst {
+  animation: dg-burst 0.5s ease-out forwards;
+  pointer-events: none;
+}
+.dg-roll {
+  animation: dg-roll 0.7s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.dg-pop {
+  animation: dg-pop 0.35s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.dg-banner {
+  animation: dg-banner 1.6s ease-in-out forwards;
+  pointer-events: none;
+}
+
+@keyframes dg-bob {
+  50% {
+    transform: translateY(-2px) scale(1.015, 0.985);
+  }
+}
+@keyframes dg-dizzy {
+  0%,
+  100% {
+    transform: rotate(-2.5deg);
+  }
+  50% {
+    transform: rotate(2.5deg);
+  }
+}
+@keyframes dg-hover {
+  50% {
+    transform: translateY(-7px);
+  }
+}
+@keyframes dg-squish {
+  50% {
+    transform: scale(1.07, 0.9);
+  }
+}
+@keyframes dg-flap {
+  from {
+    transform: scaleY(1);
+  }
+  to {
+    transform: scaleY(0.45);
+  }
+}
+@keyframes dg-flicker {
+  from {
+    transform: scale(1, 1);
+    opacity: 0.95;
+  }
+  to {
+    transform: scale(0.88, 1.14);
+    opacity: 1;
+  }
+}
+@keyframes dg-glow {
+  50% {
+    opacity: 0.45;
+  }
+}
+@keyframes dg-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes dg-hop {
+  0% {
+    transform: translateY(0) scale(1, 1);
+  }
+  40% {
+    transform: translateY(-9px) scale(0.94, 1.08);
+  }
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+}
+@keyframes dg-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+@keyframes dg-shake {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-7px, 3px);
+  }
+  40% {
+    transform: translate(6px, -3px);
+  }
+  60% {
+    transform: translate(-4px, 2px);
+  }
+  80% {
+    transform: translate(3px, -1px);
+  }
+}
+@keyframes dg-rise {
+  0% {
+    transform: translateY(0) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    transform: translateY(-8px) scale(1.25);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-46px) scale(1);
+    opacity: 0;
+  }
+}
+@keyframes dg-slash {
+  0% {
+    transform: scale(0.4) rotate(-20deg);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.15) rotate(10deg);
+    opacity: 0;
+  }
+}
+@keyframes dg-burst {
+  0% {
+    transform: scale(0.3);
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+@keyframes dg-roll {
+  0% {
+    transform: rotate(0) scale(0.5);
+  }
+  60% {
+    transform: rotate(520deg) scale(1.25);
+  }
+  100% {
+    transform: rotate(720deg) scale(1);
+  }
+}
+@keyframes dg-pop {
+  from {
+    transform: scale(0.7) translateY(14px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes dg-banner {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  20%,
+  70% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dg-bob,
+  .dg-hover,
+  .dg-squish,
+  .dg-flap,
+  .dg-dizzy,
+  .dg-spin {
+    animation: none;
+  }
+}
+
+.dg-hop-loop {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: dg-hoploop 0.8s ease-in-out infinite;
+}
+.dg-mote {
+  animation: dg-mote 7s linear infinite;
+  pointer-events: none;
+}
+.dg-sway {
+  transform-box: fill-box;
+  transform-origin: 50% 0%;
+  animation: dg-sway 4.5s ease-in-out infinite;
+}
+.dg-fog {
+  animation: dg-fog 14s linear infinite;
+  pointer-events: none;
+}
+.dg-portal {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: dg-portal 3.4s ease-in-out infinite;
+}
+.dg-gleam {
+  animation: dg-gleam 2.6s ease-in-out infinite;
+}
+@keyframes dg-hoploop {
+  0%,
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  50% {
+    transform: translateY(-5px) scale(0.97, 1.04);
+  }
+}
+@keyframes dg-mote {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-120px);
+    opacity: 0;
+  }
+}
+@keyframes dg-sway {
+  50% {
+    transform: rotate(2.4deg);
+  }
+}
+@keyframes dg-fog {
+  from {
+    transform: translateX(-40px);
+  }
+  to {
+    transform: translateX(40px);
+  }
+}
+@keyframes dg-portal {
+  50% {
+    transform: scale(1.08);
+    opacity: 0.7;
+  }
+}
+@keyframes dg-gleam {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dg-hop-loop,
+  .dg-mote,
+  .dg-sway,
+  .dg-fog,
+  .dg-portal,
+  .dg-gleam {
+    animation: none;
+  }
+}
