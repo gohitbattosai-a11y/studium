@@ -153,6 +153,66 @@ export function LootIcon({ shape, color, size = 48 }: { shape: string; color: st
         </g>
       );
       break;
+    case "axe":
+      body = (
+        <g transform="rotate(35 32 32)">
+          <rect x="29" y="6" width="6" height="54" rx="3" fill={dk} />
+          <path d="M35 10 Q56 12 54 30 Q46 28 35 30Z" fill={M} stroke="#475569" strokeWidth="1.2" />
+          <path d="M29 12 Q12 14 14 28 Q20 26 29 26Z" fill={A} stroke={dk} strokeWidth="1.2" />
+          <path d="M38 14 Q48 16 50 24" stroke="#fff" strokeWidth="1.4" fill="none" opacity="0.6" />
+        </g>
+      );
+      break;
+    case "mace":
+      body = (
+        <g transform="rotate(35 32 32)">
+          <rect x="29" y="22" width="6" height="40" rx="3" fill={dk} />
+          <circle cx="32" cy="16" r="12" fill={A} stroke={dk} strokeWidth="1.6" />
+          <path d="M32 0 L32 6 M32 26 L32 32 M16 16 L22 16 M42 16 L48 16" stroke={M} strokeWidth="3" strokeLinecap="round" />
+          <circle cx="28" cy="12" r="3" fill="#fff" opacity="0.5" />
+        </g>
+      );
+      break;
+    case "staff":
+      body = (
+        <g transform="rotate(30 32 32)">
+          <rect x="30" y="14" width="4" height="48" rx="2" fill="#7c5a2b" />
+          <circle cx="32" cy="10" r="9" fill={A} stroke={dk} strokeWidth="1.6" />
+          <circle cx="29" cy="7" r="3" fill="#fff" opacity="0.7" />
+          <path d="M24 18 Q32 24 40 18" stroke={dk} strokeWidth="2" fill="none" />
+        </g>
+      );
+      break;
+    case "bow":
+      body = (
+        <g>
+          <path d="M20 6 Q58 32 20 58" fill="none" stroke={A} strokeWidth="5" strokeLinecap="round" />
+          <path d="M20 6 L20 58" stroke="#e5e7eb" strokeWidth="1.4" />
+          <path d="M12 32 L44 32 M44 32 L38 28 M44 32 L38 36" stroke={dk} strokeWidth="2" fill="none" strokeLinecap="round" />
+        </g>
+      );
+      break;
+    case "robe":
+      body = (
+        <g>
+          <path d="M20 8 L44 8 L56 26 L48 32 L46 58 L18 58 L16 32 L8 26Z" fill={A} stroke={dk} strokeWidth="1.6" />
+          <path d="M28 8 Q32 18 36 8" fill={dk} />
+          <path d="M32 18 L32 58" stroke="#fff" strokeWidth="1.2" opacity="0.35" />
+          <rect x="18" y="36" width="28" height="4" fill={M} />
+        </g>
+      );
+      break;
+    case "leather":
+      body = (
+        <g>
+          <path d="M18 8 L46 8 L58 20 L50 30 L46 26 L46 58 L18 58 L18 26 L14 30 L6 20Z" fill={A} stroke={dk} strokeWidth="1.6" />
+          <path d="M18 24 L46 24 M18 38 L46 38" stroke={dk} strokeWidth="1.6" opacity="0.7" />
+          <circle cx="24" cy="31" r="1.6" fill={M} />
+          <circle cx="32" cy="31" r="1.6" fill={M} />
+          <circle cx="40" cy="31" r="1.6" fill={M} />
+        </g>
+      );
+      break;
     case "coin":
       body = (
         <g>
