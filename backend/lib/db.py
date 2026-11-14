@@ -76,6 +76,26 @@ INDEXES: dict[str, list[IndexModel]] = {
         IndexModel([("group_id", ASCENDING)], name="group"),
     ],
     "museum": [IndexModel([("group_id", ASCENDING), ("species_id", ASCENDING)], name="group_species", unique=True)],
+    "dungeon_chars": [IndexModel([("member_id", ASCENDING)], name="member", unique=True)],
+    "dungeon_gear": [IndexModel([("member_id", ASCENDING), ("gear_id", ASCENDING)], name="member_gear", unique=True)],
+    "stadium_clubs": [
+        IndexModel([("member_id", ASCENDING)], name="member", unique=True),
+        IndexModel([("group_id", ASCENDING)], name="group"),
+    ],
+    "stadium_cards": [
+        IndexModel([("id", ASCENDING)], name="id", unique=True),
+        IndexModel([("member_id", ASCENDING)], name="member"),
+    ],
+    "stadium_leagues": [
+        IndexModel([("id", ASCENDING)], name="id", unique=True),
+        IndexModel([("group_id", ASCENDING), ("kind", ASCENDING)], name="group_kind"),
+    ],
+    "stadium_fixtures": [
+        IndexModel([("id", ASCENDING)], name="id", unique=True),
+        IndexModel([("league_id", ASCENDING), ("season", ASCENDING), ("day", ASCENDING)], name="league_day"),
+        IndexModel([("status", ASCENDING), ("at", ASCENDING)], name="due"),
+    ],
+    "stadium_packs": [IndexModel([("member_id", ASCENDING)], name="member", unique=True)],
 }
 
 
