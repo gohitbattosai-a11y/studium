@@ -8,6 +8,7 @@ import { auctionOf, FORMATIONS, FORMATION_LIST, SQUAD_MAX, STAT_KEYS, STAT_LABEL
 import PlayerCard, { tierName } from "./PlayerCard";
 import { stadiumArt } from "@/lib/art/stadiumAssets";
 import { AskDialog } from "./Market";
+import { useStadiumActions } from "@/lib/domain/stadiumApi";
 
 const eur = (n: number) => `€${n.toFixed(1)}M`;
 const run = (fn: () => string | null, ok?: string) => {
@@ -22,6 +23,7 @@ export function PlayerDetail({ p, team, s, onClose }: { p: Player | null; team: 
   const busy = !!cur?.training;
   const now = useNow(busy);
   const [ask, setAsk] = useState(false);
+  const act = useStadiumActions();
   const left = cur?.training ? Math.max(0, Math.ceil((cur.training.end - now) / 1000)) : 0;
   const pct = cur?.training ? Math.min(100, Math.max(0, 100 - (left / trainSeconds(cur)) * 100)) : 0;
   return (
@@ -74,7 +76,27 @@ export function PlayerDetail({ p, team, s, onClose }: { p: Player | null; team: 
                 trained && <p className="mt-1 text-[11px] text-[#8B949E]">Già allenato in questa giornata: torna dopo la prossima partita.</p>
               )}
             </div>
-            {cur.loan ? (
+            {cur.out && <p className="rounded-lg border border-[#F85149]/40 bg-[#2a1214]/90 px-3 py-2 text-xs text-[#FFA198]">{cur.out.kind === "red" ? `Squalificato per ${cur.out.left} partite` : `Infortunato: torna tra ${cur.out.left} partite`}. Non può essere schierato.</p>}
+            {cur.id.startsWith("pk-") ? (
+              <div>
+                <p className="mb-1.5 text-[11px] text-[#8B949E]">Carta da pack: non si vende né va all'asta, ma puoi svincolarla per ricevere un rimborso.</p>
+                <Button
+                  variant="ghost"
+                  className="w-full text-[#FFA198]"
+                  disabled={act.release.isPending}
+                  onClick={() =>
+                    act.release.mutate(cur.id, {
+                      onSuccess: (r) => {
+                        toast.success(`Carta svincolata: +${eur(r.value)} in arrivo`);
+                        onClose();
+                      },
+                    })
+                  }
+                >
+                  Svincola
+                </Button>
+              </div>
+            ) : cur.loan ? (
               <p className="text-[11px] text-[#8B949E]">In prestito: non si può vendere né mettere all'asta.</p>
             ) : auctionOf(s, cur.id) ? (
               <p className="text-[11px] text-[#E3B341]">Questo giocatore è all'asta.</p>
