@@ -179,7 +179,7 @@ export class Match {
   version = 0;
   goalAt = -99;
   goalItem: FeedItem | null = null;
-  card: { s: Side; i: number; until: number } | null = null;
+  card: { s: Side; i: number; until: number; red: boolean } | null = null;
   private r: () => number;
   private beats: Beat[] = [];
   private plan: Plan | null = null;
@@ -233,7 +233,7 @@ export class Match {
     fx.log.forEach((e) => {
       const side: Side = e.teamId === h.id ? 0 : 1;
       if (e.type === "goal" || e.type === "save" || e.type === "post" || e.type === "off") this.beats.push({ e, side, kind: "attack", T: e.min * this.K, startT: e.min * this.K - ATTACK_LEAD, done: false });
-      else if (e.type === "yellow") this.beats.push({ e, side, kind: "foul", T: e.min * this.K, startT: e.min * this.K - FOUL_LEAD, done: false });
+      else if (e.type === "yellow" || e.type === "red" || e.type === "injury") this.beats.push({ e, side, kind: "foul", T: e.min * this.K, startT: e.min * this.K - FOUL_LEAD, done: false });
     });
     this.beats.sort((x, y) => x.T - y.T);
     for (let s = 0; s < 2; s++)
@@ -1204,7 +1204,7 @@ export class Match {
       k.run = null;
       f.beat.done = true;
       this.say(f.beat.e);
-      this.card = { s: f.beat.side, i: f.booked, until: this.t + 2.8 };
+      this.card = f.beat.e.type === "injury" ? null : { s: f.beat.side, i: f.booked, until: this.t + 2.8, red: f.beat.e.type === "red" };
       this.mode = "foul";
       this.wait = this.t + 2.8;
     }
