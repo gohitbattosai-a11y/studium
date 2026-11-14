@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { FastForward, ListOrdered, Pause, Play, X } from "lucide-react";
-import type { Fixture, StadiumState, Team } from "@/lib/domain/football";
+import type { Fixture, Team } from "@/lib/domain/football";
 import { Match } from "@/lib/domain/matchEngine";
 import { CFG } from "@/lib/domain/stadiumConfig";
 import { stadiumInner } from "@/lib/art/stadiumAssets";
@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils/cn";
 import { StadiumBack } from "./Landmarks";
 import "./stadium.css";
 
-const ICON: Record<string, string> = { kickoff: "🟢", goal: "⚽", save: "🧤", post: "💥", off: "💨", yellow: "🟨", half: "⏸", end: "🏁" };
+const ICON: Record<string, string> = { kickoff: "🟢", goal: "⚽", save: "🧤", post: "💥", off: "💨", yellow: "🟨", red: "🟥", injury: "🚑", half: "⏸", end: "🏁" };
 
 const rgb = (hex: string) => {
   const v = parseInt(hex.replace("#", "").padEnd(6, "0").slice(0, 6), 16);
@@ -44,9 +44,7 @@ const snapOf = (m: Match): Snap => ({
 
 const same = (a: Snap, b: Snap) => a.version === b.version && a.minute === b.minute && a.phase === b.phase && a.holder === b.holder && a.goalId === b.goalId && a.hg === b.hg && a.ag === b.ag;
 
-export default function LiveMatch({ fx, s, onClose }: { fx: Fixture; s: StadiumState; onClose: () => void }) {
-  const h = s.teams.find((t) => t.id === fx.home) as Team;
-  const a = s.teams.find((t) => t.id === fx.away) as Team;
+export default function LiveMatch({ fx, h, a, onClose }: { fx: Fixture; h: Team; a: Team; onClose: () => void }) {
   const [run, setRun] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [speed, setSpeed] = useState(CFG.match.defaultSpeed);
@@ -87,6 +85,7 @@ export default function LiveMatch({ fx, s, onClose }: { fx: Fixture; s: StadiumS
         const p = sim.P[c.s][c.i];
         r.setAttribute("x", (p.x + 1.2).toFixed(2));
         r.setAttribute("y", (p.y - 5).toFixed(2));
+        r.setAttribute("fill", c.red ? "#ef4444" : "#facc15");
         r.setAttribute("visibility", "visible");
       } else r.setAttribute("visibility", "hidden");
     }
