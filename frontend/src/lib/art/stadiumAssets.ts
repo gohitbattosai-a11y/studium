@@ -21,3 +21,7 @@ export const stadiumArt = (id: string): string => stadiumFiles.get(id) ?? "";
 export const stadiumInner = (id: string): string => inner(stadiumArt(id));
 export const cardTemplate = (id: string): string => cardFiles.get(id) ?? "";
 export const customCardTemplate = (id: string | undefined): string => (id ? customFiles.get(id) ?? "" : "");
+
+const packs = import.meta.glob("/src/assets/art/packs/*.svg", { query: "?raw", import: "default", eager: true }) as Record<string, string>;
+const packFiles = index(packs, /\/packs\/([^/]+)\.svg$/);
+export const packArt = (id: string): string => packFiles.get(id) ?? "";
