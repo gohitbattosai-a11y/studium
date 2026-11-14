@@ -1,0 +1,50 @@
+.pk-root { position: fixed; inset: 0; z-index: 80; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; background: radial-gradient(ellipse at 50% 40%, #1b1633 0%, #05040b 75%); color: #fff; touch-action: manipulation; user-select: none; }
+.pk-rays { position: absolute; inset: -50%; background: repeating-conic-gradient(from 0deg, var(--pk, #fff) 0deg 4deg, transparent 4deg 14deg); opacity: 0.14; animation: pk-spin 18s linear infinite; mask-image: radial-gradient(circle, #000 0%, transparent 62%); -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 62%); pointer-events: none; }
+.pk-glow { position: absolute; width: 130vmin; height: 130vmin; border-radius: 50%; background: radial-gradient(circle, var(--pk, #fff) 0%, transparent 62%); opacity: 0.22; pointer-events: none; animation: pk-breathe 2.4s ease-in-out infinite; }
+.pk-pack { position: relative; width: min(56vw, 250px); aspect-ratio: 120 / 170; filter: drop-shadow(0 18px 30px #000a) drop-shadow(0 0 22px var(--pk)); cursor: pointer; }
+.pk-pack > svg { width: 100%; height: 100%; display: block; }
+.pk-idle { animation: pk-float 3s ease-in-out infinite; }
+.pk-shake { animation: pk-shake 0.42s linear infinite; }
+.pk-charge { animation: pk-charge 2s ease-in forwards; }
+.pk-tear { animation: pk-tear 0.55s cubic-bezier(0.2, 0.9, 0.3, 1) forwards; }
+.pk-flash { position: absolute; inset: 0; background: var(--pk, #fff); pointer-events: none; animation: pk-flash 0.9s ease-out forwards; mix-blend-mode: screen; }
+.pk-ring { position: absolute; width: 20vmin; height: 20vmin; border-radius: 50%; border: 4px solid var(--pk, #fff); pointer-events: none; animation: pk-ring 1s ease-out forwards; }
+.pk-spark { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: var(--pk, #fff); box-shadow: 0 0 10px var(--pk, #fff); pointer-events: none; animation: pk-spark 1.1s ease-out forwards; }
+.pk-stage { position: relative; width: min(78vw, 320px); aspect-ratio: 100 / 136; perspective: 1100px; }
+.pk-card { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform 0.75s cubic-bezier(0.2, 0.8, 0.2, 1); cursor: pointer; }
+.pk-card.pk-flipped { transform: rotateY(180deg); }
+.pk-face, .pk-back { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 14px; }
+.pk-face { transform: rotateY(180deg); display: grid; place-items: center; }
+.pk-face > * { width: 100% !important; height: 100% !important; }
+.pk-back { background: radial-gradient(circle at 50% 40%, var(--pk) 0%, #0b0a14 80%); border: 3px solid var(--pk); box-shadow: 0 0 26px var(--pk), inset 0 0 30px #0009; display: grid; place-items: center; }
+.pk-back::after { content: "★"; font-size: 72px; color: #fff; text-shadow: 0 0 18px var(--pk); animation: pk-breathe 1.6s ease-in-out infinite; }
+.pk-back.pk-hot { animation: pk-hot 0.5s ease-in-out infinite alternate; }
+.pk-in { animation: pk-in 0.55s cubic-bezier(0.2, 1.2, 0.3, 1) both; }
+.pk-out { animation: pk-out 0.4s ease-in forwards; }
+.pk-halo { position: absolute; inset: -14%; border-radius: 22px; background: radial-gradient(circle, var(--pk) 0%, transparent 68%); opacity: 0; pointer-events: none; transition: opacity 0.6s; }
+.pk-flipped + .pk-halo, .pk-halo.on { opacity: 0.6; animation: pk-breathe 1.6s ease-in-out infinite; }
+.pk-walk { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; background: #000; animation: pk-fadein 0.4s ease-out both; }
+.pk-walk .pk-beam { position: absolute; top: 0; left: 50%; width: 70vmin; height: 100%; transform: translateX(-50%); background: linear-gradient(180deg, var(--pk), transparent 85%); clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%); opacity: 0.35; animation: pk-beam 1.6s ease-out both; }
+.pk-walk .pk-name { font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; font-size: clamp(22px, 7vw, 40px); text-shadow: 0 0 22px var(--pk); }
+.pk-letter { display: inline-block; opacity: 0; animation: pk-letter 0.35s ease-out forwards; }
+.pk-ovr { font-weight: 900; font-size: clamp(64px, 24vw, 120px); line-height: 1; color: var(--pk); text-shadow: 0 0 30px var(--pk); animation: pk-ovr 1.1s cubic-bezier(0.2, 1.4, 0.3, 1) both; }
+.pk-sum { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 10px; width: min(94vw, 560px); justify-items: center; }
+.pk-sum > div { animation: pk-in 0.5s cubic-bezier(0.2, 1.2, 0.3, 1) both; }
+.pk-new { position: absolute; top: -8px; left: -6px; z-index: 3; background: linear-gradient(90deg, #f59e0b, #ef4444); border-radius: 6px; padding: 1px 6px; font-size: 10px; font-weight: 900; letter-spacing: 0.1em; transform: rotate(-8deg); box-shadow: 0 2px 6px #0008; }
+@keyframes pk-spin { to { transform: rotate(360deg); } }
+@keyframes pk-breathe { 0%, 100% { opacity: 0.18; transform: scale(0.96); } 50% { opacity: 0.3; transform: scale(1.04); } }
+@keyframes pk-float { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-12px) rotate(1.5deg); } }
+@keyframes pk-shake { 0% { transform: translate(0, 0) rotate(0); } 20% { transform: translate(-6px, 2px) rotate(-3deg); } 40% { transform: translate(5px, -3px) rotate(3deg); } 60% { transform: translate(-5px, -2px) rotate(-2deg); } 80% { transform: translate(6px, 3px) rotate(2deg); } 100% { transform: translate(0, 0) rotate(0); } }
+@keyframes pk-charge { 0% { transform: scale(1); filter: drop-shadow(0 0 10px var(--pk)) brightness(1); } 100% { transform: scale(1.28); filter: drop-shadow(0 0 60px var(--pk)) brightness(2.2); } }
+@keyframes pk-tear { 0% { transform: scale(1.28); opacity: 1; } 100% { transform: scale(2.6); opacity: 0; } }
+@keyframes pk-flash { 0% { opacity: 0.95; } 100% { opacity: 0; } }
+@keyframes pk-ring { 0% { transform: scale(0.2); opacity: 1; } 100% { transform: scale(7); opacity: 0; } }
+@keyframes pk-spark { 0% { transform: translate(0, 0) scale(1); opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; } }
+@keyframes pk-in { 0% { transform: translateY(40px) scale(0.6); opacity: 0; } 100% { transform: translateY(0) scale(1); opacity: 1; } }
+@keyframes pk-out { to { transform: translateX(-120vw) rotate(-14deg); opacity: 0; } }
+@keyframes pk-hot { from { box-shadow: 0 0 20px var(--pk), inset 0 0 20px #0009; } to { box-shadow: 0 0 56px var(--pk), 0 0 90px var(--pk), inset 0 0 30px #0009; } }
+@keyframes pk-fadein { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pk-beam { from { opacity: 0; transform: translateX(-50%) scaleY(0.2); transform-origin: top; } to { opacity: 0.35; transform: translateX(-50%) scaleY(1); transform-origin: top; } }
+@keyframes pk-letter { from { opacity: 0; transform: translateY(18px) scale(1.6); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes pk-ovr { 0% { transform: scale(0.2); opacity: 0; } 60% { transform: scale(1.25); opacity: 1; } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .pk-rays, .pk-glow, .pk-idle, .pk-back::after, .pk-back.pk-hot { animation: none; } .pk-card { transition-duration: 0.01s; } }
