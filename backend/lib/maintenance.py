@@ -26,6 +26,13 @@ BY_GROUP = (
     "member_badges",
     "push_subs",
     "museum",
+    "dungeon_gear",
+    "dungeon_chars",
+    "stadium_clubs",
+    "stadium_cards",
+    "stadium_leagues",
+    "stadium_fixtures",
+    "stadium_packs",
 )
 
 BY_MEMBER = (
@@ -44,6 +51,11 @@ BY_MEMBER = (
     "fish_casts",
     "push_subs",
     "point_events",
+    "dungeon_gear",
+    "dungeon_chars",
+    "stadium_clubs",
+    "stadium_cards",
+    "stadium_packs",
 )
 
 
