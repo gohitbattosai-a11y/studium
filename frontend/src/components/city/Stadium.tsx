@@ -1,23 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, FastForward, Play, RefreshCw, RotateCcw, Trophy, Wrench } from "lucide-react";
+import { ChevronLeft, RotateCcw, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils/cn";
 import { useNow } from "@/lib/runtime/useNow";
-import { COLORS, SQUAD_MIN, TOTAL_DAYS, TRAIN, addBudget, available, collectTraining, getStadium, buyTeam, createTeam, isReady, myTeam, newSeason, playDay, playSeason, resetStadium, resetTraining, settleAuctions, strength, table, teamPrice, train, trainCost, trainSeconds, trainTeam, useStadium, type Fixture, type Player, type StadiumState, type Team, type TrainKind } from "@/lib/domain/football";
-import { CFG } from "@/lib/domain/stadiumConfig";
+import { COLORS, SQUAD_MIN, TRAIN, addBudget, available, collectTraining, buyTeam, createTeam, isReady, myTeam, resetStadium, resetTraining, settleAuctions, strength, teamPrice, train, trainCost, trainSeconds, trainTeam, useStadium, type Player, type StadiumState, type Team, type TrainKind } from "@/lib/domain/football";
+import { useClubSync, useServerState } from "@/lib/domain/stadiumApi";
 import { stadiumArt } from "@/lib/art/stadiumAssets";
 import Deals from "./Deals";
-import LiveMatch from "./LiveMatch";
+import Leagues, { countdown, fmtWhen } from "./Leagues";
 import MarketView from "./Market";
+import Packs from "./Packs";
 import Squad, { PlayerDetail } from "./Squad";
-import { Crest, Dot, Empty, PANEL, PosBadge, eur, run } from "./stadiumUi";
+import { Crest, PANEL, PosBadge, eur, run } from "./stadiumUi";
 import "./stadium.css";
 
-type Tab = "table" | "matches" | "squad" | "market" | "deals" | "train" | "teams";
+type Tab = "squad" | "market" | "deals" | "train" | "league" | "packs";
 
-const TABS: [Tab, string, string][] = [["squad", "Rosa", "👕"], ["market", "Mercato", "💶"], ["deals", "Trattative", "🤝"], ["train", "Allenamento", "🏃"], ["table", "Classifica", "🏆"], ["matches", "Calendario", "📅"], ["teams", "Squadre", "🛡"]];
+const TABS: [Tab, string, string][] = [["squad", "Rosa", "👕"], ["market", "Mercato", "💶"], ["deals", "Trattative", "🤝"], ["train", "Allenamento", "🏃"], ["league", "Campionato", "🏆"], ["packs", "Pack", "🎴"]];
 
 const report = (r: { name: string; d: number }[]) => {
   r.slice(0, 3).forEach((x) => toast.success(x.d > 0 ? `${x.name}: +${x.d} overall` : `${x.name} ha finito l'allenamento`));
@@ -99,132 +100,6 @@ function Setup({ s }: { s: StadiumState }) {
   );
 }
 
-function TopScorers({ s }: { s: StadiumState }) {
-  const list = s.teams
-    .flatMap((t) => t.players.map((p) => ({ p, t })))
-    .filter((x) => x.p.goals > 0)
-    .sort((a, b) => b.p.goals - a.p.goals)
-    .slice(0, 5);
-  if (!list.length) return null;
-  return (
-    <div className={cn("mt-4 rounded-xl p-3", PANEL)}>
-      <h3 className="mb-2 text-sm font-semibold">Capocannonieri</h3>
-      <ul className="flex flex-col gap-1">
-        {list.map(({ p, t }) => (
-          <li key={p.id} className="flex items-center gap-2 text-sm">
-            <Dot color={t.color} />
-            <span className="min-w-0 flex-1 truncate">{p.name}</span>
-            <span className="text-[11px] text-[#8B949E]">{t.name}</span>
-            <b className="w-6 text-right tabular-nums">{p.goals}</b>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function TableView({ s }: { s: StadiumState }) {
-  const rows = table(s);
-  const champ = s.teams.find((t) => t.id === s.champion);
-  return (
-    <div>
-      <p className="mb-2 text-xs text-[#C9D1D9]">
-        Stagione {s.season} · Giornata {s.day}/{TOTAL_DAYS}
-      </p>
-      {champ && (
-        <div className="mb-3 flex items-center gap-2 rounded-xl border border-[#E3B341]/50 bg-[#1f1a0d]/90 px-3 py-2 text-sm">
-          <Trophy className="size-4 text-[#E3B341]" />
-          <span>
-            Campione: <b>{champ.name}</b>
-            {s.prize > 0 && <span className="text-[#7EE787]"> · premio {eur(s.prize)} alla tua squadra</span>}
-          </span>
-        </div>
-      )}
-      <div className={cn("overflow-x-auto rounded-xl", PANEL)}>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-[#30363D] text-[11px] text-[#8B949E]">
-              <th className="px-2 py-2 text-left">#</th>
-              <th className="px-2 py-2 text-left">Squadra</th>
-              {["G", "V", "N", "P", "GF", "GS", "Pt"].map((h) => (
-                <th key={h} className="px-1.5 py-2 text-right">
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r, i) => (
-              <tr key={r.team.id} className={cn("border-b border-[#21262D] last:border-0", r.team.mine && "bg-[#1f2d1f]/80")}>
-                <td className="px-2 py-1.5 tabular-nums text-[#8B949E]">{i + 1}</td>
-                <td className="px-2 py-1.5">
-                  <span className="flex items-center gap-2">
-                    <Dot color={r.team.color} />
-                    <span className={cn("truncate", r.team.mine && "font-semibold")}>{r.team.name}</span>
-                  </span>
-                </td>
-                {[r.p, r.w, r.d, r.l, r.gf, r.ga].map((v, k) => (
-                  <td key={k} className="px-1.5 py-1.5 text-right tabular-nums text-[#C9D1D9]">
-                    {v}
-                  </td>
-                ))}
-                <td className="px-1.5 py-1.5 text-right font-bold tabular-nums">{r.pts}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <TopScorers s={s} />
-    </div>
-  );
-}
-
-function MatchesView({ s, onWatch }: { s: StadiumState; onWatch: (f: Fixture) => void }) {
-  const [view, setView] = useState<number | null>(null);
-  const day = view ?? Math.min(s.day + 1, TOTAL_DAYS);
-  const list = s.fixtures.filter((f) => f.day === day);
-
-  return (
-    <div>
-      <div className="mb-2 flex items-center justify-between">
-        <Button size="icon-lg" variant="ghost" disabled={day <= 1} onClick={() => setView(day - 1)} aria-label="Giornata precedente">
-          <ChevronLeft />
-        </Button>
-        <p className="text-sm font-semibold">
-          Giornata {day}/{TOTAL_DAYS}
-        </p>
-        <Button size="icon-lg" variant="ghost" disabled={day >= TOTAL_DAYS} onClick={() => setView(day + 1)} aria-label="Giornata successiva">
-          <ChevronRight />
-        </Button>
-      </div>
-      <ul className="flex flex-col gap-1.5">
-        {list.map((f, i) => {
-          const h = s.teams.find((t) => t.id === f.home) as Team;
-          const a = s.teams.find((t) => t.id === f.away) as Team;
-          const played = f.hg !== null;
-          const own = h.mine || a.mine;
-          return (
-            <li key={i}>
-              <button type="button" disabled={!played} onClick={() => onWatch(f)} className={cn("flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-sm outline-none backdrop-blur-sm", own ? "border-[#3FB950]/50 bg-[#12261E]/85" : "border-[#30363D] bg-[#0D1117]/80", played && "hover:brightness-125")}>
-                <span className="flex min-w-0 flex-1 items-center justify-end gap-2 text-right">
-                  <span className="truncate">{h.name}</span>
-                  <Dot color={h.color} />
-                </span>
-                <span className="w-14 shrink-0 text-center font-bold tabular-nums">{played ? `${f.hg} - ${f.ag}` : "vs"}</span>
-                <span className="flex min-w-0 flex-1 items-center gap-2">
-                  <Dot color={a.color} />
-                  <span className="truncate">{a.name}</span>
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-      <p className="mt-2 text-center text-[11px] text-[#8B949E]">Tocca una partita giocata per rivederla.</p>
-    </div>
-  );
-}
-
 function TrainView({ s, team }: { s: StadiumState; team: Team }) {
   const [detail, setDetail] = useState<Player | null>(null);
   const players = [...team.players].sort((a, b) => b.ovr - a.ovr);
@@ -293,56 +168,15 @@ function TrainView({ s, team }: { s: StadiumState; team: Team }) {
   );
 }
 
-function TeamsView({ s }: { s: StadiumState }) {
-  const list = [...s.teams].sort((a, b) => strength(b).ovr - strength(a).ovr);
-  return (
-    <ul className="flex flex-col gap-1.5">
-      {list.map((t) => {
-        const st = strength(t);
-        return (
-          <li key={t.id} className={cn("flex items-center gap-3 rounded-lg px-3 py-2", PANEL, t.mine && "border-[#3FB950]/50 bg-[#12261E]/85")}>
-            <Dot color={t.color} />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">
-                {t.name}
-                {t.mine && <span className="ml-2 text-[10px] text-[#7EE787]">LA TUA</span>}
-              </p>
-              <p className="text-[11px] text-[#8B949E]">
-                Att {Math.round(st.att)} · Dif {Math.round(st.def)} · {t.players.length} giocatori · {t.formation}
-              </p>
-            </div>
-            <b className="text-lg tabular-nums">{Math.round(st.ovr)}</b>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-function Hub({ s, mine, onOpen, onPlay }: { s: StadiumState; mine: Team; onOpen: (t: Tab) => void; onPlay: (f: Fixture) => void }) {
-  const finished = s.day >= TOTAL_DAYS;
+function Hub({ s, mine, onOpen }: { s: StadiumState; mine: Team; onOpen: (t: Tab) => void }) {
+  const q = useServerState();
+  const sv = q.data;
+  const now = useNow(!!sv?.next);
   const ready = isReady(mine);
-  const next = s.fixtures.find((f) => f.day === s.day + 1 && (f.home === s.myId || f.away === s.myId));
-  const h = next ? (s.teams.find((t) => t.id === next.home) as Team) : null;
-  const a = next ? (s.teams.find((t) => t.id === next.away) as Team) : null;
-  const rank = table(s).findIndex((r) => r.team.mine) + 1;
   const st = strength(mine);
   const badge: Partial<Record<Tab, number>> = { deals: s.offers.length, market: s.auctions.length };
-
-  const play = () => {
-    const d = s.day + 1;
-    const err = playDay();
-    if (err) {
-      toast.error(err);
-      return;
-    }
-    const now = getStadium();
-    const fx = now.fixtures.find((f) => f.day === d && (f.home === now.myId || f.away === now.myId));
-    if (fx) {
-      if (fx.reward) toast.success(`Premio partita +${eur(fx.reward)}`);
-      onPlay(fx);
-    }
-  };
+  const next = sv?.next;
+  const out = mine.players.filter((p) => p.out);
 
   return (
     <div className="flex flex-col gap-4">
@@ -352,7 +186,7 @@ function Hub({ s, mine, onOpen, onPlay }: { s: StadiumState; mine: Team; onOpen:
           <div className="min-w-0 flex-1">
             <h2 className="truncate text-xl font-black">{mine.name}</h2>
             <p className="text-xs text-[#C9D1D9]">
-              Stagione {s.season} · {rank}° posto · Overall {st.ovr}
+              {sv?.club?.played ?? 0} partite giocate · Overall {st.ovr}
             </p>
           </div>
           <div className="text-right">
@@ -361,53 +195,48 @@ function Hub({ s, mine, onOpen, onPlay }: { s: StadiumState; mine: Team; onOpen:
             {s.auctions.length > 0 && <p className="text-[10px] text-[#8B949E]">disponibili {eur(available(s))}</p>}
           </div>
         </div>
-        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
-          <div className="h-full rounded-full bg-gradient-to-r from-[#3FB950] to-[#E3B341]" style={{ width: `${(s.day / TOTAL_DAYS) * 100}%` }} />
-        </div>
-        <p className="mt-1 text-[10px] text-[#8B949E]">
-          Giornata {s.day}/{TOTAL_DAYS}
-        </p>
       </div>
 
       <div className="st-ticket">
-        {finished ? (
-          <div className="py-2 text-center">
-            <Trophy className="mx-auto size-9 text-[#E3B341]" />
-            <p className="mt-2 text-sm text-[#C9D1D9]">Campionato concluso</p>
-            <Button size="lg" className="mt-3 h-12 w-full text-base" onClick={() => run(newSeason, "Nuova stagione!")}>
-              <RefreshCw /> Nuova stagione
+        <p className="text-center text-[10px] tracking-[0.25em] text-[#8B949E] uppercase">Prossima partita</p>
+        {next ? (
+          <>
+            <p className="mt-2 text-center text-xs text-[#C9D1D9]">
+              {next.league} · giornata {next.day}
+            </p>
+            <div className="mt-3 flex items-center justify-center gap-3">
+              <div className="flex min-w-0 flex-1 flex-col items-center gap-1 text-center">
+                <Crest team={mine} size={46} />
+                <span className="max-w-full truncate text-sm font-semibold">{mine.name}</span>
+              </div>
+              <span className="text-2xl font-black text-[#E3B341]">VS</span>
+              <div className="flex min-w-0 flex-1 flex-col items-center gap-1 text-center">
+                <span className="grid size-[46px] place-items-center rounded-full bg-white/10 text-xl">🛡</span>
+                <span className="max-w-full truncate text-sm font-semibold">{next.opponent}</span>
+              </div>
+            </div>
+            <p className="mt-3 text-center text-2xl font-black tabular-nums text-[#7EE787]">{countdown(next.at, now)}</p>
+            <p className="text-center text-[11px] text-[#8B949E]">
+              {fmtWhen(next.at)} · {next.home ? "in casa" : "in trasferta"} · si gioca da sola, potrai rivederla
+            </p>
+          </>
+        ) : (
+          <div className="py-3 text-center">
+            <p className="text-sm text-[#C9D1D9]">Nessuna partita in programma.</p>
+            <Button className="mt-3" onClick={() => onOpen("league")}>
+              Crea o unisciti a una lega
             </Button>
           </div>
-        ) : (
-          <>
-            <p className="text-center text-[10px] tracking-[0.25em] text-[#8B949E] uppercase">
-              Prossima partita · Giornata {s.day + 1}/{TOTAL_DAYS}
-            </p>
-            {h && a && (
-              <div className="mt-3 flex items-center justify-center gap-3">
-                <div className="flex min-w-0 flex-1 flex-col items-center gap-1 text-center">
-                  <Crest team={h} size={46} />
-                  <span className="max-w-full truncate text-sm font-semibold">{h.name}</span>
-                </div>
-                <span className="text-2xl font-black text-[#E3B341]">VS</span>
-                <div className="flex min-w-0 flex-1 flex-col items-center gap-1 text-center">
-                  <Crest team={a} size={46} />
-                  <span className="max-w-full truncate text-sm font-semibold">{a.name}</span>
-                </div>
-              </div>
-            )}
-            <p className="mt-3 text-center text-[11px] text-[#7EE787]">
-              Vittoria +{eur(CFG.economy.winReward)} · Pareggio +{eur(CFG.economy.drawReward)} · Sconfitta +{eur(CFG.economy.lossReward)} · +{eur(CFG.economy.goalBonus)} a gol
-            </p>
-            {!ready && <p className="mt-3 rounded-lg border border-[#F85149]/40 bg-[#2a1214]/90 px-3 py-2 text-xs text-[#FFA198]">Formazione incompleta: servono 11 titolari. Vai in Rosa e Mercato.</p>}
-            <Button size="lg" className="st-play mt-4 h-14 w-full text-lg font-black tracking-wider" disabled={!ready} onClick={play} data-testid="stadium-play">
-              <Play /> GIOCA
-            </Button>
-            <Button variant="secondary" className="mt-2 w-full" disabled={!ready} onClick={() => run(playSeason, "Campionato concluso!")}>
-              <FastForward /> Simula tutto il campionato
-            </Button>
-          </>
         )}
+        {(!ready || sv?.warning) && <p className="mt-3 rounded-lg border border-[#F85149]/40 bg-[#2a1214]/90 px-3 py-2 text-xs text-[#FFA198]">{sv?.warning ?? "Formazione incompleta: servono 11 titolari disponibili."} Se non schieri 11 giocatori la partita viene persa 0-3 a tavolino.</p>}
+        {out.length > 0 && (
+          <p className="mt-2 text-center text-[11px] text-[#8B949E]">
+            Indisponibili: {out.map((p) => `${p.out?.kind === "red" ? "🟥" : "🚑"} ${p.name} (${p.out?.left})`).join(", ")}
+          </p>
+        )}
+        <Button variant="secondary" className="mt-3 w-full" onClick={() => onOpen("league")}>
+          Campionato e leghe
+        </Button>
       </div>
 
       <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4">
@@ -426,8 +255,8 @@ function Hub({ s, mine, onOpen, onPlay }: { s: StadiumState; mine: Team; onOpen:
 export default function Stadium() {
   const s = useStadium();
   const [tab, setTab] = useState<Tab | null>(null);
-  const [live, setLive] = useState<Fixture | null>(null);
   const mine = myTeam(s);
+  useClubSync();
   useEffect(() => {
     const id = window.setInterval(() => {
       report(collectTraining());
@@ -445,7 +274,7 @@ export default function Stadium() {
           {!mine ? (
             <Setup s={s} />
           ) : !tab ? (
-            <Hub s={s} mine={mine} onOpen={setTab} onPlay={setLive} />
+            <Hub s={s} mine={mine} onOpen={setTab} />
           ) : (
             <>
               <div className="st-nav mb-3">
@@ -462,18 +291,16 @@ export default function Stadium() {
                 <span className="st-budget">{eur(s.budget)}</span>
               </div>
               <h2 className="sr-only">{label}</h2>
-              {tab === "table" && <TableView s={s} />}
-              {tab === "matches" && <MatchesView s={s} onWatch={setLive} />}
               {tab === "squad" && <Squad s={s} team={mine} />}
               {tab === "market" && <MarketView s={s} team={mine} />}
               {tab === "deals" && <Deals s={s} team={mine} />}
               {tab === "train" && <TrainView s={s} team={mine} />}
-              {tab === "teams" && <TeamsView s={s} />}
+              {tab === "league" && <Leagues myId={mine.id} onNeedClub={() => toast("Sto creando il tuo club online, riprova tra un attimo")} />}
+              {tab === "packs" && <Packs hasClub />}
             </>
           )}
         </div>
       </div>
-      {live && <LiveMatch key={`${live.day}${live.home}${live.away}`} fx={live} s={s} onClose={() => setLive(null)} />}
     </div>
   );
 }
