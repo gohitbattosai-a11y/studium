@@ -8,6 +8,31 @@ const PORTALS = [
   { key: "antro", x: 52, top: -46, w: 17, color: "#f43f5e", dark: "#4c0519", delay: "0.8s" },
 ];
 
+const CAVES = [
+  { key: "rovine", x: -64, y: -60, color: "#38bdf8", dark: "#082f49", delay: "0.2s" },
+  { key: "vulcano", x: 64, y: -60, color: "#ef4444", dark: "#450a0a", delay: "0.6s" },
+];
+
+function Cave({ x, y, color, dark, delay, id }: { x: number; y: number; color: string; dark: string; delay: string; id: string }) {
+  const arch = "M-11 10 L-11 -4 Q-11 -18 0 -18 Q11 -18 11 -4 L11 10Z";
+  return (
+    <g transform={`translate(${x} ${y})`}>
+      <defs>
+        <radialGradient id={`gc-${id}`} cx="0.5" cy="0.8" r="0.8">
+          <stop offset="0" stopColor={color} stopOpacity="0.95" />
+          <stop offset="0.6" stopColor={color} stopOpacity="0.35" />
+          <stop offset="1" stopColor={dark} stopOpacity="1" />
+        </radialGradient>
+      </defs>
+      <path d="M-15 12 L-15 -4 Q-15 -23 0 -23 Q15 -23 15 -4 L15 12Z" fill="#2a2d3a" stroke="#14151c" strokeWidth="1.2" />
+      <path d={arch} fill="#07040d" />
+      <path d={arch} fill={`url(#gc-${id})`} className="dg-gleam" style={{ animationDelay: delay }} />
+      <path d="M-4 -24 L0 -32 L4 -24Z" fill={color} stroke="#14151c" strokeWidth="0.8" />
+      <rect x="-14" y="10" width="28" height="4" rx="1.5" fill="#8a90a8" />
+    </g>
+  );
+}
+
 function Portal({ x, top, w, color, dark, delay, id }: { x: number; top: number; w: number; color: string; dark: string; delay: string; id: string }) {
   const arch = `M${-w} 16 L${-w} ${top + w} Q${-w} ${top} 0 ${top} Q${w} ${top} ${w} ${top + w} L${w} 16Z`;
   return (
@@ -86,6 +111,9 @@ export function Dungeon3D() {
       {PORTALS.map((p) => (
         <Portal key={p.key} id={p.key} x={p.x} top={p.top} w={p.w} color={p.color} dark={p.dark} delay={p.delay} />
       ))}
+      {CAVES.map((c) => (
+        <Cave key={c.key} id={c.key} x={c.x} y={c.y} color={c.color} dark={c.dark} delay={c.delay} />
+      ))}
       <g transform="translate(0 -100)">
         <path d="M-17 -2 Q-19 -22 0 -22 Q19 -22 17 -2 L12 6 L-12 6Z" fill="#ebe5d0" stroke="#8d866f" strokeWidth="1" />
         <ellipse cx="-6.5" cy="-8" rx="4.4" ry="5.2" fill="#14101c" />
@@ -132,8 +160,12 @@ export function DungeonNight({ x, y, s }: Place) {
     <g transform={`translate(${x} ${y}) scale(${s})`} pointerEvents="none">
       <ellipse cx="0" cy="14" rx="96" ry="30" fill="#a855f7" opacity="0.16" />
       <ellipse cx="0" cy="-22" rx="34" ry="46" fill="#c084fc" opacity="0.4" className="ct-glow" />
+      <ellipse cx="-64" cy="-64" rx="14" ry="20" fill="#38bdf8" opacity="0.3" className="ct-glow" />
+      <ellipse cx="64" cy="-64" rx="14" ry="20" fill="#ef4444" opacity="0.3" className="ct-glow" />
       <ellipse cx="-50" cy="-12" rx="18" ry="28" fill="#84cc16" opacity="0.3" className="ct-glow" style={{ animationDelay: "0.3s" }} />
       <ellipse cx="50" cy="-12" rx="18" ry="28" fill="#f43f5e" opacity="0.3" className="ct-glow" style={{ animationDelay: "0.8s" }} />
+      <ellipse cx="-64" cy="-64" rx="14" ry="20" fill="#38bdf8" opacity="0.3" className="ct-glow" style={{ animationDelay: "0.2s" }} />
+      <ellipse cx="64" cy="-64" rx="14" ry="20" fill="#ef4444" opacity="0.3" className="ct-glow" style={{ animationDelay: "0.6s" }} />
       <circle cx="-84" cy="-34" r="26" fill="url(#cm-lamp)" className="ct-glow" />
       <circle cx="84" cy="-34" r="26" fill="url(#cm-lamp)" className="ct-glow" style={{ animationDelay: "0.5s" }} />
     </g>
