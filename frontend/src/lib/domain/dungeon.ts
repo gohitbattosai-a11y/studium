@@ -3,8 +3,8 @@ export const ROWS = 7;
 
 export type Dir = "n" | "s" | "e" | "w";
 export type DieKind = "fire" | "ice" | "heal" | "bolt";
-export type EnemyKind = "slime" | "skeleton" | "bat" | "wraith" | "golem" | "goblin" | "orc" | "warlord" | "spider" | "broodmother";
-export type DungeonId = "covo" | "cripta" | "antro";
+export type EnemyKind = "slime" | "skeleton" | "bat" | "wraith" | "golem" | "goblin" | "orc" | "warlord" | "spider" | "broodmother" | "scarab" | "mummy" | "pharaoh" | "imp" | "magmaling" | "dragon";
+export type DungeonId = "covo" | "cripta" | "antro" | "rovine" | "vulcano";
 export type Ai = "slime" | "skeleton" | "bat" | "wraith" | "rush" | "boss";
 export type PropKind = "chest" | "spikes" | "potion" | "die" | "door";
 export type Cell = [number, number];
@@ -150,6 +150,12 @@ export const DEF: Record<EnemyKind, { hp: number; dmg: number; name: string; ai:
   warlord: { hp: 38, dmg: 0, name: "Re Orco", ai: "boss" },
   spider: { hp: 4, dmg: 2, name: "Ragno", ai: "bat" },
   broodmother: { hp: 44, dmg: 0, name: "Regina Ragno", ai: "boss" },
+  scarab: { hp: 4, dmg: 2, name: "Scarabeo", ai: "bat" },
+  mummy: { hp: 8, dmg: 3, name: "Mummia", ai: "skeleton" },
+  pharaoh: { hp: 48, dmg: 0, name: "Faraone", ai: "boss" },
+  imp: { hp: 5, dmg: 3, name: "Diavoletto", ai: "rush" },
+  magmaling: { hp: 9, dmg: 4, name: "Magmaling", ai: "slime" },
+  dragon: { hp: 56, dmg: 0, name: "Drago di lava", ai: "boss" },
 };
 
 export const isBoss = (k: EnemyKind) => DEF[k].ai === "boss";
@@ -241,9 +247,67 @@ export const DUNGEONS: Record<DungeonId, DungeonDef> = {
       T("#12050a", "#5a1f33", "#451828", "#6e2a42", "#622539", "#240a14", "#fb7185", "#e11d48", "#fda4af", "hive"),
     ],
   },
+  rovine: {
+    id: "rovine",
+    name: "Rovine del Faraone",
+    tag: "Esperta",
+    blurb: "Sei piani di sabbia, scarabei e mummie, fino al Faraone che sorveglia il suo tesoro.",
+    last: 6,
+    floorNames: ["", "Dune d'ingresso", "Corridoi di sabbia", "Sala dei geroglifici", "Camera delle mummie", "Pozzo dei sarcofagi", "Tomba del Faraone"],
+    floors: [
+      [],
+      ["scarab", "scarab", "scarab"],
+      ["scarab", "scarab", "mummy", "scarab"],
+      ["mummy", "mummy", "scarab", "scarab"],
+      ["mummy", "wraith", "scarab", "scarab", "mummy"],
+      ["mummy", "mummy", "wraith", "wraith", "scarab"],
+    ],
+    boss: "pharaoh",
+    minion: "scarab",
+    accent: "#38bdf8",
+    themes: [
+      T("#14100a", "#8a6d3b", "#6f5630", "#a98a52", "#9c7f49", "#2a2012", "#fde68a", "#f59e0b", "#fde68a", "crypt"),
+      T("#14100a", "#8a6d3b", "#6f5630", "#a98a52", "#9c7f49", "#2a2012", "#fde68a", "#f59e0b", "#fde68a", "crypt"),
+      T("#120e08", "#7d6236", "#654e2b", "#9a7d4b", "#8d7243", "#261c10", "#fcd34d", "#f59e0b", "#fef3c7", "crypt"),
+      T("#0a1214", "#2f5f6b", "#244b55", "#3f7886", "#386c79", "#0e2228", "#7dd3fc", "#38bdf8", "#bae6fd", "cave"),
+      T("#100c12", "#5a4a63", "#463a4e", "#6e5c78", "#625269", "#1c1521", "#fde68a", "#c084fc", "#e9d5ff", "crypt"),
+      T("#0e0c06", "#6b5a22", "#54461a", "#85722f", "#786729", "#221c08", "#fde047", "#eab308", "#fef08a", "crypt"),
+      T("#06101a", "#1f4a73", "#173a5c", "#2d5f93", "#285585", "#0a1c2e", "#7dd3fc", "#38bdf8", "#e0f2fe", "crypt"),
+    ],
+  },
+  vulcano: {
+    id: "vulcano",
+    name: "Cuore del Vulcano",
+    tag: "Leggendaria",
+    blurb: "Sette piani di lava e fuoco, e in fondo il Drago che dorme sul suo tesoro.",
+    last: 7,
+    floorNames: ["", "Bocca del vulcano", "Gallerie di cenere", "Fiumi di lava", "Forgia infernale", "Caverna dei diavoletti", "Camino di magma", "Tana del Drago"],
+    floors: [
+      [],
+      ["imp", "imp", "imp"],
+      ["imp", "imp", "magmaling", "bat"],
+      ["imp", "magmaling", "magmaling", "bat"],
+      ["magmaling", "magmaling", "imp", "imp", "bat"],
+      ["imp", "imp", "imp", "magmaling", "magmaling"],
+      ["magmaling", "magmaling", "imp", "imp", "bat", "bat"],
+    ],
+    boss: "dragon",
+    minion: "imp",
+    accent: "#ef4444",
+    themes: [
+      T("#120403", "#4a1d14", "#37150e", "#5c2a1c", "#522518", "#240a06", "#fdba74", "#ef4444", "#fb923c", "forge"),
+      T("#120403", "#4a1d14", "#37150e", "#5c2a1c", "#522518", "#240a06", "#fdba74", "#ef4444", "#fb923c", "forge"),
+      T("#0e0a0a", "#3d3333", "#2e2626", "#4f4343", "#463b3b", "#1a1414", "#fca5a5", "#f87171", "#d6d3d1", "cave"),
+      T("#160502", "#6b2410", "#511a0b", "#823218", "#762c14", "#2c0d05", "#fdba74", "#f97316", "#fed7aa", "forge"),
+      T("#100505", "#5a1f1f", "#451616", "#6e2a2a", "#622424", "#220808", "#fecaca", "#dc2626", "#fecaca", "forge"),
+      T("#0e0608", "#4d1f33", "#3b1727", "#632a42", "#58243a", "#1f0a14", "#fda4af", "#f43f5e", "#fecdd3", "hive"),
+      T("#140803", "#7a2f0b", "#5f2408", "#92400e", "#853a0c", "#2e1004", "#fde68a", "#fb923c", "#fef3c7", "forge"),
+      T("#1a0402", "#8a1f12", "#6b170d", "#a62d1a", "#982818", "#330a05", "#fef08a", "#ef4444", "#fecaca", "forge"),
+    ],
+  },
 };
 
-export const DUNGEON_LIST: DungeonDef[] = [DUNGEONS.covo, DUNGEONS.cripta, DUNGEONS.antro];
+export const DUNGEON_LIST: DungeonDef[] = [DUNGEONS.covo, DUNGEONS.cripta, DUNGEONS.antro, DUNGEONS.rovine, DUNGEONS.vulcano];
 
 export const DIE_INFO: Record<DieKind, { name: string; icon: string; text: string; color: string }> = {
   fire: { name: "Dado di fuoco", icon: "🔥", text: "Brucia tutti i nemici nella tua colonna davanti a te (d6+2)", color: "#f97316" },
