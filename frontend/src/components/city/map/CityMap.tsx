@@ -25,6 +25,15 @@ function Tag({ x, y, w = 100, text, color }: { x: number; y: number; w?: number;
   );
 }
 
+const PLACE_LABELS: { key: "forest" | "stadium" | "school" | "dig" | "dungeon" | "shop"; view: View; label: string; text: string; y: number; color: string; testId: string }[] = [
+  { key: "forest", view: "forest", label: "Vai nella foresta", text: "Foresta", y: 78, color: "#4ADE80", testId: "city-forest-label" },
+  { key: "stadium", view: "stadium", label: "Vai allo stadio", text: "Stadio", y: 58, color: "#7EE787", testId: "city-stadium-label" },
+  { key: "school", view: "school", label: "Entra a scuola", text: "Scuola", y: 28, color: "#58A6FF", testId: "city-school-label" },
+  { key: "dig", view: "dig", label: "Vai al sito di scavo", text: "Scavo", y: 42, color: "#D2A679", testId: "city-dig-label" },
+  { key: "dungeon", view: "dungeon", label: "Entra nei sotterranei", text: "Dungeon", y: 40, color: "#C084FC", testId: "city-dungeon-label" },
+  { key: "shop", view: "shop", label: "Entra nel negozio", text: "Negozio", y: 28, color: "#F0883E", testId: "city-shop-label" },
+];
+
 function Tree({ x, y, s = 1, t = "oak" }: Pt) {
   const k = Math.abs(Math.round(x * 7.3 + y * 13.1));
   if (t === "pine") {
@@ -1163,6 +1172,16 @@ export default function CityMap({ onGo }: { onGo: (v: View) => void }) {
           <DigNight x={L.dig[0]} y={L.dig[1]} s={L.dig[2]} />
           <DungeonNight x={L.dungeon[0]} y={L.dungeon[1]} s={L.dungeon[2]} />
           <ShopNight x={L.shop[0]} y={L.shop[1]} s={L.shop[2]} />
+          {PLACE_LABELS.map((pl) => {
+            const [lx, ly, ls] = L[pl.key];
+            return (
+              <g key={pl.key} transform={`translate(${lx} ${ly}) scale(${ls})`}>
+                <g {...hot(pl.view, pl.label)} className="cursor-pointer outline-none" data-testid={pl.testId}>
+                  <Tag x={0} y={pl.y} w={104} text={pl.text} color={pl.color} />
+                </g>
+              </g>
+            );
+          })}
         </svg>
       </div>
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_50%,transparent_60%,rgba(6,24,13,0.5))]" />
