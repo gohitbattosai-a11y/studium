@@ -316,7 +316,6 @@ export const isReady = (t: Team | undefined) => !!t && t.xi.length === 11 && t.x
 
 export const myTeam = (s: StadiumState) => s.teams.find((t) => t.id === s.myId);
 
-const LEGACY_KEY = "studium.stadium.v2";
 const keyOf = (scope: string) => `studium.stadium.v3:${scope}`;
 
 function normalize(raw: StadiumState | null | undefined): StadiumState | null {
@@ -341,22 +340,11 @@ const commit = (next: StadiumState) => {
 export const stadiumScope = (memberId: string, ctx: string) => `${memberId}:${ctx}`;
 export const currentScope = () => scope;
 
-export function bindStadium(memberId: string, ctx: string, allowLegacy = false) {
+export function bindStadium(memberId: string, ctx: string) {
   const next = stadiumScope(memberId, ctx);
   if (next === scope) return;
   scope = next;
   let loaded = normalize(readJson<StadiumState | null>(keyOf(next), null));
-  if (!loaded && allowLegacy && ctx === "pub") {
-    loaded = normalize(readJson<StadiumState | null>(LEGACY_KEY, null));
-    if (loaded) {
-      writeJson(keyOf(next), loaded);
-      try {
-        window.localStorage.removeItem(LEGACY_KEY);
-      } catch {
-        void 0;
-      }
-    }
-  }
   state = loaded ?? fresh();
   listeners.forEach((l) => l());
 }
