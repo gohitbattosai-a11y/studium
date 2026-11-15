@@ -38,6 +38,9 @@ export interface DungeonInfo {
   blurb: string;
   floors: number;
   record: DungeonRecord;
+  unlocked: boolean;
+  requires: string | null;
+  requires_name: string | null;
 }
 
 export interface Hunter {
