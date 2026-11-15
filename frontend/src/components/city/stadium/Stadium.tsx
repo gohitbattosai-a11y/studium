@@ -252,11 +252,15 @@ function Hub({ s, mine, onOpen }: { s: StadiumState; mine: Team; onOpen: (t: Tab
   );
 }
 
-export default function Stadium() {
+export default function Stadium({ memberId }: { memberId: string }) {
   const s = useStadium();
   const [tab, setTab] = useState<Tab | null>(null);
   const mine = myTeam(s);
-  useClubSync();
+  const sync = useClubSync(memberId);
+  const ctxLabel = sync.ctx === "pub" ? "Lega pubblica" : `Lega privata${sync.ctxName ? `: ${sync.ctxName}` : ""}`;
+  useEffect(() => {
+    setTab(null);
+  }, [sync.ctx]);
   useEffect(() => {
     const id = window.setInterval(() => {
       report(collectTraining());
@@ -270,8 +274,13 @@ export default function Stadium() {
       <span className="absolute inset-0 block [&>svg]:size-full" aria-hidden dangerouslySetInnerHTML={{ __html: stadiumArt("backdrop") }} />
       <div className="absolute inset-0 overflow-y-auto pt-14 pb-10">
         <div className="mx-auto w-full max-w-3xl px-3 pt-3">
-          <Tools s={s} />
-          {!mine ? (
+          {sync.ready && mine && <p className="mb-2 text-center text-[11px] font-semibold tracking-wider text-[#8B949E] uppercase">{ctxLabel}</p>}
+          {sync.ready && <Tools s={s} />}
+          {!sync.ready ? (
+            <p className="py-16 text-center text-sm text-[#8B949E]">Carico la tua squadra…</p>
+          ) : !mine && sync.hasClub ? (
+            <p className="py-16 text-center text-sm text-[#8B949E]">Preparo la tua squadra…</p>
+          ) : !mine ? (
             <Setup s={s} />
           ) : !tab ? (
             <Hub s={s} mine={mine} onOpen={setTab} />
