@@ -119,7 +119,7 @@ export default function CityPanel({ me, onClose }: { me: Me; onClose: () => void
             {view === "dig" && <Dig />}
             {view === "shop" && <Shop city={data} participating={me.participating} onExit={() => setView("map")} />}
             {view === "fossils" && <FossilRoom onAtrium={() => setView("lobby")} />}
-            {view === "stadium" && <Stadium />}
+            {view === "stadium" && <Stadium memberId={me.member_id} />}
             {view === "dungeon" && <DungeonHub memberId={me.member_id} onRun={(id) => { setDungeonId(id); setView("dungeonrun"); }} onShop={() => setView("shop")} />}
             {view === "dungeonrun" && <Dungeon key={dungeonId} dungeonId={dungeonId} onExit={() => setView("dungeon")} />}
             <Bucket open={bucketOpen} onClose={() => setBucketOpen(false)} city={data} />
