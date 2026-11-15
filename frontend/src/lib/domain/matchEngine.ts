@@ -11,7 +11,7 @@ const ATTACK_LEAD = CFG.match.attackLead;
 const FOUL_LEAD = 4.5;
 
 type Side = 0 | 1;
-type Mode = "kickoff" | "open" | "flight" | "shot" | "return" | "celebrate" | "restart" | "foul" | "interval" | "end";
+type Mode = "kickoff" | "open" | "flight" | "shot" | "return" | "celebrate" | "restart" | "foul" | "setpiece" | "interval" | "end";
 type ShotKind = "goal" | "save" | "post" | "wide" | "over";
 
 interface Ref {
@@ -101,6 +101,16 @@ interface Steal {
   s: Side;
   i: number;
   since: number;
+}
+interface SetPiece {
+  kind: "throw" | "corner" | "goal" | "free";
+  side: Side;
+  spot: Pt;
+  taker: number;
+  t0: number;
+  ready: number;
+  box: boolean;
+  wallN: number;
 }
 interface Foul {
   beat: Beat;
@@ -197,6 +207,9 @@ export class Match {
   private drib: Drib | null = null;
   private steal: Steal | null = null;
   private after: (() => void) | null = null;
+  private sp: SetPiece | null = null;
+  private wall: Footballer[] = [];
+  private contact = 0;
 
   constructor(fx: Fixture, h: Team, a: Team) {
     this.teams = [h, a];
@@ -377,6 +390,10 @@ export class Match {
     const m = this.mode;
     if (p.run && p.run.until > this.t) return { x: p.run.x, y: p.run.y, sp: p.speed };
     if (m === "end") return { x: p.x, y: p.y, sp: 0 };
+    if (m === "setpiece" && this.sp) {
+      const r = this.spAim(s, i);
+      if (r) return r;
+    }
     if (m === "interval" || m === "restart" || m === "kickoff" || m === "celebrate") {
       const k = this.kickPos(s, i);
       return { x: k.x, y: k.y, sp: p.speed * (m === "interval" ? 0.75 : 1.1) };
@@ -388,7 +405,8 @@ export class Match {
     if (this.owner && this.owner.s === s && this.owner.i === i) return this.carry(s, i);
     if (this.press[s] === i) {
       const dr = this.dir[s];
-      return { x: clamp(this.ball.x - dr * 2.8, 1, PITCH_L - 1), y: this.ball.y, sp: p.speed * 0.9 };
+      const h = this.owner ? this.P[this.owner.s][this.owner.i] : null;
+      return { x: clamp(this.ball.x - dr * 0.6 + (h ? h.vx * 0.25 : 0), 1, PITCH_L - 1), y: clamp(this.ball.y + (h ? h.vy * 0.25 : 0), 1, PITCH_W - 1), sp: p.speed };
     }
     return this.shape(s, i);
   }
@@ -440,6 +458,7 @@ export class Match {
           for (let j = 0; j < 11; j++) {
             if (s2 === s && j === i) continue;
             const q = this.P[s2][j];
+            if (this.wall.length && this.wall.includes(p) && this.wall.includes(q)) continue;
             const ox = p.x - q.x;
             const oy = p.y - q.y;
             const od = Math.hypot(ox, oy);
@@ -483,6 +502,7 @@ export class Match {
       for (let b = a + 1; b < all.length; b++) {
         const p = all[a];
         const q = all[b];
+        if (this.wall.length && this.wall.includes(p) && this.wall.includes(q)) continue;
         let dx = q.x - p.x;
         let dy = q.y - p.y;
         let d = Math.hypot(dx, dy);
@@ -547,6 +567,7 @@ export class Match {
     this.move(dt);
     this.separate();
     this.moveBall(dt);
+    if (this.mode === "open" && this.owner && !this.foul) this.checkOut();
   }
 
   private flow(dt: number) {
@@ -559,10 +580,17 @@ export class Match {
         break;
       case "foul":
         if (this.t >= this.wait) {
+          const f = this.foul;
           this.foul = null;
-          this.mode = "open";
-          this.holdLeft = 0.7;
+          if (f) this.freeKick(f);
+          else {
+            this.mode = "open";
+            this.holdLeft = 0.7;
+          }
         }
+        break;
+      case "setpiece":
+        this.runSet();
         break;
       default:
         break;
@@ -593,6 +621,7 @@ export class Match {
       this.checkSteal();
       return;
     }
+    if (this.contest(dt)) return;
     if (!this.plan) {
       if (this.half === 1 && this.mt >= HALF_MIN * this.K) {
         this.startInterval();
@@ -643,6 +672,198 @@ export class Match {
       return;
     }
     this.fillerPass();
+  }
+
+  private contest(dt: number) {
+    const o = this.owner as Ref;
+    const d = (1 - o.s) as Side;
+    const pi = this.press[d];
+    const nb = this.nextBeat();
+    if (this.plan || this.after || pi < 1 || (nb && nb.startT - this.mt < 6)) {
+      this.contact = Math.min(0, this.contact);
+      return false;
+    }
+    const me = this.P[o.s][o.i];
+    const q = this.P[d][pi];
+    if (dist(me.x, me.y, q.x, q.y) < 4) this.contact += dt;
+    else this.contact = this.contact < 0 ? this.contact + dt : Math.max(0, this.contact - dt * 2);
+    if (this.contact < 0.7) return false;
+    this.contact = -2.5;
+    const win = this.r() < clamp(0.32 + (q.dif - me.dri) / 220 + this.edge[d] / 300, 0.15, 0.55);
+    if (!win) {
+      q.run = { x: q.x, y: q.y, until: this.t + 0.9 };
+      return false;
+    }
+    q.run = null;
+    me.run = { x: me.x, y: me.y, until: this.t + 0.7 };
+    this.drib = null;
+    this.steal = null;
+    this.owner = { s: d, i: pi };
+    this.poss = d;
+    this.holdLeft = 0.6;
+    return true;
+  }
+
+  private checkOut() {
+    const b = this.ball;
+    if (b.x < -0.3 || b.x > PITCH_L + 0.3 || b.y < -0.3 || b.y > PITCH_W + 0.3) this.outOfPlay((this.owner as Ref).s);
+  }
+
+  private sendOut(s: Side) {
+    const o = this.owner as Ref;
+    const me = this.P[s][o.i];
+    const dr = this.dir[s];
+    const line = this.prog(me.x, s) > 0.78 && this.r() < 0.6;
+    const tx = line ? (dr > 0 ? PITCH_L + 1.2 : -1.2) : clamp(me.x + dr * 9, 6, PITCH_L - 6);
+    const ty = line ? clamp(me.y + (this.r() - 0.5) * 16, 8, PITCH_W - 8) : me.y < MY ? -1.2 : PITCH_W + 1.2;
+    const len = dist(this.ball.x, this.ball.y, tx, ty);
+    this.owner = null;
+    this.drib = null;
+    this.mode = "flight";
+    this.fly(tx, ty, 0, clamp(len / 13, 0.7, 2), len > 18 ? 1.5 : 0.3, 1.6, () => this.outOfPlay(s));
+  }
+
+  private outOfPlay(last: Side) {
+    const b = this.ball;
+    this.plan = null;
+    this.drib = null;
+    this.steal = null;
+    this.after = null;
+    this.owner = null;
+    this.seg = null;
+    this.contact = 0;
+    if (b.x < 0 || b.x > PITCH_L) {
+      const gl = b.x < 0 ? 0 : PITCH_L;
+      const def: Side = this.x0(0) === gl ? 0 : 1;
+      if (last === def) this.startSet("corner", (1 - def) as Side, { x: gl, y: b.y < MY ? 0 : PITCH_W });
+      else this.startSet("goal", def, { x: gl + (gl === 0 ? 5.5 : -5.5), y: MY + (b.y < MY ? -4 : 4) });
+      return;
+    }
+    this.startSet("throw", (1 - last) as Side, { x: clamp(b.x, 2, PITCH_L - 2), y: b.y < MY ? 0 : PITCH_W });
+  }
+
+  private freeKick(f: Foul) {
+    const s = f.vs;
+    const dr = this.dir[s];
+    const gx = dr > 0 ? PITCH_L : 0;
+    let x = clamp(this.ball.x, 3, PITCH_L - 3);
+    const y = clamp(this.ball.y, 2, PITCH_W - 2);
+    if (Math.abs(x - gx) < 17 && Math.abs(y - MY) < 21) x = gx - dr * 17.5;
+    this.startSet("free", s, { x, y });
+  }
+
+  private startSet(kind: SetPiece["kind"], side: Side, spot: Pt) {
+    const dr = this.dir[side];
+    const gx = dr > 0 ? PITCH_L : 0;
+    let taker = 0;
+    if (kind !== "goal") {
+      let bd = 1e9;
+      for (let i = 1; i < 11; i++) {
+        const q = this.P[side][i];
+        const d = dist(q.x, q.y, spot.x, spot.y);
+        if (d < bd) {
+          bd = d;
+          taker = i;
+        }
+      }
+    }
+    const dg = dist(spot.x, spot.y, gx, MY);
+    const box = kind === "corner" || (kind === "free" && dg < 32 && this.prog(spot.x, side) > 0.62);
+    const wallN = kind === "free" ? (dg < 24 ? 4 : dg < 33 ? 3 : 0) : 0;
+    this.wall = [];
+    if (wallN) {
+      const d = (1 - side) as Side;
+      const order = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].sort((a, c) => dist(this.P[d][a].x, this.P[d][a].y, spot.x, spot.y) - dist(this.P[d][c].x, this.P[d][c].y, spot.x, spot.y));
+      this.wall = order.slice(0, wallN).map((i) => this.P[d][i]);
+    }
+    const wait = kind === "free" ? 2.6 : kind === "corner" ? 2.2 : kind === "goal" ? 1.6 : 1.2;
+    this.sp = { kind, side, spot, taker, t0: this.t, ready: this.t + wait, box, wallN };
+    this.owner = null;
+    this.poss = side;
+    this.mode = "setpiece";
+    this.holdLeft = 0;
+    const len = dist(this.ball.x, this.ball.y, spot.x, spot.y);
+    this.fly(spot.x, spot.y, 0, clamp(len / 10, 0.4, 2.2), 0.2, 1, () => undefined);
+    this.P[side][taker].run = { x: spot.x, y: spot.y, until: this.t + 9 };
+  }
+
+  private spAim(s: Side, i: number): { x: number; y: number; sp: number } | null {
+    const sp = this.sp as SetPiece;
+    const p = this.P[s][i];
+    const att = s === sp.side;
+    const dra = this.dir[sp.side];
+    const gx = dra > 0 ? PITCH_L : 0;
+    if (att && i === sp.taker) return { x: sp.spot.x, y: sp.spot.y, sp: p.speed };
+    if (sp.kind === "goal" || sp.kind === "throw") return null;
+    if (!att && i === 0) return { x: gx - dra * 1.3, y: MY + clamp((sp.spot.y - MY) * 0.22, -3.2, 3.2), sp: p.speed * 0.8 };
+    if (!att && this.wall.includes(p)) {
+      const k = this.wall.indexOf(p);
+      const ux = gx - sp.spot.x;
+      const uy = MY - sp.spot.y;
+      const ul = Math.hypot(ux, uy) || 1;
+      const off = (k - (this.wall.length - 1) / 2) * 1;
+      return { x: sp.spot.x + (ux / ul) * 9.4 - (uy / ul) * off, y: sp.spot.y + (uy / ul) * 9.4 + (ux / ul) * off, sp: p.speed * 1.1 };
+    }
+    if (!sp.box || i === 0) return null;
+    const slot = (i * 7) % 11;
+    if (att) {
+      if (p.d < 0.3) return null;
+      return { x: gx - dra * (7 + (slot % 4) * 2.4), y: MY + ((slot * 5) % 9 - 4) * 2.6, sp: p.speed };
+    }
+    return { x: gx - dra * (5 + (slot % 4) * 2.2), y: MY + ((slot * 3) % 9 - 4) * 2.4, sp: p.speed };
+  }
+
+  private runSet() {
+    const sp = this.sp;
+    if (!sp) {
+      this.mode = "open";
+      return;
+    }
+    if (this.seg || this.t < sp.ready) return;
+    const tk = this.P[sp.side][sp.taker];
+    if (dist(tk.x, tk.y, sp.spot.x, sp.spot.y) < 1.3 || this.t - sp.t0 > 8) this.takeSet();
+  }
+
+  private takeSet() {
+    const sp = this.sp as SetPiece;
+    const s = sp.side;
+    const dr = this.dir[s];
+    const gx = dr > 0 ? PITCH_L : 0;
+    const tk = this.P[s][sp.taker];
+    tk.run = null;
+    this.sp = null;
+    this.wall = [];
+    this.ball.x = sp.spot.x;
+    this.ball.y = sp.spot.y;
+    this.ball.z = 0;
+    let best = -1;
+    let bs = -1e9;
+    if (sp.box) {
+      for (let i = 1; i < 11; i++) {
+        if (i === sp.taker) continue;
+        const sc = this.P[s][i].d + this.r() * 0.5;
+        if (sc > bs) {
+          bs = sc;
+          best = i;
+        }
+      }
+      this.pass(s, best, { x: gx - dr * (8 + this.r() * 3), y: MY + (this.r() - 0.5) * 8 }, 15.5, 3.2, 0.3, 1.9);
+      return;
+    }
+    for (let i = sp.kind === "goal" ? 1 : 0; i < 11; i++) {
+      if (i === sp.taker || (i === 0 && sp.kind !== "free")) continue;
+      const q = this.P[s][i];
+      const d = dist(sp.spot.x, sp.spot.y, q.x, q.y);
+      if (d < 4) continue;
+      const sc = (q.x - sp.spot.x) * dr * 0.05 - Math.abs(d - (sp.kind === "goal" ? 28 : 13)) * 0.12 + this.r() * 1.5 - (i === 0 ? 5 : 0);
+      if (sc > bs) {
+        bs = sc;
+        best = i;
+      }
+    }
+    if (best < 0) best = sp.taker === 1 ? 2 : 1;
+    const q = this.P[s][best];
+    this.pass(s, best, { x: q.x + dr * 2, y: q.y }, sp.kind === "goal" ? 18 : 12, sp.kind === "goal" ? 2.4 : sp.kind === "throw" ? 1 : 0.3, 0.5);
   }
 
   private takeBall(side: Side) {
@@ -721,6 +942,13 @@ export class Match {
         if (d.win) v.run = { x: v.x, y: v.y, until: this.t + 1 };
       }
     }
+    if (d.win) {
+      const pi = this.press[1 - d.s];
+      if (pi >= 1) {
+        const v = this.P[1 - d.s][pi];
+        if (dist(me.x, me.y, v.x, v.y) < 5.2 && !(v.run && v.run.until > this.t)) v.run = { x: v.x, y: v.y, until: this.t + 1.1 };
+      }
+    }
     if (dist(me.x, me.y, d.x, d.y) < 2.2 || this.t > d.until) {
       this.drib = null;
       this.holdLeft = 0.2;
@@ -762,6 +990,10 @@ export class Match {
       const q = opp[j];
       const dx = (q.x - me.x) * dr;
       if (dx > 0.5 && dx < 13 && Math.abs(q.y - me.y) < 7) front = Math.min(front, dist(me.x, me.y, q.x, q.y));
+    }
+    if (o.i !== 0 && !soon && this.r() < 0.05 && !(b && b.startT - this.mt < 9)) {
+      this.sendOut(s);
+      return;
     }
     const pd = front < 13 ? CFG.match.dribbleChance : CFG.match.dribbleChance * 0.4;
     if (o.i !== 0 && this.prog(me.x, s) < 0.88 && this.r() < pd) {
