@@ -249,7 +249,7 @@ export function useClubSync(memberId: string) {
     lastWorld.current = "";
     if (!ctx || !data) return;
     let dead = false;
-    bindStadium(memberId, ctx, !data.club);
+    bindStadium(memberId, ctx);
     const finish = () => {
       if (dead) return;
       readyRef.current = true;
