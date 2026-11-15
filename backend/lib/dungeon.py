@@ -1,5 +1,6 @@
 import math
 import random
+from typing import Optional
 
 LOOT_LIMIT = 60
 MIN_SECONDS_PER_FLOOR = 8
@@ -25,6 +26,12 @@ LOOT: list[dict] = [
     {"id": "amuleto", "name": "Amuleto della notte", "rarity": "epico", "shape": "amulet", "color": "#a855f7", "value": 62},
     {"id": "corona_sepolta", "name": "Corona sepolta", "rarity": "leggendario", "shape": "crown", "color": "#fbbf24", "value": 150},
     {"id": "lama_antica", "name": "Lama dell'antico re", "rarity": "leggendario", "shape": "greatsword", "color": "#f472b6", "value": 170},
+    {"id": "bende", "name": "Bende antiche", "rarity": "comune", "shape": "cloth", "color": "#e7e0c8", "value": 3},
+    {"id": "cenere", "name": "Cenere ardente", "rarity": "comune", "shape": "scrap", "color": "#fb923c", "value": 3},
+    {"id": "scarabeo", "name": "Scarabeo d'oro", "rarity": "raro", "shape": "amulet", "color": "#f59e0b", "value": 34},
+    {"id": "rubino", "name": "Rubino del vulcano", "rarity": "epico", "shape": "gem", "color": "#ef4444", "value": 82},
+    {"id": "maschera_faraone", "name": "Maschera del Faraone", "rarity": "leggendario", "shape": "crown", "color": "#38bdf8", "value": 190},
+    {"id": "scaglia_drago", "name": "Scaglia di drago", "rarity": "leggendario", "shape": "cuirass", "color": "#f97316", "value": 210},
 ]
 LOOT_BY_ID = {i["id"]: i for i in LOOT}
 
@@ -39,6 +46,12 @@ TROPHIES: list[dict] = [
     {"id": "t_warlord", "name": "Corona del Re Orco", "dungeon": "covo", "enemy": "warlord", "rarity": "epico", "art": "orccrown", "color": "#eab308", "chance": 1.0, "blurb": "Pesante, rozza e sporca di battaglie."},
     {"id": "t_spider", "name": "Zanna di ragno", "dungeon": "antro", "enemy": "spider", "rarity": "non_comune", "art": "fang", "color": "#a3e635", "chance": 0.24, "blurb": "Ancora velenosa, meglio non toccarla."},
     {"id": "t_broodmother", "name": "Occhio della Regina", "dungeon": "antro", "enemy": "broodmother", "rarity": "leggendario", "art": "eye", "color": "#f43f5e", "chance": 1.0, "blurb": "Sembra ancora guardarti."},
+    {"id": "t_scarab", "name": "Cuore di scarabeo", "dungeon": "rovine", "enemy": "scarab", "rarity": "comune", "art": "core", "color": "#f59e0b", "chance": 0.28, "blurb": "Dorato e lucido come una moneta."},
+    {"id": "t_mummy", "name": "Benda del Faraone", "dungeon": "rovine", "enemy": "mummy", "rarity": "raro", "art": "veil", "color": "#e7d9a8", "chance": 0.2, "blurb": "Secca, antica e piena di geroglifici."},
+    {"id": "t_pharaoh", "name": "Maschera del Faraone", "dungeon": "rovine", "enemy": "pharaoh", "rarity": "leggendario", "art": "orccrown", "color": "#38bdf8", "chance": 1.0, "blurb": "Oro e lapislazzuli, ancora freddi."},
+    {"id": "t_imp", "name": "Corno di diavoletto", "dungeon": "vulcano", "enemy": "imp", "rarity": "non_comune", "art": "fang", "color": "#ef4444", "chance": 0.24, "blurb": "Ancora caldo al tatto."},
+    {"id": "t_magma", "name": "Nucleo di magma", "dungeon": "vulcano", "enemy": "magmaling", "rarity": "raro", "art": "heart", "color": "#f97316", "chance": 0.2, "blurb": "Pulsa piano, come un cuore di lava."},
+    {"id": "t_dragon", "name": "Occhio del Drago", "dungeon": "vulcano", "enemy": "dragon", "rarity": "leggendario", "art": "eye", "color": "#fbbf24", "chance": 1.0, "blurb": "Una fessura d'oro che non dorme mai."},
 ]
 TROPHIES_BY_ID = {t["id"]: t for t in TROPHIES}
 
@@ -73,8 +86,34 @@ DUNGEONS: list[dict] = [
         "loot": ["ragnatela", "osso", "stoffa", "scudo_scheggiato", "moneta", "anello", "gemma", "spada_runica", "amuleto", "corazza", "corona_sepolta", "lama_antica"],
         "boost": 0.25,
     },
+    {
+        "id": "rovine",
+        "name": "Rovine del Faraone",
+        "tag": "Esperta",
+        "blurb": "Sei piani di sabbia, scarabei e mummie, fino al Faraone che sorveglia il suo tesoro.",
+        "floors": 6,
+        "enemies": ["scarab", "mummy", "wraith", "pharaoh"],
+        "loot": ["bende", "osso", "moneta", "scarabeo", "anello", "gemma", "spada_runica", "amuleto", "corazza", "maschera_faraone", "corona_sepolta"],
+        "boost": 0.35,
+    },
+    {
+        "id": "vulcano",
+        "name": "Cuore del Vulcano",
+        "tag": "Leggendaria",
+        "blurb": "Sette piani di lava e fuoco, e in fondo il Drago che dorme sul suo tesoro.",
+        "floors": 7,
+        "enemies": ["imp", "magmaling", "bat", "dragon"],
+        "loot": ["cenere", "rottami", "elmo_cornuto", "scudo_scheggiato", "gemma", "rubino", "spallaccio", "amuleto", "corazza", "scaglia_drago", "lama_antica"],
+        "boost": 0.5,
+    },
 ]
+DUNGEON_ORDER = [d["id"] for d in DUNGEONS]
 DUNGEONS_BY_ID = {d["id"]: d for d in DUNGEONS}
+
+
+def required_for(dungeon_id: str) -> Optional[str]:
+    i = DUNGEON_ORDER.index(dungeon_id)
+    return DUNGEON_ORDER[i - 1] if i > 0 else None
 
 
 def loot_count(cleared: int, won: bool, roll: int) -> int:
