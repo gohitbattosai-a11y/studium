@@ -27,14 +27,14 @@ const scopeIds = (svg: string, prefix: string) => {
 
 const avatarMarkup = (p: Player, shirt: string) => {
   const h = hash(p.id);
-  const style = p.look?.style ?? (h >> 6) % 5;
-  let svg = fill(cardTemplate("avatar").replace(/^<svg[^>]*>/, "").replace(/<\/svg>$/, ""), {
+  const style = p.look?.style ?? (h >> 6) % 8;
+  const beard = p.look?.style !== undefined ? ((h >> 10) % 5 === 0 ? 2 : 0) : [0, 0, 1, 2, 3][(h >> 10) % 5];
+  const svg = fill(cardTemplate("avatar").replace(/^<svg[^>]*>/, "").replace(/<\/svg>$/, ""), {
     skin: p.look?.skin ?? SKIN[h % SKIN.length],
     hair: p.look?.hair ?? HAIR[(h >> 3) % HAIR.length],
     shirt,
   });
-  [0, 1, 2, 3, 4].filter((n) => n !== style).forEach((n) => (svg = svg.replace(new RegExp(`<g id="hair-${n}">[\\s\\S]*?</g>`), "")));
-  return svg;
+  return svg.replace(/<g id="(hair|hairb|beard)-(\d+)">[\s\S]*?<\/g>/g, (m, kind: string, n: string) => (kind === "beard" ? (Number(n) === beard ? m : "") : Number(n) === style ? m : ""));
 };
 
 interface Props {
