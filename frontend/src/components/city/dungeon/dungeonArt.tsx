@@ -1,5 +1,6 @@
 import type { DieKind, EnemyKind, PropKind } from "@/lib/domain/dungeon";
 import { DIE_INFO } from "@/lib/domain/dungeon";
+import { EXTRA_H, ExtraEnemyArt } from "./dungeonArt2";
 
 const Shadow = ({ rx = 22 }: { rx?: number }) => <ellipse cx="0" cy="2" rx={rx} ry={rx * 0.3} fill="#000" opacity="0.38" />;
 
@@ -510,10 +511,11 @@ export function EnemyArt({ kind, exh }: { kind: EnemyKind; exh?: boolean }) {
   if (kind === "warlord") return <Warlord exh={!!exh} />;
   if (kind === "spider") return <Spider />;
   if (kind === "broodmother") return <Broodmother exh={!!exh} />;
+  if (kind in EXTRA_H) return <ExtraEnemyArt kind={kind} exh={exh} />;
   return <Golem exh={!!exh} />;
 }
 
-export const ENEMY_H: Record<EnemyKind, number> = { slime: 44, skeleton: 82, bat: 60, wraith: 84, golem: 142, goblin: 82, orc: 104, warlord: 168, spider: 56, broodmother: 112 };
+export const ENEMY_H: Record<EnemyKind, number> = { slime: 44, skeleton: 82, bat: 60, wraith: 84, golem: 142, goblin: 82, orc: 104, warlord: 168, spider: 56, broodmother: 112, scarab: EXTRA_H.scarab ?? 58, mummy: EXTRA_H.mummy ?? 94, pharaoh: EXTRA_H.pharaoh ?? 152, imp: EXTRA_H.imp ?? 80, magmaling: EXTRA_H.magmaling ?? 66, dragon: EXTRA_H.dragon ?? 142 };
 
 export function PropArt({ kind, die, open }: { kind: PropKind; die?: DieKind; open?: boolean }) {
   if (kind === "chest")
