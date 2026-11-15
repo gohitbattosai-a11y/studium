@@ -269,7 +269,8 @@ export default function PetCompanion({ petId, me }: { petId: string; me: Me }) {
     const speed = petId === "tartaruga" ? 40 : petId === "drago" ? 72 : petId === "dinosauro" ? 66 : petId === "panda" ? 48 : 62;
     let raf = 0;
     let last = performance.now();
-    let parked = false;
+    let running = false;
+    let lastFrame = performance.now();
 
     const randomPoint = () => {
       const b = bounds();
@@ -292,8 +293,9 @@ export default function PetCompanion({ petId, me }: { petId: string; me: Me }) {
     const frame = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
+      lastFrame = now;
       if (isPaused()) {
-        parked = true;
+        running = false;
         return;
       }
       const b = bounds();
@@ -334,17 +336,34 @@ export default function PetCompanion({ petId, me }: { petId: string; me: Me }) {
       raf = requestAnimationFrame(frame);
     };
 
-    dwellUntil.current = performance.now() + 1500 + Math.random() * 2000;
-    raf = requestAnimationFrame(frame);
-    const off = subscribeActivity(() => {
-      if (!parked || isPaused()) return;
-      parked = false;
+    const start = () => {
+      if (isPaused()) return;
+      if (running) {
+        if (performance.now() - lastFrame < 2500) return;
+        cancelAnimationFrame(raf);
+      }
+      running = true;
+      lastFrame = performance.now();
       last = performance.now();
+      lastActive.current = Date.now();
+      if (modeRef.current === "sleep") {
+        setModeIf("idle");
+        setBubble(null);
+      }
+      pausedUntil.current = 0;
+      dwellUntil.current = performance.now() + 600;
       raf = requestAnimationFrame(frame);
-    });
+    };
+
+    dwellUntil.current = performance.now() + 1500 + Math.random() * 2000;
+    start();
+    const off = subscribeActivity(start);
+    const watchdog = window.setInterval(start, 1000);
     return () => {
       off();
+      window.clearInterval(watchdog);
       cancelAnimationFrame(raf);
+      running = false;
     };
   }, [petId, settings.area]);
 
