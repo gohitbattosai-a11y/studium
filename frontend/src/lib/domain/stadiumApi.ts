@@ -1,9 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api/client";
 import { errMsg } from "@/lib/utils/format";
-import { addBudget, applyServer, myTeam, syncDay, useStadium, type Fixture, type Player, type Team } from "@/lib/domain/football";
+import { addBudget, adoptClub, applyServer, bindStadium, currentScope, getStadium, myTeam, replaceStadium, stadiumScope, syncDay, useStadium, type Fixture, type Player, type StadiumState, type Team } from "@/lib/domain/football";
 
 export interface ServerSettings {
   interval_minutes: number;
@@ -22,6 +22,7 @@ export interface ServerSettings {
 
 export interface ClubInfo {
   id: string;
+  ctx: string;
   name: string;
   color: string;
   formation: string;
@@ -53,6 +54,8 @@ export interface NextMatch {
 }
 
 export interface ServerState {
+  ctx?: string;
+  ctx_name?: string | null;
   now: number;
   settings: ServerSettings;
   club: ClubInfo | null;
@@ -223,18 +226,54 @@ export function useStadiumActions() {
   };
 }
 
-export function useClubSync() {
+export function useClubSync(memberId: string) {
   const s = useStadium();
   const qc = useQueryClient();
   const mine = myTeam(s);
-  const q = useServerState(!!mine);
+  const q = useServerState(true);
   const data = q.data;
+  const ctx = data?.ctx ?? null;
+  const hasClub = !!data?.club;
+  const [ready, setReady] = useState(false);
+  const readyRef = useRef(false);
   const creating = useRef(false);
   const lastSig = useRef("");
+  const lastWorld = useRef("");
   const claiming = useRef(false);
+  const want = ctx ? stadiumScope(memberId, ctx) : null;
 
   useEffect(() => {
-    if (!mine || !data || data.club || creating.current) return;
+    readyRef.current = false;
+    setReady(false);
+    lastSig.current = "";
+    lastWorld.current = "";
+    if (!ctx || !data) return;
+    let dead = false;
+    bindStadium(memberId, ctx, !data.club);
+    const finish = () => {
+      if (dead) return;
+      readyRef.current = true;
+      setReady(true);
+    };
+    apiGet<{ data: StadiumState | null; saved_at: number }>(`/stadium/world/${ctx}`)
+      .then((r) => {
+        if (dead) return;
+        if (r.data && r.saved_at > (getStadium().savedAt ?? 0)) replaceStadium(r.data, r.saved_at);
+        finish();
+      })
+      .catch(finish);
+    return () => {
+      dead = true;
+    };
+  }, [memberId, ctx, !!data]);
+
+  useEffect(() => {
+    if (!ready || mine || !data?.club) return;
+    adoptClub(data.club);
+  }, [ready, mine, data?.club]);
+
+  useEffect(() => {
+    if (!ready || !mine || !data || data.club || creating.current) return;
     creating.current = true;
     apiPost<ClubInfo>("/stadium/club", { name: mine.name, color: mine.color })
       .then(() => qc.invalidateQueries({ queryKey: KEY }))
@@ -242,16 +281,16 @@ export function useClubSync() {
       .finally(() => {
         creating.current = false;
       });
-  }, [mine, data, qc]);
+  }, [ready, mine, data, qc]);
 
   useEffect(() => {
-    if (!data?.club) return;
+    if (!ready || !data?.club) return;
     applyServer(data.club.status, data.cards);
     syncDay(data.club.played);
-  }, [data]);
+  }, [ready, data]);
 
   useEffect(() => {
-    if (!data?.club || data.club.pending <= 0 || claiming.current) return;
+    if (!ready || !data?.club || data.club.pending <= 0 || claiming.current) return;
     claiming.current = true;
     apiPost<{ amount: number }>("/stadium/club/claim")
       .then((r) => {
@@ -265,23 +304,42 @@ export function useClubSync() {
         claiming.current = false;
         qc.invalidateQueries({ queryKey: STATE });
       });
-  }, [data?.club?.pending, data?.club, qc]);
+  }, [ready, data?.club?.pending, data?.club, qc]);
 
-  const sig = mine && data?.club ? JSON.stringify([mine.formation, mine.xi, mine.players.map((p) => [p.id, p.name, p.pos, p.ovr, p.pot, p.stats, p.price, p.priceAt, p.goals])]) : "";
+  const sig = ready && mine && data?.club ? JSON.stringify([ctx, mine.formation, mine.xi, mine.players.map((p) => [p.id, p.name, p.pos, p.ovr, p.pot, p.stats, p.price, p.priceAt, p.goals])]) : "";
   useEffect(() => {
-    if (!sig || sig === lastSig.current || !mine) return;
+    if (!sig || sig === lastSig.current || !mine || !ctx) return;
     const t = window.setTimeout(() => {
+      if (!readyRef.current || currentScope() !== want) return;
+      const cur = myTeam(getStadium());
+      if (!cur) return;
       lastSig.current = sig;
-      apiPut<{ club: ClubInfo; warning: string | null }>("/stadium/club/squad", { formation: mine.formation, xi: mine.xi, players: mine.players })
+      apiPut<{ club: ClubInfo; warning: string | null }>("/stadium/club/squad", { ctx, formation: cur.formation, xi: cur.xi, players: cur.players })
         .then((r) => {
           qc.setQueryData<ServerState>(STATE, (old) => (old ? { ...old, club: r.club, warning: r.warning } : old));
         })
         .catch(() => {
           lastSig.current = "";
+          qc.invalidateQueries({ queryKey: STATE });
         });
     }, 1200);
     return () => window.clearTimeout(t);
-  }, [sig, mine, qc]);
+  }, [sig, mine, ctx, want, qc]);
 
-  return q;
+  const worldSig = ready && mine ? String(s.savedAt ?? 0) : "";
+  useEffect(() => {
+    if (!worldSig || !ctx || worldSig === lastWorld.current) return;
+    const t = window.setTimeout(() => {
+      if (!readyRef.current || currentScope() !== want) return;
+      const cur = getStadium();
+      if (!cur.myId) return;
+      lastWorld.current = worldSig;
+      apiPut(`/stadium/world/${ctx}`, { data: cur, saved_at: cur.savedAt ?? Date.now() }).catch(() => {
+        lastWorld.current = "";
+      });
+    }, 4000);
+    return () => window.clearTimeout(t);
+  }, [worldSig, ctx, want]);
+
+  return { query: q, ready: ready && currentScope() === want, ctx, ctxName: data?.ctx_name ?? null, hasClub };
 }
