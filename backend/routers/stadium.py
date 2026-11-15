@@ -1,3 +1,4 @@
+import json
 import random
 import time
 from typing import Optional
@@ -13,7 +14,9 @@ from lib.stadium_core import CFG, COLORS, lineup_problem, sanitize_squad
 from lib.stadium_league import (
     LCFG,
     SCFG,
+    blank_squad,
     club_team,
+    club_view,
     compute_scorers,
     compute_table,
     ensure_serie_a,
@@ -38,6 +41,7 @@ class CreateClub(BaseModel):
 
 
 class SquadSync(BaseModel):
+    ctx: str = "pub"
     formation: str
     xi: list[Optional[str]] = Field(default_factory=list)
     players: list[dict] = Field(default_factory=list)
@@ -61,8 +65,23 @@ class ReleaseCard(BaseModel):
     card_id: str
 
 
-def club_public(club: dict) -> dict:
+async def club_ctx(club: dict) -> str:
+    lid = club.get("custom_league_id")
+    if not lid:
+        return "pub"
+    lg = await db.stadium_leagues.find_one({"id": lid}, {"_id": 0, "private": 1})
+    return lid if lg and lg.get("private") else "pub"
+
+
+async def init_private_squad(club: dict, league_id: str, member_id: str) -> None:
+    if (club.get("squads") or {}).get(league_id):
+        return
+    await db.stadium_clubs.update_one({"id": club["id"]}, {"$set": {f"squads.{league_id}": blank_squad(await member_cards(member_id))}})
+
+
+def club_public(club: dict, ctx: str = "pub") -> dict:
     return {
+        "ctx": ctx,
         "id": club["id"],
         "name": club["name"],
         "color": club["color"],
@@ -129,9 +148,16 @@ async def state(member: dict = Depends(stadium_member)):
     out: dict = {"now": time.time(), "settings": settings(), "club": None, "cards": [], "next": None, "warning": None}
     out["cards"] = await member_cards(member["id"])
     if club:
-        out["club"] = club_public(club)
+        ctx = await club_ctx(club)
+        view = club_view(club, ctx)
+        out["ctx"] = ctx
+        out["ctx_name"] = None
+        if ctx != "pub":
+            lg = await db.stadium_leagues.find_one({"id": ctx}, {"_id": 0, "name": 1})
+            out["ctx_name"] = lg["name"] if lg else None
+        out["club"] = club_public(view, ctx)
         out["next"] = await next_fixture(club)
-        out["warning"] = lineup_problem(club_team(club), set(status_of(club).keys()))
+        out["warning"] = lineup_problem(club_team(view), set(status_of(view).keys()))
     return out
 
 
@@ -165,14 +191,51 @@ async def create_club(body: CreateClub, member: dict = Depends(stadium_member)):
 @router.put("/stadium/club/squad")
 async def sync_squad(body: SquadSync, member: dict = Depends(stadium_member)):
     club = await need_club(member)
+    ctx = await club_ctx(club)
+    if body.ctx != ctx:
+        raise HTTPException(status_code=409, detail="La lega è cambiata, ricarico la rosa")
     cards = {c["id"]: c for c in await member_cards(member["id"])}
     clean = sanitize_squad(body.model_dump(), cards, random.Random())
     ids = {p["id"] for p in clean["players"]}
-    state_doc = club.get("state") or {"out": {}, "yellows": {}}
+    view = club_view(club, ctx)
+    state_doc = view.get("state") or {"out": {}, "yellows": {}}
     state_doc["out"] = {k: v for k, v in state_doc.get("out", {}).items() if k in ids}
-    await db.stadium_clubs.update_one({"id": club["id"]}, {"$set": {"formation": clean["formation"], "xi": clean["xi"], "players": clean["players"], "state": state_doc}})
-    club.update({"formation": clean["formation"], "xi": clean["xi"], "players": clean["players"], "state": state_doc})
-    return {"club": club_public(club), "warning": lineup_problem(club_team(club), set(status_of(club).keys()))}
+    if ctx == "pub":
+        fields = {"formation": clean["formation"], "xi": clean["xi"], "players": clean["players"], "state": state_doc}
+    else:
+        fields = {f"squads.{ctx}": {"formation": clean["formation"], "xi": clean["xi"], "players": clean["players"], "state": state_doc}}
+    await db.stadium_clubs.update_one({"id": club["id"]}, {"$set": fields})
+    view = {**view, "formation": clean["formation"], "xi": clean["xi"], "players": clean["players"], "state": state_doc}
+    return {"club": club_public(view, ctx), "warning": lineup_problem(club_team(view), set(status_of(view).keys()))}
+
+
+class WorldSync(BaseModel):
+    data: dict
+    saved_at: int = 0
+
+
+async def check_ctx(member: dict, ctx: str) -> None:
+    if ctx == "pub":
+        return
+    club = await get_club(member)
+    if not club or await club_ctx(club) != ctx:
+        raise HTTPException(status_code=409, detail="Contesto non valido")
+
+
+@router.get("/stadium/world/{ctx}")
+async def get_world(ctx: str, member: dict = Depends(stadium_member)):
+    await check_ctx(member, ctx)
+    doc = await db.stadium_worlds.find_one({"member_id": member["id"], "ctx": ctx}, {"_id": 0})
+    return {"data": doc["data"] if doc else None, "saved_at": int(doc["saved_at"]) if doc else 0}
+
+
+@router.put("/stadium/world/{ctx}")
+async def put_world(ctx: str, body: WorldSync, member: dict = Depends(stadium_member)):
+    await check_ctx(member, ctx)
+    if len(json.dumps(body.data, separators=(",", ":"))) > 1_500_000:
+        raise HTTPException(status_code=413, detail="Dati troppo grandi")
+    await db.stadium_worlds.update_one({"member_id": member["id"], "ctx": ctx}, {"$set": {"data": body.data, "saved_at": body.saved_at}}, upsert=True)
+    return {"ok": True}
 
 
 @router.post("/stadium/club/claim")
@@ -294,6 +357,8 @@ async def create_league(body: CreateLeague, member: dict = Depends(stadium_membe
     }
     await db.stadium_leagues.insert_one(dict(league))
     await db.stadium_clubs.update_one({"id": club["id"]}, {"$set": {"custom_league_id": league["id"]}})
+    if league["private"]:
+        await init_private_squad(club, league["id"], member["id"])
     return league_card(league, member, club)
 
 
@@ -316,6 +381,8 @@ async def join_league(league_id: str, body: JoinLeague, member: dict = Depends(s
     if res.modified_count == 0:
         raise HTTPException(status_code=409, detail="Impossibile entrare nella lega")
     await db.stadium_clubs.update_one({"id": club["id"]}, {"$set": {"custom_league_id": league["id"]}})
+    if league.get("private"):
+        await init_private_squad(club, league["id"], member["id"])
     return {"ok": True}
 
 
@@ -341,6 +408,8 @@ async def delete_league(league_id: str, member: dict = Depends(stadium_member)):
         raise HTTPException(status_code=409, detail="La lega è in corso")
     ids = [t["club_id"] for t in league["teams"] if t.get("club_id")]
     await db.stadium_clubs.update_many({"id": {"$in": ids}, "custom_league_id": league["id"]}, {"$set": {"custom_league_id": None}})
+    await db.stadium_clubs.update_many({"id": {"$in": ids}}, {"$unset": {f"squads.{league['id']}": ""}})
+    await db.stadium_worlds.delete_many({"ctx": league["id"]})
     await db.stadium_fixtures.delete_many({"league_id": league["id"]})
     await db.stadium_leagues.delete_one({"id": league["id"]})
     return {"ok": True}
@@ -448,9 +517,11 @@ async def release_card(body: ReleaseCard, member: dict = Depends(stadium_member)
     if not card:
         raise HTTPException(status_code=404, detail="Carta non trovata")
     value = release_value(int(card["player"]["ovr"]))
-    players = [p for p in club["players"] if p["id"] != card["id"]]
-    xi = [None if i == card["id"] else i for i in club["xi"]]
-    await db.stadium_clubs.update_one({"id": club["id"]}, {"$set": {"players": players, "xi": xi}, "$inc": {"pending": value}})
+    fields = {"players": [p for p in club["players"] if p["id"] != card["id"]], "xi": [None if i == card["id"] else i for i in club["xi"]]}
+    for key, sq in (club.get("squads") or {}).items():
+        fields[f"squads.{key}.players"] = [p for p in sq.get("players", []) if p["id"] != card["id"]]
+        fields[f"squads.{key}.xi"] = [None if i == card["id"] else i for i in sq.get("xi", [])]
+    await db.stadium_clubs.update_one({"id": club["id"]}, {"$set": fields, "$inc": {"pending": value}})
     return {"value": value}
 
 
