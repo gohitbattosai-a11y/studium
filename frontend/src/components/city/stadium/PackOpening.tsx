@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils/cn";
 import { packArt } from "@/lib/art/stadiumAssets";
 import { sfxGachaBurst, sfxGachaCrack, sfxGachaReveal, sfxGachaShake } from "@/lib/audio/sfx";
+import { POS_LABEL, STAT_KEYS, STAT_LABEL } from "@/lib/domain/football";
 import type { OpenResult, PackInfo, PulledCard } from "@/lib/domain/stadiumApi";
 import PlayerCard from "./PlayerCard";
 import "./packs.css";
@@ -32,42 +33,75 @@ function Sparks({ color, n = 26 }: { color: string; n?: number }) {
   );
 }
 
+const STEP_MS = 1150;
+
+function walkSteps(card: PulledCard) {
+  const r = rar(card.rarity);
+  const stats = card.player.stats;
+  const best = STAT_KEYS.reduce((m, k) => (stats[k] > stats[m] ? k : m), STAT_KEYS[0]);
+  const steps: { k: string; label: string; value: string; color: string }[] = [];
+  steps.push({ k: "rar", label: card.exclusive ? "Giocatore esclusivo" : "Rarità", value: r.name, color: r.color });
+  steps.push({ k: "pos", label: "Ruolo", value: POS_LABEL[card.player.pos], color: "#ffffff" });
+  steps.push({ k: "stat", label: "Punto di forza", value: `${STAT_LABEL[best]} ${stats[best]}`, color: "#7EE787" });
+  steps.push({ k: "pot", label: "Potenziale", value: String(card.player.pot), color: "#E3B341" });
+  return steps;
+}
+
 function Walkout({ card, onDone }: { card: PulledCard; onDone: () => void }) {
   const r = rar(card.rarity);
+  const steps = useMemo(() => walkSteps(card), [card]);
+  const letters = useMemo(() => [...card.player.name.toUpperCase()], [card]);
+  const total = steps.length + 2;
   const [stage, setStage] = useState(0);
-  const letters = [...card.player.name.toUpperCase()];
   useEffect(() => {
-    const t1 = window.setTimeout(() => setStage(1), 900 + letters.length * 55);
-    const t2 = window.setTimeout(() => setStage(2), 2300 + letters.length * 55);
-    return () => {
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
-    };
-  }, [letters.length]);
+    if (stage >= total) return;
+    const id = window.setTimeout(() => setStage((n) => n + 1), stage === total - 2 ? STEP_MS + 400 : STEP_MS);
+    return () => window.clearTimeout(id);
+  }, [stage, total]);
   useEffect(() => {
-    if (stage === 1) sfxGachaReveal(5);
-  }, [stage]);
+    if (stage < steps.length) sfxGachaReveal(Math.min(5, 1 + stage));
+    else if (stage === steps.length) sfxGachaReveal(5);
+  }, [stage, steps.length]);
+  const done = stage >= total;
+  const showOvr = stage >= steps.length;
+  const showName = stage >= steps.length + 1;
+  const cur = stage < steps.length ? steps[stage] : null;
   return (
-    <div className="pk-walk" style={{ ["--pk" as string]: r.color }} onClick={() => stage >= 1 && onDone()}>
+    <div className="pk-walk" style={{ ["--pk" as string]: r.color }} onClick={() => (done ? onDone() : setStage(total))} data-testid="pack-walkout">
       <div className="pk-beam" />
-      <div className="relative flex flex-col items-center gap-3 px-4 text-center">
-        <p className="text-[11px] font-bold tracking-[0.4em] uppercase" style={{ color: r.color }}>
-          {card.exclusive ? "Giocatore esclusivo" : r.name}
-        </p>
-        <p className="pk-name">
-          {letters.map((c, i) => (
-            <span key={i} className="pk-letter" style={{ animationDelay: `${600 + i * 55}ms` }}>
-              {c === " " ? " " : c}
+      <div className="relative flex w-full max-w-md flex-col items-center gap-4 px-4 text-center">
+        <div className="flex min-h-8 flex-wrap items-center justify-center gap-1.5">
+          {steps.slice(0, Math.min(stage, steps.length)).map((st, i) => (
+            <span key={st.k} className="pk-chip" style={{ ["--c" as string]: st.color, animationDelay: `${i * 30}ms` }}>
+              {st.value}
             </span>
           ))}
+        </div>
+        <div className="grid min-h-[190px] place-items-center">
+          {cur && (
+            <div key={cur.k} className="pk-step">
+              <p className="text-[11px] font-bold tracking-[0.4em] text-white/60 uppercase">{cur.label}</p>
+              <p className="pk-step-v" style={{ color: cur.color, textShadow: `0 0 28px ${cur.color}` }}>
+                {cur.value}
+              </p>
+            </div>
+          )}
+          {showOvr && (
+            <div key="ovr" className="flex flex-col items-center">
+              <div className="pk-ovr">{card.player.ovr}</div>
+              <p className="text-sm font-bold tracking-widest text-white/80">{card.player.pos}</p>
+            </div>
+          )}
+        </div>
+        <p className="pk-name min-h-[2.4em]">
+          {showName &&
+            letters.map((c, i) => (
+              <span key={i} className="pk-letter" style={{ animationDelay: `${i * 55}ms` }}>
+                {c === " " ? " " : c}
+              </span>
+            ))}
         </p>
-        {stage >= 1 && (
-          <>
-            <div className="pk-ovr">{card.player.ovr}</div>
-            <p className="text-sm font-bold tracking-widest text-white/80">{card.player.pos}</p>
-          </>
-        )}
-        {stage >= 2 && <p className="text-xs text-white/60">Tocca per scoprire la carta</p>}
+        <p className="h-4 text-xs text-white/60">{done ? "Tocca per scoprire la carta" : "Tocca per saltare"}</p>
       </div>
       <Sparks color={r.color} n={40} />
     </div>
@@ -133,7 +167,7 @@ export default function PackOpening({ pack, run, onClose, onAgain }: { pack: Pac
     if (!cur || leaving) return;
     if (!flipped[idx]) {
       const r = rar(cur.rarity);
-      if (cur.exclusive || r.rank >= 5) {
+      if (cur.exclusive || r.rank >= 4 || cur.player.ovr >= 85) {
         setWalk(idx);
         return;
       }
