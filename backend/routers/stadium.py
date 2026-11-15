@@ -145,7 +145,7 @@ async def next_fixture(club: dict) -> Optional[dict]:
 @router.get("/stadium/state")
 async def state(member: dict = Depends(stadium_member)):
     club = await get_club(member)
-    out: dict = {"now": time.time(), "settings": settings(), "club": None, "cards": [], "next": None, "warning": None}
+    out: dict = {"now": time.time(), "settings": settings(), "club": None, "cards": [], "next": None, "warning": None, "ctx": "pub", "ctx_name": None}
     out["cards"] = await member_cards(member["id"])
     if club:
         ctx = await club_ctx(club)
