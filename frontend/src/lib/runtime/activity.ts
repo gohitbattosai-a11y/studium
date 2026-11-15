@@ -4,7 +4,7 @@ const IDLE_AFTER_MS = 60_000;
 const SCROLL_SETTLE_MS = 160;
 const INPUT_EVENTS = ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"] as const;
 
-let overlays = 0;
+const overlays = new Set<symbol>();
 let idle = false;
 let scrolling = false;
 let tab = "home";
@@ -16,7 +16,7 @@ const listeners = new Set<() => void>();
 
 const hidden = () => typeof document !== "undefined" && document.hidden;
 
-export const isPaused = () => overlays > 0 || hidden();
+export const isPaused = () => overlays.size > 0 || hidden();
 export const isDormant = () => hidden() || idle;
 export const getActiveTab = () => tab;
 
@@ -84,21 +84,24 @@ if (typeof document !== "undefined") {
   for (const name of INPUT_EVENTS) window.addEventListener(name, onInput, { passive: true, capture: true });
   window.addEventListener("scroll", onScroll, { passive: true, capture: true });
   window.setInterval(() => {
+    const root = document.documentElement;
+    if (root.hasAttribute("data-paused") !== isPaused() || root.hasAttribute("data-idle") !== idle) sync();
     if (hidden() || idle) return;
     if (Date.now() - lastInput > IDLE_AFTER_MS) {
       idle = true;
       sync();
     }
-  }, 10_000);
+  }, 2_000);
 }
 
 export function useOverlay(active = true) {
   useEffect(() => {
     if (!active) return;
-    overlays += 1;
+    const token = Symbol("overlay");
+    overlays.add(token);
     sync();
     return () => {
-      overlays = Math.max(0, overlays - 1);
+      overlays.delete(token);
       sync();
     };
   }, [active]);
@@ -108,5 +111,5 @@ const snapshot = () => `${version}`;
 
 export function useActivity() {
   useSyncExternalStore(subscribeActivity, snapshot, snapshot);
-  return { tab, overlay: overlays > 0, dormant: isDormant() };
+  return { tab, overlay: overlays.size > 0, dormant: isDormant() };
 }
