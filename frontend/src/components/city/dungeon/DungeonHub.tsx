@@ -32,13 +32,13 @@ function Plaque({ t, owned, size = 56, onClick, count }: { t: TrophyDef; owned: 
   );
 }
 
-function GateCard({ id, name, tag, blurb, floors, record, got, total, onGo }: { id: DungeonId; name: string; tag: string; blurb: string; floors: number; record: { best: number; wins: number }; got: number; total: number; onGo: () => void }) {
+function GateCard({ id, name, tag, blurb, floors, record, got, total, locked, requiresName, onGo }: { locked: boolean; requiresName: string | null; id: DungeonId; name: string; tag: string; blurb: string; floors: number; record: { best: number; wins: number }; got: number; total: number; onGo: () => void }) {
   const def = DUNGEON_LIST.find((d) => d.id === id)!;
   const boss = DEF[def.boss];
   const h = ENEMY_H[def.boss];
   const k = Math.min(1, 150 / h);
   return (
-    <div className="dg-pop relative overflow-hidden rounded-2xl bg-[#12101f] ring-1 ring-white/15" style={{ boxShadow: `0 0 30px ${def.accent}22` }}>
+    <div className={cn("dg-pop relative overflow-hidden rounded-2xl bg-[#12101f] ring-1 ring-white/15", locked && "grayscale")} style={{ boxShadow: `0 0 30px ${def.accent}22` }}>
       <div className="relative h-44 overflow-hidden" style={{ background: `radial-gradient(ellipse at 50% 85%, ${def.accent}55, transparent 65%), linear-gradient(#0b0912, ${def.themes[1].wall2})` }}>
         <svg viewBox="0 0 200 180" className="absolute inset-0 size-full" preserveAspectRatio="xMidYMax meet">
           <defs>
@@ -75,8 +75,8 @@ function GateCard({ id, name, tag, blurb, floors, record, got, total, onGo }: { 
             Trofei {got}/{total}
           </span>
         </div>
-        <Button className="mt-3 w-full" onClick={onGo} data-testid={`dungeon-go-${id}`}>
-          <Swords className="size-4" /> Entra
+        <Button className="mt-3 w-full" onClick={onGo} disabled={locked} data-testid={`dungeon-go-${id}`}>
+          {locked ? <Lock className="size-4" /> : <Swords className="size-4" />} {locked ? `Completa prima: ${requiresName ?? "il dungeon precedente"}` : "Entra"}
         </Button>
       </div>
     </div>
@@ -151,7 +151,7 @@ export default function DungeonHub({ memberId, onRun, onShop }: { memberId: stri
           <div className="mx-auto grid max-w-5xl gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {data.dungeons.map((d) => {
               const ts = data.trophies.filter((t) => t.dungeon === d.id);
-              return <GateCard key={d.id} id={d.id as DungeonId} name={d.name} tag={d.tag} blurb={d.blurb} floors={d.floors} record={d.record} got={ts.filter((t) => mine.has(t.id)).length} total={ts.length} onGo={() => (data.char ? onRun(d.id as DungeonId) : setTab("hero"))} />;
+              return <GateCard key={d.id} id={d.id as DungeonId} name={d.name} tag={d.tag} blurb={d.blurb} floors={d.floors} record={d.record} got={ts.filter((t) => mine.has(t.id)).length} total={ts.length} locked={!d.unlocked} requiresName={d.requires_name} onGo={() => (data.char ? onRun(d.id as DungeonId) : setTab("hero"))} />;
             })}
           </div>
         )}
