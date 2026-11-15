@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 from pymongo.errors import DuplicateKeyError
 
 from lib.db import db
-from lib.dungeon import DUNGEONS, DUNGEONS_BY_ID, LOOT, LOOT_BY_ID, LOOT_LIMIT, MAX_KILLS_PER_FLOOR, MIN_SECONDS_PER_FLOOR, TROPHIES, TROPHIES_BY_ID, roll_loot, roll_trophies
+from lib.dungeon import DUNGEONS, DUNGEONS_BY_ID, LOOT, LOOT_BY_ID, LOOT_LIMIT, MAX_KILLS_PER_FLOOR, MIN_SECONDS_PER_FLOOR, TROPHIES, TROPHIES_BY_ID, required_for, roll_loot, roll_trophies
 from lib.dungeon_gear import ABILITIES, ABILITIES_BY_ID, CAPES, CLASSES, CLASSES_BY_ID, GEAR, GEAR_BY_ID, HAIRS, LEVEL_XP, MAX_LEVEL, SKINS, STARTER, abilities_for, ability_slots, build_loadout, default_abilities, duplicate_value, level_for, look_valid, roll_gear, usable_gear, xp_gain
 from lib.gate import feature_gate
 from lib.security import new_id, now_iso
@@ -94,6 +94,9 @@ class DungeonOut(BaseModel):
     blurb: str
     floors: int
     record: RecordOut
+    unlocked: bool = True
+    requires: Optional[str] = None
+    requires_name: Optional[str] = None
 
 
 class HunterOut(BaseModel):
@@ -293,6 +296,26 @@ async def equipped_gear(char: dict, owned: set[str], records: dict, trophies: se
     return out
 
 
+def is_unlocked(dungeon_id: str, recs: dict) -> bool:
+    need = required_for(dungeon_id)
+    return need is None or (need in recs and recs[need].wins >= 1)
+
+
+def dungeon_out(d: dict, recs: dict) -> DungeonOut:
+    need = required_for(d["id"])
+    return DungeonOut(
+        id=d["id"],
+        name=d["name"],
+        tag=d["tag"],
+        blurb=d["blurb"],
+        floors=d["floors"],
+        record=recs.get(d["id"], RecordOut(best=0, wins=0, runs=0)),
+        unlocked=is_unlocked(d["id"], recs),
+        requires=need,
+        requires_name=DUNGEONS_BY_ID[need]["name"] if need else None,
+    )
+
+
 @router.get("/dungeon", response_model=HubOut)
 async def get_hub(member: dict = Depends(city_member)):
     recs = await records_of(member["id"])
@@ -328,7 +351,7 @@ async def get_hub(member: dict = Depends(city_member)):
         for g in GEAR
     ]
     return HubOut(
-        dungeons=[DungeonOut(id=d["id"], name=d["name"], tag=d["tag"], blurb=d["blurb"], floors=d["floors"], record=recs.get(d["id"], RecordOut(best=0, wins=0, runs=0))) for d in DUNGEONS],
+        dungeons=[dungeon_out(d, recs) for d in DUNGEONS],
         items=[LootOut(**{k: i[k] for k in ("id", "name", "rarity", "shape", "color", "value")}) for i in LOOT],
         trophies=[TrophyOut(**{k: t[k] for k in ("id", "name", "dungeon", "enemy", "rarity", "art", "color", "blurb")}) for t in TROPHIES],
         bag=await wallet_bag(member),
@@ -352,6 +375,9 @@ async def start_run(body: StartRequest, member: dict = Depends(city_member)):
     if not char:
         raise HTTPException(status_code=409, detail="Crea prima il tuo personaggio")
     recs = await records_of(member["id"])
+    if not is_unlocked(body.dungeon_id, recs):
+        need = DUNGEONS_BY_ID[required_for(body.dungeon_id) or body.dungeon_id]["name"]
+        raise HTTPException(status_code=403, detail=f"Sbloccato solo dopo aver completato: {need}")
     rec_plain = {k: {"best": v.best, "wins": v.wins} for k, v in recs.items()}
     gear = await equipped_gear(char, await owned_gear(member["id"]), rec_plain, await member_trophies(member["id"]))
     run = {"id": new_id(), "member_id": member["id"], "dungeon_id": body.dungeon_id, "started": time.time()}
