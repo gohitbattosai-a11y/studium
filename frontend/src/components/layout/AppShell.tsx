@@ -44,7 +44,8 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
   const pets = usePets(petsOpen);
   const petSettings = usePetSettings();
   const { equip } = useShopActions();
-  const equipped = shop.data?.equipped_background;
+  const myRow = members.data?.find((m) => m.nickname === me.nickname);
+  const equipped = shop.data ? shop.data.equipped_background : myRow?.background;
   const background: BackgroundId = isBackgroundId(equipped) ? equipped : "none";
   const ownedBackgrounds = (shop.data?.items ?? []).filter((i) => i.kind === "background" && i.owned).map((i) => i.id);
   const customBackgrounds: BackgroundOption[] = (shop.data?.items ?? [])
