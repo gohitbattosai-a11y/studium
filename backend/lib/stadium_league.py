@@ -56,6 +56,21 @@ def club_team(club: dict) -> dict:
     }
 
 
+def league_ctx(league: dict) -> str:
+    return league["id"] if league.get("private") else "pub"
+
+
+def blank_squad(cards: Optional[list] = None) -> dict:
+    return {"formation": "4-3-3", "xi": [None] * 11, "players": [c["player"] for c in (cards or [])], "state": {"out": {}, "yellows": {}}}
+
+
+def club_view(club: dict, ctx: str) -> dict:
+    if ctx == "pub":
+        return club
+    sq = (club.get("squads") or {}).get(ctx) or blank_squad()
+    return {**club, "formation": sq["formation"], "xi": sq["xi"], "players": sq["players"], "state": sq.get("state") or {"out": {}, "yellows": {}}}
+
+
 def status_of(club: dict) -> dict:
     out = (club.get("state") or {}).get("out", {})
     return {pid: {"kind": v["kind"], "left": v["left"]} for pid, v in out.items()}
@@ -252,7 +267,7 @@ async def load_team(league: dict, tid: str) -> tuple[Optional[dict], bool]:
     if bot:
         return bot, True
     club = await db.stadium_clubs.find_one({"id": tid}, {"_id": 0})
-    return (club_team(club) if club else None), False
+    return (club_team(club_view(club, league_ctx(league))) if club else None), False
 
 
 def reward_for(cfg: dict, gf: int, ga: int, walkover_win: bool) -> float:
@@ -271,10 +286,9 @@ async def save_team(league: dict, team: dict, is_bot: bool, reward: float, notes
     if is_bot:
         await db.stadium_leagues.update_one({"id": league["id"]}, {"$set": {f"bots.{team['id']}.state": team["state"], f"bots.{team['id']}.players": team["players"]}})
         return
-    await db.stadium_clubs.update_one(
-        {"id": team["id"]},
-        {"$set": {"state": team["state"], "players": team["players"]}, "$inc": {"pending": reward, "played": 1}},
-    )
+    ctx = league_ctx(league)
+    fields = {"state": team["state"], "players": team["players"]} if ctx == "pub" else {f"squads.{ctx}.state": team["state"], f"squads.{ctx}.players": team["players"]}
+    await db.stadium_clubs.update_one({"id": team["id"]}, {"$set": fields, "$inc": {"pending": reward, "played": 1}})
 
 
 async def play_fixture(fx: dict) -> None:
