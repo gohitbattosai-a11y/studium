@@ -140,6 +140,8 @@ GEAR: list[dict] = [
     _gear("g_manto_ragnatela", "Manto di ragnatela", "armor", "epico", "robe", "#e5e7eb", {"hp": 6, "armor": 1, "regen": 1}, "unlock", unlock={"type": "trophy", "id": "t_broodmother"}),
     _gear("g_egida_re_orco", "Egida del Re Orco", "armor", "leggendario", "cuirass", "#fbbf24", {"hp": 14, "armor": 3, "guard": 1}, "drop", drop={"dungeon": "covo", "chance": 0.14}),
     _gear("g_corazza_eterna", "Corazza del Guardiano eterno", "armor", "leggendario", "cuirass", "#7c3aed", {"hp": 16, "armor": 3, "regen": 1}, "drop", drop={"dungeon": "cripta", "chance": 0.12}),
+    _gear("g_egida_faraone", "Egida del Faraone", "armor", "leggendario", "cuirass", "#38bdf8", {"hp": 16, "armor": 3, "guard": 1}, "drop", drop={"dungeon": "rovine", "chance": 0.14}),
+    _gear("g_scaglie_drago", "Scaglie del Drago", "armor", "leggendario", "cuirass", "#f97316", {"hp": 20, "armor": 4, "regen": 1}, "drop", drop={"dungeon": "vulcano", "chance": 0.12}),
 ]
 GEAR_BY_ID = {g["id"]: g for g in GEAR}
 STARTER = {"weapon": {c["id"]: next(g["id"] for g in GEAR if g["slot"] == "weapon" and g["source"] == "start" and c["id"] in g["classes"]) for c in CLASSES}, "armor": {c["id"]: "g_tunica" for c in CLASSES}}
