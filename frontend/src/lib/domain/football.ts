@@ -89,6 +89,7 @@ export interface StadiumState {
   auctions: Auction[];
   offers: Offer[];
   ledger: Ledger[];
+  savedAt?: number;
 }
 
 export interface AuctionBot {
@@ -315,11 +316,11 @@ export const isReady = (t: Team | undefined) => !!t && t.xi.length === 11 && t.x
 
 export const myTeam = (s: StadiumState) => s.teams.find((t) => t.id === s.myId);
 
-const KEY = "studium.stadium.v2";
+const LEGACY_KEY = "studium.stadium.v2";
+const keyOf = (scope: string) => `studium.stadium.v3:${scope}`;
 
-function load(): StadiumState {
-  const raw = readJson<StadiumState | null>(KEY, null);
-  if (!raw || !Array.isArray(raw.teams) || !Array.isArray(raw.market) || !Array.isArray(raw.fixtures)) return fresh();
+function normalize(raw: StadiumState | null | undefined): StadiumState | null {
+  if (!raw || !Array.isArray(raw.teams) || !Array.isArray(raw.market) || !Array.isArray(raw.fixtures)) return null;
   raw.auctions = raw.auctions ?? [];
   raw.offers = raw.offers ?? [];
   raw.ledger = raw.ledger ?? [];
@@ -327,13 +328,58 @@ function load(): StadiumState {
   return raw;
 }
 
-let state: StadiumState = load();
+let scope: string | null = null;
+let state: StadiumState = fresh();
 const listeners = new Set<() => void>();
 const commit = (next: StadiumState) => {
+  next.savedAt = Date.now();
   state = next;
-  writeJson(KEY, next);
+  if (scope) writeJson(keyOf(scope), next);
   listeners.forEach((l) => l());
 };
+
+export const stadiumScope = (memberId: string, ctx: string) => `${memberId}:${ctx}`;
+export const currentScope = () => scope;
+
+export function bindStadium(memberId: string, ctx: string, allowLegacy = false) {
+  const next = stadiumScope(memberId, ctx);
+  if (next === scope) return;
+  scope = next;
+  let loaded = normalize(readJson<StadiumState | null>(keyOf(next), null));
+  if (!loaded && allowLegacy && ctx === "pub") {
+    loaded = normalize(readJson<StadiumState | null>(LEGACY_KEY, null));
+    if (loaded) {
+      writeJson(keyOf(next), loaded);
+      try {
+        window.localStorage.removeItem(LEGACY_KEY);
+      } catch {
+        void 0;
+      }
+    }
+  }
+  state = loaded ?? fresh();
+  listeners.forEach((l) => l());
+}
+
+export function replaceStadium(data: StadiumState, savedAt: number) {
+  const next = normalize(data);
+  if (!next) return;
+  next.savedAt = savedAt;
+  state = next;
+  if (scope) writeJson(keyOf(scope), next);
+  listeners.forEach((l) => l());
+}
+
+export function adoptClub(club: { name: string; color: string; formation: string; xi: (string | null)[]; players: Player[] }) {
+  if (state.myId) return;
+  const s = structuredClone(state);
+  const team: Team = { id: uid("t"), name: club.name, color: club.color, players: club.players.map((p) => ({ ...p, trained: -1, training: null })), mine: true, formation: FORMATIONS[club.formation] ? club.formation : "4-3-3", xi: club.xi.length === 11 ? club.xi : Array(11).fill(null), budget: 0 };
+  s.teams.push(team);
+  s.myId = team.id;
+  fillEmpty(team);
+  commit(s);
+}
+
 const subscribe = (l: () => void) => {
   listeners.add(l);
   return () => {
