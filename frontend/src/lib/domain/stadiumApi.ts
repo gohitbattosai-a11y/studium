@@ -232,7 +232,7 @@ export function useClubSync(memberId: string) {
   const mine = myTeam(s);
   const q = useServerState(true);
   const data = q.data;
-  const ctx = data?.ctx ?? null;
+  const ctx = data ? data.ctx ?? "pub" : null;
   const hasClub = !!data?.club;
   const [ready, setReady] = useState(false);
   const readyRef = useRef(false);
