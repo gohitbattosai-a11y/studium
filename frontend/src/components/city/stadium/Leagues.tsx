@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, Crown, Eye, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -23,16 +23,22 @@ const statusLabel: Record<string, string> = { open: "In formazione", running: "I
 
 export function ReplayHost({ id, onClose }: { id: string; onClose: () => void }) {
   const q = useReplay(id);
-  if (q.isError) {
-    toast.error("Replay non disponibile");
-    onClose();
-    return null;
-  }
-  if (!q.data) return <div className="fixed inset-0 z-[70] grid place-items-center bg-black/80 text-sm text-white">Carico la partita…</div>;
   const r = q.data;
-  const h = teamOfSnap(r.home);
-  const a = teamOfSnap(r.away);
-  return <LiveMatch fx={{ day: r.day, home: h.id, away: a.id, hg: r.hg, ag: r.ag, events: r.events, log: r.log }} h={h} a={a} onClose={onClose} />;
+  const built = useMemo(() => {
+    if (!r) return null;
+    const h = teamOfSnap(r.home);
+    const a = teamOfSnap(r.away);
+    return { h, a, fx: { day: r.day, home: h.id, away: a.id, hg: r.hg, ag: r.ag, events: r.events, log: r.log } };
+  }, [r]);
+  useEffect(() => {
+    if (q.isError) {
+      toast.error("Replay non disponibile");
+      onClose();
+    }
+  }, [q.isError]);
+  if (q.isError) return null;
+  if (!built) return <div className="fixed inset-0 z-[70] grid place-items-center bg-black/80 text-sm text-white">Carico la partita…</div>;
+  return <LiveMatch fx={built.fx} h={built.h} a={built.a} onClose={onClose} />;
 }
 
 function FixtureList({ d, myId, onWatch }: { d: LeagueDetail; myId: string | null; onWatch: (f: FixtureRow) => void }) {
@@ -102,11 +108,33 @@ function LeagueView({ id, myId, onBack }: { id: string; myId: string | null; onB
   if (!d) return <p className="py-10 text-center text-sm text-[#8B949E]">Carico…</p>;
   const serie = d.kind === "serie_a";
   const next = d.fixtures.filter((f) => f.status === "scheduled").sort((a, b) => a.at - b.at)[0];
+  const names = Object.fromEntries(d.teams_list.map((t) => [t.id, t]));
+  const recent = d.fixtures
+    .filter((f) => f.status === "played" && !f.walkover && (f.home === myId || f.away === myId))
+    .sort((a, b) => b.at - a.at)
+    .slice(0, 3);
   return (
     <div>
       <Button size="sm" variant="outline" onClick={onBack} className="mb-3">
         <ChevronLeft /> Leghe
       </Button>
+      {recent.length > 0 && (
+        <div className={cn("mb-3 rounded-xl p-3", PANEL)}>
+          <h4 className="mb-2 text-xs font-semibold tracking-wide text-[#8B949E] uppercase">Le tue ultime partite</h4>
+          <ul className="flex flex-col gap-1.5">
+            {recent.map((f) => (
+              <li key={f.id} className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/30 px-2.5 py-1.5 text-sm">
+                <span className="min-w-0 flex-1 truncate text-right">{names[f.home]?.name}</span>
+                <span className="w-14 shrink-0 text-center font-bold tabular-nums">{f.hg} - {f.ag}</span>
+                <span className="min-w-0 flex-1 truncate">{names[f.away]?.name}</span>
+                <Button size="sm" variant="secondary" onClick={() => setWatch(f.id)}>
+                  <Eye /> Rivedi
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className={cn("mb-3 rounded-xl p-3", PANEL)}>
         <div className="flex items-center gap-2">
           {serie && <Crown className="size-5 text-[#E3B341]" />}
