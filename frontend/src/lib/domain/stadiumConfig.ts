@@ -19,6 +19,9 @@ export interface RosterEntry {
   price?: number;
   stats?: Partial<Record<StatId, number>>;
   team?: string;
+  nation?: string;
+  league?: string;
+  reserve?: boolean;
   card?: string;
   skin?: string;
   hair?: string;
