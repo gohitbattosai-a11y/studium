@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { apiGet } from "@/lib/api/client";
+import { ApiError, apiGet } from "@/lib/api/client";
+import { readJson, removeKey, writeJson } from "@/lib/utils/storage";
 import type { Me } from "@/lib/api/types";
 import AuthScreen from "@/components/auth/AuthScreen";
 import AppShell from "@/components/layout/AppShell";
@@ -11,10 +12,17 @@ import { queryClient } from "@/lib/api/queryClient";
 import { Toaster } from "@/components/ui/sonner";
 import { BrandMark } from "@/components/common";
 
+const ME_KEY = "studium:me:v1";
+
 export default function Studium() {
   const [, setEpoch] = useState(0);
   const status = useStatus();
-  const me = useQuery({ queryKey: ["me"], queryFn: () => apiGet<Me>("/auth/me"), retry: false, staleTime: 60_000 });
+  const me = useQuery({ queryKey: ["me"], queryFn: () => apiGet<Me>("/auth/me"), retry: false, staleTime: 60_000, initialData: () => readJson<Me | null>(ME_KEY, null) ?? undefined, initialDataUpdatedAt: 0 });
+  const unauthorized = me.error instanceof ApiError && me.error.status === 401;
+  useEffect(() => {
+    if (me.isSuccess && !me.isPlaceholderData && me.dataUpdatedAt > 0) writeJson(ME_KEY, me.data);
+    else if (unauthorized) removeKey(ME_KEY);
+  }, [me.isSuccess, me.dataUpdatedAt, me.data, unauthorized]);
 
   if (me.data) hydrateFor(queryClient, me.data.member_id);
 
@@ -25,7 +33,7 @@ export default function Studium() {
         <BrandMark className="size-9 animate-pulse" />
       </div>
     );
-  } else if (me.isError || !me.data) {
+  } else if ((me.isError && (unauthorized || !me.data)) || !me.data) {
     body = (
       <>
         {status.data?.updating && (
