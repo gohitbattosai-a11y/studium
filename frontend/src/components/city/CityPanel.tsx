@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { ArrowLeft, X } from "lucide-react";
 import type { Me } from "@/lib/api/types";
@@ -8,21 +8,21 @@ import { LoadError, SkeletonList } from "@/components/common";
 import { getAmbient, setAmbient } from "@/lib/audio/ambient";
 import { setSandboxUser } from "@/lib/runtime/sandbox";
 import { useOverlay } from "@/lib/runtime/activity";
-import AnimalRoom from "./animals/AnimalRoom";
+const AnimalRoom = lazy(() => import("./animals/AnimalRoom"));
 import Bucket from "./shared/Bucket";
 import CityMap from "./map/CityMap";
-import Forest from "./animals/Forest";
-import Museum from "./museum/Museum";
-import MuseumRoom from "./museum/MuseumRoom";
-import Pond from "./fishing/Pond";
-import Stadium from "./stadium/Stadium";
-import School from "./school/School";
-import Dig from "./fossils/Dig";
-import Shop from "./shop/Shop";
-import Dungeon from "./dungeon/Dungeon";
-import DungeonHub from "./dungeon/DungeonHub";
+const Forest = lazy(() => import("./animals/Forest"));
+const Museum = lazy(() => import("./museum/Museum"));
+const MuseumRoom = lazy(() => import("./museum/MuseumRoom"));
+const Pond = lazy(() => import("./fishing/Pond"));
+const Stadium = lazy(() => import("./stadium/Stadium"));
+const School = lazy(() => import("./school/School"));
+const Dig = lazy(() => import("./fossils/Dig"));
+const Shop = lazy(() => import("./shop/Shop"));
+const Dungeon = lazy(() => import("./dungeon/Dungeon"));
+const DungeonHub = lazy(() => import("./dungeon/DungeonHub"));
 import { DUNGEONS, type DungeonId } from "@/lib/domain/dungeon";
-import FossilRoom from "./fossils/FossilRoom";
+const FossilRoom = lazy(() => import("./fossils/FossilRoom"));
 import { ROOMS } from "./shared/rooms";
 
 type View = "map" | "lobby" | "room" | "pond" | "forest" | "stadium" | "animals" | "school" | "dig" | "fossils" | "shop" | "dungeon" | "dungeonrun";
@@ -95,7 +95,9 @@ export default function CityPanel({ me, onClose }: { me: Me; onClose: () => void
         </Button>
       </header>
       <div className="absolute inset-0">
-        {city.isPending ? (
+        {view === "map" ? (
+          <CityMap onGo={setView} />
+        ) : city.isPending ? (
           <div className="p-4">
             <SkeletonList />
           </div>
@@ -104,12 +106,7 @@ export default function CityPanel({ me, onClose }: { me: Me; onClose: () => void
             <LoadError testId="city-error" />
           </div>
         ) : (
-          <>
-            {view === "map" && (
-              <>
-                <CityMap onGo={setView} />
-              </>
-            )}
+          <Suspense fallback={<div className="grid h-full place-items-center text-sm text-[#8B949E]">Carico…</div>}>
             {view === "lobby" && <Museum city={data} onFish={() => openRoom(ROOMS[0].id)} onAnimals={() => setView("animals")} onFossils={() => setView("fossils")} onBucket={() => setBucketOpen(true)} onExit={() => setView("map")} />}
             {view === "room" && <MuseumRoom key={roomId} city={data} roomId={roomId} onRoom={setRoomId} onAtrium={() => setView("lobby")} onBucket={() => setBucketOpen(true)} />}
             {view === "pond" && <Pond city={data} onBucket={() => setBucketOpen(true)} />}
@@ -123,7 +120,7 @@ export default function CityPanel({ me, onClose }: { me: Me; onClose: () => void
             {view === "dungeon" && <DungeonHub memberId={me.member_id} onRun={(id) => { setDungeonId(id); setView("dungeonrun"); }} onShop={() => setView("shop")} />}
             {view === "dungeonrun" && <Dungeon key={dungeonId} dungeonId={dungeonId} onExit={() => setView("dungeon")} />}
             <Bucket open={bucketOpen} onClose={() => setBucketOpen(false)} city={data} />
-          </>
+          </Suspense>
         )}
       </div>
     </div>,
