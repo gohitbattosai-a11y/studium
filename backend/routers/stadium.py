@@ -10,7 +10,7 @@ from pymongo.errors import DuplicateKeyError
 from lib.db import db
 from lib.gate import feature_gate
 from lib.security import new_id, now_iso
-from lib.stadium_core import CFG, COLORS, lineup_problem, sanitize_squad
+from lib.stadium_core import CFG, COLORS, fatigue_map, lineup_problem, sanitize_squad
 from lib.stadium_league import (
     LCFG,
     SCFG,
@@ -18,7 +18,9 @@ from lib.stadium_league import (
     club_team,
     club_view,
     compute_scorers,
+    champions_tables,
     compute_table,
+    ensure_champions,
     ensure_serie_a,
     fixtures_of,
     interval_of,
@@ -27,6 +29,7 @@ from lib.stadium_league import (
     status_of,
     tick,
 )
+from lib.stadium_friendly import busy, club_rating, friendly_league_id, notify as friendly_notify, play_friendly
 from lib.stadium_packs import EXCLUSIVE, PACKS, PACKS_BY_ID, RANK, pack_public, release_value, roll_pack
 from routers.shop import require_admin, totals
 
@@ -93,6 +96,8 @@ def club_public(club: dict, ctx: str = "pub") -> dict:
         "played": int(club.get("played", 0)),
         "custom_league_id": club.get("custom_league_id"),
         "serie_a_id": club.get("serie_a_id"),
+        "champions_id": club.get("champions_id"),
+        "fatigue": fatigue_map(club_team(club), time.time()),
     }
 
 
@@ -272,8 +277,9 @@ def league_card(league: dict, member: dict, club: Optional[dict]) -> dict:
 async def leagues(member: dict = Depends(stadium_member)):
     club = await get_club(member)
     serie = await ensure_serie_a(member["group_id"])
+    champions = await ensure_champions(member["group_id"])
     docs = [d async for d in db.stadium_leagues.find({"group_id": member["group_id"], "kind": "custom"}, {"_id": 0, "bots": 0}).sort("created_at", -1).limit(60)]
-    return {"serie_a": league_card(serie, member, club), "leagues": [league_card(d, member, club) for d in docs], "now": time.time()}
+    return {"serie_a": league_card(serie, member, club), "champions": league_card(champions, member, club), "leagues": [league_card(d, member, club) for d in docs], "now": time.time()}
 
 
 async def detail(league: dict, member: dict, club: Optional[dict]) -> dict:
@@ -292,12 +298,18 @@ async def detail(league: dict, member: dict, club: Optional[dict]) -> dict:
             "ag": f["ag"],
             "walkover": f.get("walkover"),
             "events": f.get("events") or [],
+            "stage": f.get("stage"),
+            "grp": f.get("grp"),
+            "pens": f.get("pens"),
         }
         for f in fixtures
     ]
     out = league_card(league, member, club)
     out["teams_list"] = [{"id": t["id"], "name": t["name"], "color": t["color"], "bot": t.get("member_id") is None, "mine": bool(club) and t["id"] == club["id"]} for t in league["teams"]]
     out["table"] = table
+    if league["kind"] == "champions":
+        out["groups"] = champions_tables(league, fixtures)
+        out["stage"] = league.get("stage")
     out["fixtures"] = fx
     out["scorers"] = compute_scorers(fixtures, league)
     out["champion"] = names.get(league.get("champion") or "", {}).get("name") if league.get("champion") else None
@@ -318,6 +330,12 @@ async def get_league(league_id: str, member: dict) -> dict:
 async def serie_a(member: dict = Depends(stadium_member)):
     club = await get_club(member)
     return await detail(await ensure_serie_a(member["group_id"]), member, club)
+
+
+@router.get("/stadium/champions")
+async def champions(member: dict = Depends(stadium_member)):
+    club = await get_club(member)
+    return await detail(await ensure_champions(member["group_id"]), member, club)
 
 
 @router.get("/stadium/leagues/{league_id}")
@@ -444,6 +462,8 @@ async def replay(fixture_id: str, member: dict = Depends(stadium_member)):
     if not fx or fx["status"] != "played":
         raise HTTPException(status_code=404, detail="Partita non ancora giocata")
     league = await db.stadium_leagues.find_one({"id": fx["league_id"]}, {"_id": 0, "teams": 1, "name": 1})
+    if fx.get("stage") == "friendly":
+        league = {"name": "Amichevole", "teams": []}
     names = {t["id"]: t for t in (league or {}).get("teams", [])}
     return {
         "id": fx["id"],
@@ -452,6 +472,8 @@ async def replay(fixture_id: str, member: dict = Depends(stadium_member)):
         "at": fx["at"],
         "hg": fx["hg"],
         "ag": fx["ag"],
+        "pens": fx.get("pens"),
+        "stage": fx.get("stage"),
         "walkover": fx.get("walkover"),
         "reason": fx.get("walkover_reason"),
         "events": fx.get("events") or [],
@@ -536,3 +558,102 @@ async def advance(member: dict = Depends(stadium_member)):
             await db.stadium_fixtures.update_many({"league_id": lg["id"], "season": lg["season"], "status": "scheduled", "day": nxt["day"]}, {"$set": {"at": now - 1}})
     played = await tick()
     return {"played": played}
+
+
+class Challenge(BaseModel):
+    club_id: str
+
+
+def friendly_row(d: dict) -> dict:
+    return {k: d.get(k) for k in ("id", "from_club", "from_name", "from_color", "to_club", "to_name", "to_color", "status", "created_at", "expires_at", "fixture_id", "hg", "ag")}
+
+
+async def expire_friendlies(group_id: str) -> None:
+    await db.stadium_friendlies.update_many({"group_id": group_id, "status": "pending", "expires_at": {"$lt": time.time()}}, {"$set": {"status": "expired"}})
+
+
+@router.get("/stadium/friendlies")
+async def friendlies(member: dict = Depends(stadium_member)):
+    club = await get_club(member)
+    gid = member["group_id"]
+    await expire_friendlies(gid)
+    clubs = [c async for c in db.stadium_clubs.find({"group_id": gid}, {"_id": 0})]
+    rivals = []
+    for c in clubs:
+        if club and c["id"] == club["id"]:
+            continue
+        rivals.append({"id": c["id"], "name": c["name"], "color": c["color"], "rating": round(club_rating(c), 1)})
+    rivals.sort(key=lambda r: -r["rating"])
+    mine = []
+    if club:
+        mine = [d async for d in db.stadium_friendlies.find({"group_id": gid, "$or": [{"from_club": club["id"]}, {"to_club": club["id"]}]}, {"_id": 0}).sort("created_at", -1).limit(30)]
+    return {"now": time.time(), "rivals": rivals, "mine": [friendly_row(d) for d in mine], "club_id": club["id"] if club else None}
+
+
+@router.post("/stadium/friendlies")
+async def challenge(body: Challenge, member: dict = Depends(stadium_member)):
+    club = await need_club(member)
+    gid = member["group_id"]
+    if body.club_id == club["id"]:
+        raise HTTPException(status_code=400, detail="Non puoi sfidare te stesso")
+    other = await db.stadium_clubs.find_one({"id": body.club_id, "group_id": gid}, {"_id": 0})
+    if not other:
+        raise HTTPException(status_code=404, detail="Squadra non trovata")
+    await expire_friendlies(gid)
+    open_n = await db.stadium_friendlies.count_documents({"group_id": gid, "status": "pending", "from_club": club["id"]})
+    if open_n >= int(CFG["friendly"]["pendingMax"]):
+        raise HTTPException(status_code=409, detail="Hai già troppe sfide in attesa")
+    if await db.stadium_friendlies.find_one({"group_id": gid, "status": "pending", "from_club": club["id"], "to_club": other["id"]}, {"_id": 1}):
+        raise HTTPException(status_code=409, detail="Sfida già inviata")
+    now = time.time()
+    doc = {"id": new_id(), "group_id": gid, "from_club": club["id"], "from_name": club["name"], "from_color": club["color"], "to_club": other["id"], "to_name": other["name"], "to_color": other["color"], "status": "pending", "created_at": now, "expires_at": now + 60 * int(CFG["friendly"]["expireMinutes"]), "fixture_id": None}
+    await db.stadium_friendlies.insert_one(dict(doc))
+    friendly_notify(other, "Sfida amichevole", f"{club['name']} ti sfida a un'amichevole", "friendly")
+    return friendly_row(doc)
+
+
+async def load_friendly(fid: str, member: dict) -> tuple[dict, dict]:
+    club = await need_club(member)
+    d = await db.stadium_friendlies.find_one({"id": fid, "group_id": member["group_id"]}, {"_id": 0})
+    if not d or club["id"] not in (d["from_club"], d["to_club"]):
+        raise HTTPException(status_code=404, detail="Sfida non trovata")
+    if d["status"] == "pending" and d["expires_at"] < time.time():
+        await db.stadium_friendlies.update_one({"id": fid}, {"$set": {"status": "expired"}})
+        d["status"] = "expired"
+    return club, d
+
+
+@router.post("/stadium/friendlies/{fid}/accept")
+async def accept_friendly(fid: str, member: dict = Depends(stadium_member)):
+    club, d = await load_friendly(fid, member)
+    if d["to_club"] != club["id"]:
+        raise HTTPException(status_code=403, detail="Solo lo sfidato può accettare")
+    if d["status"] != "pending":
+        raise HTTPException(status_code=409, detail="Sfida non più valida")
+    claimed = await db.stadium_friendlies.find_one_and_update({"id": fid, "status": "pending"}, {"$set": {"status": "playing"}})
+    if not claimed:
+        raise HTTPException(status_code=409, detail="Sfida non più valida")
+    home = await db.stadium_clubs.find_one({"id": d["from_club"]}, {"_id": 0})
+    away = await db.stadium_clubs.find_one({"id": d["to_club"]}, {"_id": 0})
+    try:
+        if not home or not away:
+            raise ValueError("Squadra non disponibile")
+        if await busy(home["id"]) or await busy(away["id"]):
+            raise ValueError("Una delle squadre sta giocando una partita ufficiale")
+        fx = await play_friendly(home, away)
+    except ValueError as e:
+        await db.stadium_friendlies.update_one({"id": fid}, {"$set": {"status": "pending"}})
+        raise HTTPException(status_code=409, detail=str(e))
+    await db.stadium_friendlies.update_one({"id": fid}, {"$set": {"status": "played", "fixture_id": fx["id"], "hg": fx["hg"], "ag": fx["ag"]}})
+    friendly_notify(home, "Amichevole giocata", f"{home['name']} {fx['hg']}-{fx['ag']} {away['name']}", "friendly")
+    return {"fixture_id": fx["id"], "hg": fx["hg"], "ag": fx["ag"]}
+
+
+@router.post("/stadium/friendlies/{fid}/decline")
+async def decline_friendly(fid: str, member: dict = Depends(stadium_member)):
+    club, d = await load_friendly(fid, member)
+    if d["status"] != "pending":
+        raise HTTPException(status_code=409, detail="Sfida non più valida")
+    status = "declined" if d["to_club"] == club["id"] else "cancelled"
+    await db.stadium_friendlies.update_one({"id": fid, "status": "pending"}, {"$set": {"status": status}})
+    return {"ok": True}
