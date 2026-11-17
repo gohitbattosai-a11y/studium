@@ -11,6 +11,7 @@ export type LogType = "kickoff" | "goal" | "save" | "post" | "off" | "yellow" | 
 export interface Player {
   id: string;
   out?: { kind: "injury" | "red"; left: number };
+  tired?: number;
   name: string;
   pos: Pos;
   ovr: number;
@@ -23,6 +24,9 @@ export interface Player {
   priceAt?: number;
   card?: string;
   look?: { skin?: string; hair?: string; style?: number };
+  nation?: string;
+  club?: string;
+  league?: string;
   loan?: { from: string; until: number };
 }
 
@@ -170,9 +174,7 @@ const OFFSETS: Record<Pos, Stats> = {
 };
 const AW: Record<Pos, number> = { ATT: 1, CEN: 0.5, DIF: 0.1, POR: 0 };
 const DW: Record<Pos, number> = { POR: 1.5, DIF: 1, CEN: 0.5, ATT: 0.05 };
-const FIRST = ["Luca", "Marco", "Matteo", "Andrea", "Davide", "Simone", "Federico", "Alessio", "Giorgio", "Riccardo", "Tommaso", "Nicolò", "Edoardo", "Filippo", "Samuele", "Lorenzo", "Gabriele", "Emanuele", "Stefano", "Diego", "Pietro", "Jacopo", "Mattia", "Leonardo", "Carlos", "Mateo", "Hugo", "Lucas", "Noah", "Kylian", "Jules", "Thomas", "Yannick", "Joshua", "Emre", "Karim", "Omar", "Sven", "Jonas", "Rafael"];
-const LAST = ["Rossi", "Bianchi", "Ferrari", "Esposito", "Romano", "Colombo", "Ricci", "Marino", "Greco", "Bruno", "Gallo", "Conti", "De Luca", "Costa", "Giordano", "Mancini", "Rizzo", "Lombardi", "Moretti", "Barbieri", "Fontana", "Santoro", "Mariani", "Rinaldi", "Caruso", "Ferraro", "Galli", "Martini", "Leone", "Longo", "Silva", "Garcia", "Lopez", "Dubois", "Martin", "Müller", "Schmidt", "Kovač", "Nowak", "Haddad", "Yilmaz", "Santos", "Oliveira", "Costa Lima", "Moreau", "Bernard", "Fischer", "Novak", "Petrov", "Jansen"];
-const BOT_NAMES = ["Real Studium", "Atletico Banco", "Inter Compiti", "Dinamo Cattedra", "Juve Lavagna", "Sporting Quaderno", "Borussia Zaino", "Milan Ricreazione", "Olimpia Interrogati", "Torino Verifica", "Napoli Appunti", "Roma Merenda"];
+const BOT_NAMES = ["Inter", "Milan", "Juventus", "Napoli", "Roma", "Lazio", "Atalanta", "Fiorentina", "Bologna", "Torino", "Genoa", "Udinese"];
 
 const rnd = (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1));
 const pick = <T>(a: T[]): T => a[Math.floor(Math.random() * a.length)];
@@ -194,29 +196,29 @@ function mkStats(pos: Pos, ovr: number): Stats {
   STAT_KEYS.forEach((k) => (raw[k] = OFFSETS[pos][k] + rnd(-5, 5)));
   const d = ovr - STAT_KEYS.reduce((s, k) => s + WEIGHTS[pos][k] * raw[k], 0);
   const out = {} as Stats;
-  STAT_KEYS.forEach((k) => (out[k] = clamp(Math.round(raw[k] + d), 20, 99)));
+  STAT_KEYS.forEach((k) => (out[k] = clamp(Math.round(raw[k] + d), 20, 125)));
   return out;
 }
 
 function mkPlayer(pos: Pos, ovr: number): Player {
-  const stats = mkStats(pos, clamp(ovr, 40, 92));
-  const o = calcOvr(pos, stats);
-  return { id: uid("p"), name: `${pick(FIRST)} ${pick(LAST)}`, pos, ovr: o, pot: clamp(o + rnd(2, 14), o, 99), stats, goals: 0, trained: -1, training: null };
+  const pool = ROSTER.filter((r) => r.pos === pos && r.reserve).sort((a, b) => Math.abs(a.ovr - ovr) - Math.abs(b.ovr - ovr)).slice(0, 8);
+  const r = pool.length ? pick(pool) : pick(ROSTER.filter((x) => x.pos === pos));
+  return { ...fromRoster(r), id: `${r.id}~${uid("")}` };
 }
 
 function fromRoster(r: RosterEntry): Player {
-  const ovr = clamp(Math.round(r.ovr), 30, 99);
+  const ovr = clamp(Math.round(r.ovr), 30, 105);
   const stats = mkStats(r.pos, clamp(ovr, 40, 92));
   (Object.keys(r.stats ?? {}) as StatKey[]).forEach((k) => {
     const v = r.stats?.[k];
-    if (typeof v === "number") stats[k] = clamp(Math.round(v), 20, 99);
+    if (typeof v === "number") stats[k] = clamp(Math.round(v), 20, 125);
   });
   return {
     id: r.id,
     name: r.name,
     pos: r.pos,
     ovr,
-    pot: clamp(Math.round(r.pot ?? ovr + rnd(2, 8)), ovr, 99),
+    pot: clamp(Math.round(r.pot ?? ovr + rnd(2, 8)), ovr, 109),
     stats,
     goals: 0,
     trained: -1,
@@ -224,6 +226,9 @@ function fromRoster(r: RosterEntry): Player {
     price: r.price,
     priceAt: r.price !== undefined ? ovr : undefined,
     card: r.card,
+    nation: r.nation,
+    club: r.team,
+    league: r.league,
     look: r.skin || r.hair || r.hairStyle !== undefined ? { skin: r.skin, hair: r.hair, style: r.hairStyle } : undefined,
   };
 }
@@ -381,7 +386,7 @@ export const useStadium = () => useSyncExternalStore(subscribe, () => state);
 const refill = (s: StadiumState) => {
   const used = new Set(s.teams.map((t) => t.name));
   while (s.teams.length < TEAMS) {
-    const name = BOT_NAMES.find((n) => !used.has(n)) ?? `FC ${pick(LAST)}`;
+    const name = BOT_NAMES.find((n) => !used.has(n)) ?? `Reserve ${used.size + 1}`;
     used.add(name);
     s.teams.push(mkBot(name));
   }
@@ -497,7 +502,7 @@ export function setSlot(i: number, pid: string | null): string | null {
 function applyTrain(p: Player, kind: TrainKind) {
   TRAIN[kind].stats.forEach((k) => {
     const g = p.ovr >= p.pot ? rnd(0, 1) : rnd(1, 3);
-    p.stats[k] = clamp(p.stats[k] + g, 20, 99);
+    p.stats[k] = clamp(p.stats[k] + g, 20, 125);
   });
   p.ovr = calcOvr(p.pos, p.stats);
 }
@@ -566,7 +571,7 @@ export interface ServerCard {
   player: Player;
 }
 
-export function applyServer(status: Record<string, { kind: "injury" | "red"; left: number }>, cards: ServerCard[]) {
+export function applyServer(status: Record<string, { kind: "injury" | "red"; left: number }>, cards: ServerCard[], fatigue: Record<string, number> = {}) {
   const s = structuredClone(state);
   const t = myTeam(s);
   if (!t) return;
@@ -582,6 +587,8 @@ export function applyServer(status: Record<string, { kind: "injury" | "red"; lef
     const st = status[p.id];
     if (st) p.out = { kind: st.kind, left: st.left };
     else delete p.out;
+    if (fatigue[p.id]) p.tired = fatigue[p.id];
+    else delete p.tired;
   });
   t.xi = t.xi.map((id) => (id && t.players.some((p) => p.id === id && !p.out) ? id : null));
   fillEmpty(t);
