@@ -3,7 +3,7 @@ import zlib
 from typing import Optional
 
 import uuid
-from lib.stadium_core import CATALOG, CFG, POS_LIST, RARITIES, calc_ovr, clamp, from_catalog, mk_player, mk_stats
+from lib.stadium_core import CATALOG, CFG, POS_LIST, POT_MAX, RARITIES, STAT_MAX, calc_ovr, clamp, from_catalog, mk_stats
 
 PCFG = CFG["packs"]
 PACKS = PCFG["list"]
@@ -28,12 +28,12 @@ def exclusive_player(entry: dict, pid: str) -> dict:
     rng = random.Random(zlib.crc32(entry["id"].encode()))
     stats = mk_stats(entry["pos"], entry["ovr"], rng)
     ovr = calc_ovr(entry["pos"], stats)
-    return {
+    p = {
         "id": pid,
         "name": entry["name"],
         "pos": entry["pos"],
         "ovr": ovr,
-        "pot": clamp(ovr + 2, ovr, 99),
+        "pot": clamp(int(entry.get("pot", ovr + 2)), ovr, POT_MAX),
         "stats": stats,
         "goals": 0,
         "trained": -1,
@@ -41,6 +41,13 @@ def exclusive_player(entry: dict, pid: str) -> dict:
         "card": entry["card"],
         "look": {"skin": entry["skin"], "hair": entry["hair"], "style": entry["style"]},
     }
+    if entry.get("nation"):
+        p["nation"] = entry["nation"]
+    if entry.get("league"):
+        p["league"] = entry["league"]
+    if entry.get("team"):
+        p["club"] = entry["team"]
+    return p
 
 
 def pick_rarity(odds: dict, rng: random.Random) -> str:
@@ -68,13 +75,13 @@ def make_card(rarity: str, exclusive_chance: float, owned: set, taken: set, rng:
             continue
         break
     lo, hi = PCFG["rarityOvr"][cur]
-    pool_c = [c for c in CATALOG if lo <= c["ovr"] <= hi]
-    if pool_c and cur in ("raro", "epico", "leggendario") and rng.random() < 0.7:
-        base = rng.choice(pool_c)
-        return {"id": pid, "rarity": cur, "exclusive_id": None, "player": from_catalog(base, pid)}
+    target = rng.randint(lo, hi)
     pos = rng.choices(POS_LIST, weights=[POS_WEIGHTS[p] for p in POS_LIST])[0]
-    p = mk_player(pid, pos, rng.randint(lo, hi), rng)
-    return {"id": pid, "rarity": cur, "exclusive_id": None, "player": p}
+    pool_c = [c for c in CATALOG if c["pos"] == pos and lo <= c["ovr"] <= hi]
+    if not pool_c:
+        pool_c = sorted([c for c in CATALOG if c["pos"] == pos], key=lambda c: abs(c["ovr"] - target))[:6]
+    base = rng.choice(pool_c)
+    return {"id": pid, "rarity": cur, "exclusive_id": None, "player": from_catalog(base, pid)}
 
 
 def roll_pack(pack: dict, owned: set, pity: int, rng: random.Random) -> tuple[list[dict], int]:
