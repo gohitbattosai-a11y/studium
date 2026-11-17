@@ -545,7 +545,6 @@ function Museum3D() {
       <path d="M134 250 q8 -9 14 0Z M312 250 q8 -9 14 0Z" fill="#4fae59" opacity="0.7" />
       <Flowers x={141} y={252} n={5} />
       <Flowers x={319} y={252} n={5} />
-      <Tag x={230} y={274} text="Museo" color="#E3B341" />
     </g>
   );
 }
@@ -660,7 +659,6 @@ function Pond3D() {
           <circle cx={x} cy={y} r="1.2" fill="#fff0a8" />
         </g>
       ))}
-      <Tag x={590} y={392} text="Pond" color="#58A6FF" />
     </g>
   );
 }
@@ -819,7 +817,9 @@ export default function CityMap({ onGo }: { onGo: (v: View) => void }) {
       const prevCy = c.ready ? (c.y + c.vh / 2) / c.k : L.plaza[1] - 40;
       c.vw = vw;
       c.vh = vh;
-      c.k = Math.max(clamp(Math.min(vh / 820, vw / 1000), 0.5, 1.15), vw / WORLD_W, vh / WORLD_H);
+      const phone = vw < 700;
+      const base = phone ? clamp(Math.max(vh / 900, vw / 520), 0.72, 1.0) : clamp(Math.min(vh / 820, vw / 1000), 0.5, 1.15);
+      c.k = Math.max(base, vw / WORLD_W, vh / WORLD_H);
       c.ready = true;
       centerOn(prevCx, prevCy);
     };
