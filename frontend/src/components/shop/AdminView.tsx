@@ -35,7 +35,7 @@ export default function AdminView({ me }: { me: Me }) {
   const gradePoints = table.data?.grades.find((r) => r.grade === rounded)?.points ?? 0;
   const gradeValid = grade.trim() !== "" && Number.isFinite(g) && g >= 1 && g <= 10;
   const bonusValue = Number(bonusPoints);
-  const bonusValid = Number.isInteger(bonusValue) && bonusValue !== 0 && Math.abs(bonusValue) <= 50;
+  const bonusValid = Number.isInteger(bonusValue) && bonusValue !== 0 && Math.abs(bonusValue) <= 1000;
 
   const giftOptions =
     giftKind === "pet"
@@ -141,7 +141,7 @@ export default function AdminView({ me }: { me: Me }) {
           </Field>
           <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-[7rem_1fr]">
             <Field label="Punti">
-              <Input className="h-10 text-base md:h-9 md:text-sm" inputMode="numeric" value={bonusPoints} onChange={(e) => setBonusPoints(e.target.value)} placeholder="+2 / -1" data-testid="bonus-points" />
+              <Input className="h-10 text-base md:h-9 md:text-sm" inputMode="numeric" value={bonusPoints} onChange={(e) => setBonusPoints(e.target.value)} placeholder="+50 / -10" data-testid="bonus-points" />
             </Field>
             <Field label="Motivo">
               <Input className="h-10 text-base md:h-9 md:text-sm" value={bonusReason} onChange={(e) => setBonusReason(e.target.value)} maxLength={80} placeholder="Interrogazione volontaria" data-testid="bonus-reason" />
