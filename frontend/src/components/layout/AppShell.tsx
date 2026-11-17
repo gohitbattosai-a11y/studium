@@ -22,6 +22,8 @@ import SecretPassage, { SecretLogo } from "@/components/hunt/SecretPassage";
 import { OBS_SEQUENCE, OBS_WINDOW } from "@/components/obs/entry";
 import { setActiveTab } from "@/lib/runtime/activity";
 import { refreshTab } from "@/lib/api/polling";
+import { apiGet } from "@/lib/api/client";
+import { queryClient } from "@/lib/api/queryClient";
 import { TABS, type TabId } from "@/components/layout/tabs";
 
 const Observatory = lazy(() => import("@/components/obs/Observatory"));
@@ -54,6 +56,15 @@ export default function AppShell({ me, status }: { me: Me; status?: SiteStatus }
   const setBackground = (id: BackgroundId) => equip.mutate({ kind: "background", item_id: id === "none" ? null : id });
   useAmbient(background);
   useEffect(() => setActiveTab("home"), []);
+  useEffect(() => {
+    if (!featureOpen(status, "citta", me.role)) return;
+    const warm = () => {
+      void import("@/components/city/CityPanel");
+      void queryClient.prefetchQuery({ queryKey: ["stadium", "state"], queryFn: () => apiGet("/stadium/state"), staleTime: 5_000 });
+    };
+    const id = window.setTimeout(() => (typeof window.requestIdleCallback === "function" ? window.requestIdleCallback(warm, { timeout: 4000 }) : warm()), 2500);
+    return () => window.clearTimeout(id);
+  }, [status, me.role]);
   const logout = () => void endSession("/");
 
   const go = (t: Tab) => {
