@@ -267,7 +267,7 @@ class GradeCreate(BaseModel):
 
 class BonusCreate(BaseModel):
     member_id: str
-    points: int = Field(ge=-50, le=50)
+    points: int = Field(ge=-1000, le=1000)
     reason: Text(1, 80)
 
 
