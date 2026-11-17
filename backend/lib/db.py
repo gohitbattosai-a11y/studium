@@ -96,6 +96,10 @@ INDEXES: dict[str, list[IndexModel]] = {
         IndexModel([("status", ASCENDING), ("at", ASCENDING)], name="due"),
     ],
     "stadium_packs": [IndexModel([("member_id", ASCENDING)], name="member", unique=True)],
+    "stadium_friendlies": [
+        IndexModel([("id", ASCENDING)], name="id", unique=True),
+        IndexModel([("group_id", ASCENDING), ("status", ASCENDING)], name="group_status"),
+    ],
 }
 
 
