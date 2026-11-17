@@ -9,6 +9,14 @@ import { installGlobalSfx } from '@/lib/audio/sfx'
 
 installGlobalSfx()
 
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    const go = () => navigator.serviceWorker.register('/sw.js').catch(() => undefined)
+    if ('requestIdleCallback' in window) window.requestIdleCallback(go)
+    else window.setTimeout(go, 1500)
+  })
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
