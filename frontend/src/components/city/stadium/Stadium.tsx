@@ -9,6 +9,7 @@ import { COLORS, SQUAD_MIN, TRAIN, addBudget, available, collectTraining, buyTea
 import { useClubSync, useServerState } from "@/lib/domain/stadiumApi";
 import { stadiumArt } from "@/lib/art/stadiumAssets";
 import Deals from "./Deals";
+import Friendlies from "./Friendlies";
 import Leagues, { countdown, fmtWhen } from "./Leagues";
 import MarketView from "./Market";
 import Packs from "./Packs";
@@ -16,9 +17,9 @@ import Squad, { PlayerDetail } from "./Squad";
 import { Crest, PANEL, PosBadge, eur, run } from "./stadiumUi";
 import "./stadium.css";
 
-type Tab = "squad" | "market" | "deals" | "train" | "league" | "packs";
+type Tab = "squad" | "market" | "deals" | "train" | "league" | "friendly" | "packs";
 
-const TABS: [Tab, string, string][] = [["squad", "Rosa", "👕"], ["market", "Mercato", "💶"], ["deals", "Trattative", "🤝"], ["train", "Allenamento", "🏃"], ["league", "Campionato", "🏆"], ["packs", "Pack", "🎴"]];
+const TABS: [Tab, string, string][] = [["squad", "Rosa", "👕"], ["market", "Mercato", "💶"], ["deals", "Trattative", "🤝"], ["train", "Allenamento", "🏃"], ["league", "Campionato", "🏆"], ["friendly", "Amichevoli", "⚔️"], ["packs", "Pack", "🎴"]];
 
 const report = (r: { name: string; d: number }[]) => {
   r.slice(0, 3).forEach((x) => toast.success(x.d > 0 ? `${x.name}: +${x.d} overall` : `${x.name} ha finito l'allenamento`));
@@ -305,6 +306,7 @@ export default function Stadium({ memberId }: { memberId: string }) {
               {tab === "deals" && <Deals s={s} team={mine} />}
               {tab === "train" && <TrainView s={s} team={mine} />}
               {tab === "league" && <Leagues myId={mine.id} onNeedClub={() => toast("Sto creando il tuo club online, riprova tra un attimo")} />}
+              {tab === "friendly" && <Friendlies />}
               {tab === "packs" && <Packs hasClub />}
             </>
           )}
