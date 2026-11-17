@@ -19,6 +19,8 @@ export const countdown = (at: number, now: number) => {
   return `${s}s`;
 };
 
+const stageLabel: Record<string, string> = { group: "Girone", semi: "Semifinale", final: "Finale" };
+
 const statusLabel: Record<string, string> = { open: "In formazione", running: "In corso", finished: "Conclusa", break: "Pausa tra stagioni" };
 
 export function ReplayHost({ id, onClose }: { id: string; onClose: () => void }) {
@@ -82,7 +84,7 @@ function FixtureList({ d, myId, onWatch }: { d: LeagueDetail; myId: string | nul
                 </span>
               </div>
               <div className="mt-1 flex items-center justify-between text-[10px] text-[#8B949E]">
-                <span>{played ? (f.walkover ? "3-0 a tavolino" : "Giocata") : f.status === "void" ? "Annullata" : fmtWhen(f.at)}</span>
+                <span>{f.stage && f.stage !== "group" && f.stage !== "friendly" ? `${stageLabel[f.stage] ?? f.stage} · ` : ""}{played ? (f.walkover ? "3-0 a tavolino" : f.pens ? `Rigori ${f.pens[0]}-${f.pens[1]}` : "Giocata") : f.status === "void" ? "Annullata" : fmtWhen(f.at)}</span>
                 {played && !f.walkover && (
                   <button type="button" onClick={() => onWatch(f)} className="flex items-center gap-1 rounded-full bg-[#58A6FF]/15 px-2 py-0.5 font-semibold text-[#58A6FF]">
                     <Eye className="size-3" /> Rivedi
@@ -107,6 +109,7 @@ function LeagueView({ id, myId, onBack }: { id: string; myId: string | null; onB
   const d = q.data;
   if (!d) return <p className="py-10 text-center text-sm text-[#8B949E]">Carico…</p>;
   const serie = d.kind === "serie_a";
+  const champ = d.kind === "champions";
   const next = d.fixtures.filter((f) => f.status === "scheduled").sort((a, b) => a.at - b.at)[0];
   const names = Object.fromEntries(d.teams_list.map((t) => [t.id, t]));
   const recent = d.fixtures
@@ -137,7 +140,7 @@ function LeagueView({ id, myId, onBack }: { id: string; myId: string | null; onB
       )}
       <div className={cn("mb-3 rounded-xl p-3", PANEL)}>
         <div className="flex items-center gap-2">
-          {serie && <Crown className="size-5 text-[#E3B341]" />}
+          {(serie || champ) && <Crown className={cn("size-5", champ ? "text-[#58A6FF]" : "text-[#E3B341]")} />}
           <h3 className="min-w-0 flex-1 truncate text-lg font-black">{d.name}</h3>
           <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold">{statusLabel[d.status] ?? d.status}</span>
         </div>
@@ -150,28 +153,28 @@ function LeagueView({ id, myId, onBack }: { id: string; myId: string | null; onB
         {d.status === "running" && next && <p className="mt-1 text-xs text-[#C9D1D9]">Prossima giornata tra {countdown(next.at, now)}</p>}
         {d.status === "open" && d.code && <p className="mt-1 text-xs text-[#C9D1D9]">Codice invito: <b className="tracking-widest">{d.code}</b></p>}
         <div className="mt-2 flex flex-wrap gap-2">
-          {!serie && d.status === "open" && d.owner && (
+          {!serie && !champ && d.status === "open" && d.owner && (
             <Button size="sm" disabled={act.start.isPending} onClick={() => act.start.mutate(d.id, { onSuccess: () => toast.success("Lega avviata! Le partite si giocano da sole.") })}>
               Avvia lega
             </Button>
           )}
-          {!serie && d.status === "finished" && d.owner && (
+          {!serie && !champ && d.status === "finished" && d.owner && (
             <Button size="sm" disabled={act.start.isPending} onClick={() => act.start.mutate(d.id)}>
               Nuova stagione
             </Button>
           )}
-          {!serie && !d.joined && d.status === "open" && d.private && <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="Codice invito" className="h-8 w-36" />}
-          {!serie && !d.joined && d.status === "open" && (
+          {!serie && !champ && !d.joined && d.status === "open" && d.private && <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="Codice invito" className="h-8 w-36" />}
+          {!serie && !champ && !d.joined && d.status === "open" && (
             <Button size="sm" disabled={act.join.isPending || !myId || (d.private && code.trim().length < 3)} onClick={() => act.join.mutate({ id: d.id, code: d.private ? code.trim() : undefined }, { onSuccess: () => toast.success("Ti sei iscritto") })}>
               Iscriviti
             </Button>
           )}
-          {!serie && d.joined && d.status !== "running" && (
+          {!serie && !champ && d.joined && d.status !== "running" && (
             <Button size="sm" variant="outline" disabled={act.leave.isPending} onClick={() => act.leave.mutate(d.id, { onSuccess: () => toast("Hai lasciato la lega") })}>
               Esci
             </Button>
           )}
-          {!serie && d.owner && d.status !== "running" && (
+          {!serie && !champ && d.owner && d.status !== "running" && (
             <Button size="sm" variant="ghost" className="text-[#FFA198]" onClick={() => act.remove.mutate(d.id, { onSuccess: onBack })}>
               Elimina
             </Button>
@@ -185,7 +188,34 @@ function LeagueView({ id, myId, onBack }: { id: string; myId: string | null; onB
           </button>
         ))}
       </div>
-      {view === "table" && (
+      {view === "table" && champ && d.groups && d.groups.length > 0 && (
+        <div className="flex flex-col gap-3">
+          {Object.entries(d.groups.reduce<Record<string, typeof d.groups>>((acc, r) => ({ ...acc, [r.grp ?? "A"]: [...(acc[r.grp ?? "A"] ?? []), r] }), {})).map(([g, rows]) => (
+            <div key={g} className={cn("overflow-x-auto rounded-xl", PANEL)}>
+              <p className="px-3 pt-2 text-[11px] font-bold tracking-wider text-[#58A6FF] uppercase">Girone {g}</p>
+              <table className="w-full text-sm">
+                <tbody>
+                  {rows.map((r, i) => (
+                    <tr key={r.id} className={cn("border-b border-[#21262D] last:border-0", r.id === myId && "bg-[#1f2d1f]/80", i < 2 && "bg-[#0d1f33]/50")}>
+                      <td className="px-2 py-1.5 tabular-nums text-[#8B949E]">{i + 1}</td>
+                      <td className="px-2 py-1.5">
+                        <span className="flex items-center gap-2">
+                          <Dot color={r.color} />
+                          <span className={cn("truncate", r.id === myId && "font-semibold")}>{r.name}</span>
+                        </span>
+                      </td>
+                      <td className="px-1.5 py-1.5 text-right text-[11px] tabular-nums text-[#8B949E]">{r.p}G {r.gf}-{r.ga}</td>
+                      <td className="px-1.5 py-1.5 text-right font-bold tabular-nums">{r.pts}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ))}
+          <p className="text-[10px] text-[#8B949E]">Le prime due di ogni girone vanno in semifinale. Semifinali e finale si decidono ai rigori in caso di parità.</p>
+        </div>
+      )}
+      {view === "table" && !champ && (
         <div className={cn("overflow-x-auto rounded-xl", PANEL)}>
           <table className="w-full text-sm">
             <thead>
@@ -219,7 +249,7 @@ function LeagueView({ id, myId, onBack }: { id: string; myId: string | null; onB
               ))}
             </tbody>
           </table>
-          {!serie && <p className="px-3 py-2 text-[10px] text-[#8B949E]">La prima classificata a fine stagione viene promossa in Serie A.</p>}
+          {!serie && !champ && <p className="px-3 py-2 text-[10px] text-[#8B949E]">La prima classificata a fine stagione viene promossa in Serie A.</p>}
         </div>
       )}
       {view === "fixtures" && <FixtureList d={d} myId={myId} onWatch={(f) => setWatch(f.id)} />}
@@ -277,6 +307,16 @@ export default function Leagues({ myId, onNeedClub }: { myId: string | null; onN
   const n = size ?? cfg?.default_teams ?? 8;
   return (
     <div>
+      {d?.champions && (
+        <button type="button" onClick={() => setOpen("champions")} className="mb-3 flex w-full items-center gap-3 rounded-2xl border border-[#58A6FF]/50 bg-gradient-to-r from-[#0a1b33]/90 to-[#080d18]/90 px-4 py-3 text-left">
+          <Crown className="size-7 text-[#58A6FF]" />
+          <div className="min-w-0 flex-1">
+            <p className="text-base font-black text-[#9CC9FF]">Champions League</p>
+            <p className="text-[11px] text-[#C9D1D9]">Il torneo sopra la Serie A: ci arrivi qualificandoti. Gironi, semifinali e finale con i migliori club del mondo.</p>
+          </div>
+          {d.champions.joined && <span className="text-[10px] font-bold text-[#7EE787]">QUALIFICATO</span>}
+        </button>
+      )}
       {d?.serie_a && (
         <button type="button" onClick={() => setOpen("serie-a")} className="mb-3 flex w-full items-center gap-3 rounded-2xl border border-[#E3B341]/50 bg-gradient-to-r from-[#2a2108]/90 to-[#12100a]/90 px-4 py-3 text-left">
           <Crown className="size-7 text-[#E3B341]" />
