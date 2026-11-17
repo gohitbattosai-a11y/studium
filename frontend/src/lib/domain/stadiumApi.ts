@@ -33,6 +33,8 @@ export interface ClubInfo {
   played: number;
   custom_league_id: string | null;
   serie_a_id: string | null;
+  champions_id?: string | null;
+  fatigue?: Record<string, number>;
 }
 
 export interface CardInfo {
@@ -67,7 +69,7 @@ export interface ServerState {
 export interface LeagueCard {
   id: string;
   name: string;
-  kind: "custom" | "serie_a";
+  kind: "custom" | "serie_a" | "champions";
   status: string;
   size: number;
   teams: number;
@@ -111,6 +113,9 @@ export interface FixtureRow {
   ag: number | null;
   walkover: string | null;
   events: { min: number; teamId: string; player: string }[];
+  stage?: string | null;
+  grp?: string | null;
+  pens?: [number, number] | null;
 }
 
 export interface LeagueDetail extends LeagueCard {
@@ -122,10 +127,13 @@ export interface LeagueDetail extends LeagueCard {
   scorers: { player: string; team: string; goals: number }[];
   promoted_waiting?: number;
   next_season_at?: number | null;
+  groups?: (TableRow & { grp?: string })[];
+  stage?: string | null;
 }
 
 export interface LeaguesOut {
   serie_a: LeagueCard | null;
+  champions: LeagueCard | null;
   leagues: LeagueCard[];
   now: number;
 }
@@ -146,6 +154,8 @@ export interface Replay {
   at: number;
   hg: number;
   ag: number;
+  pens?: [number, number] | null;
+  stage?: string | null;
   walkover: string | null;
   reason: string | null;
   events: Fixture["events"];
@@ -195,8 +205,39 @@ const STATE = [...KEY, "state"];
 
 export const useServerState = (enabled = true) => useQuery({ queryKey: STATE, queryFn: () => apiGet<ServerState>("/stadium/state"), enabled, refetchInterval: 20_000, staleTime: 5_000 });
 export const useLeagues = (enabled = true) => useQuery({ queryKey: [...KEY, "leagues"], queryFn: () => apiGet<LeaguesOut>("/stadium/leagues"), enabled, refetchInterval: 20_000 });
-export const useLeague = (id: string | null) => useQuery({ queryKey: [...KEY, "league", id], queryFn: () => apiGet<LeagueDetail>(id === "serie-a" ? "/stadium/serie-a" : `/stadium/leagues/${id}`), enabled: !!id, refetchInterval: 20_000 });
+export const useLeague = (id: string | null) => useQuery({ queryKey: [...KEY, "league", id], queryFn: () => apiGet<LeagueDetail>(id === "serie-a" ? "/stadium/serie-a" : id === "champions" ? "/stadium/champions" : `/stadium/leagues/${id}`), enabled: !!id, refetchInterval: 20_000 });
 export const useReplay = (id: string | null) => useQuery({ queryKey: [...KEY, "replay", id], queryFn: () => apiGet<Replay>(`/stadium/fixtures/${id}`), enabled: !!id, staleTime: Infinity });
+export interface FriendlyRival {
+  id: string;
+  name: string;
+  color: string;
+  rating: number;
+}
+
+export interface FriendlyRow {
+  id: string;
+  from_club: string;
+  from_name: string;
+  from_color: string;
+  to_club: string;
+  to_name: string;
+  to_color: string;
+  status: "pending" | "playing" | "played" | "declined" | "cancelled" | "expired";
+  created_at: number;
+  expires_at: number;
+  fixture_id: string | null;
+  hg?: number | null;
+  ag?: number | null;
+}
+
+export interface FriendliesOut {
+  now: number;
+  club_id: string | null;
+  rivals: FriendlyRival[];
+  mine: FriendlyRow[];
+}
+
+export const useFriendlies = (enabled = true) => useQuery({ queryKey: [...KEY, "friendlies"], queryFn: () => apiGet<FriendliesOut>("/stadium/friendlies"), enabled, refetchInterval: 10_000 });
 export const usePacks = (enabled = true) => useQuery({ queryKey: [...KEY, "packs"], queryFn: () => apiGet<PackState>("/stadium/packs"), enabled });
 
 export function useStadiumActions() {
@@ -210,6 +251,9 @@ export function useStadiumActions() {
     leave: useMutation({ mutationFn: (id: string) => apiPost(`/stadium/leagues/${id}/leave`), onSuccess: all, onError }),
     remove: useMutation({ mutationFn: (id: string) => apiDelete(`/stadium/leagues/${id}`), onSuccess: all, onError }),
     start: useMutation({ mutationFn: (id: string) => apiPost(`/stadium/leagues/${id}/start`), onSuccess: all, onError }),
+    challenge: useMutation({ mutationFn: (club_id: string) => apiPost<FriendlyRow>("/stadium/friendlies", { club_id }), onSuccess: all, onError }),
+    acceptFriendly: useMutation({ mutationFn: (id: string) => apiPost<{ fixture_id: string; hg: number; ag: number }>(`/stadium/friendlies/${id}/accept`), onSuccess: all, onError }),
+    declineFriendly: useMutation({ mutationFn: (id: string) => apiPost(`/stadium/friendlies/${id}/decline`), onSuccess: all, onError }),
     open: useMutation({
       mutationFn: (pack_id: string) => apiPost<OpenResult>("/stadium/packs/open", { pack_id }),
       onSuccess: () => {
@@ -250,11 +294,13 @@ export function useClubSync(memberId: string) {
     if (!ctx || !data) return;
     let dead = false;
     bindStadium(memberId, ctx);
+    const hadLocal = !!getStadium().myId;
     const finish = () => {
       if (dead) return;
       readyRef.current = true;
       setReady(true);
     };
+    if (hadLocal) finish();
     apiGet<{ data: StadiumState | null; saved_at: number }>(`/stadium/world/${ctx}`)
       .then((r) => {
         if (dead) return;
@@ -285,7 +331,7 @@ export function useClubSync(memberId: string) {
 
   useEffect(() => {
     if (!ready || !data?.club) return;
-    applyServer(data.club.status, data.cards);
+    applyServer(data.club.status, data.cards, data.club.fatigue);
     syncDay(data.club.played);
   }, [ready, data]);
 
