@@ -1,6 +1,7 @@
 import json
 import math
 import random
+import zlib
 from pathlib import Path
 from typing import Optional
 
@@ -11,6 +12,9 @@ try:
 except OSError:
     CATALOG = []
 CATALOG_BY_ID = {c["id"]: c for c in CATALOG}
+EXCLUSIVE_ALL: list[dict] = CFG.get("packs", {}).get("exclusive", [])
+RESERVE = [c for c in CATALOG if c.get("reserve")]
+STARTERS = [c for c in CATALOG if not c.get("reserve")]
 
 STAT_KEYS = ["rit", "tir", "pas", "dri", "dif", "fis"]
 POS_LIST = ["POR", "DIF", "CEN", "ATT"]
@@ -34,11 +38,15 @@ OFFSETS = {
 AW = {"ATT": 1, "CEN": 0.5, "DIF": 0.1, "POR": 0}
 DW = {"POR": 1.5, "DIF": 1, "CEN": 0.5, "ATT": 0.05}
 GW = {"ATT": 6, "CEN": 2.5, "DIF": 0.8, "POR": 0}
+STAT_MAX = 125
+OVR_MAX = 105
+POT_MAX = 109
 COLORS = ["#2563eb", "#dc2626", "#16a34a", "#f59e0b", "#7c3aed", "#0891b2", "#db2777", "#ea580c", "#475569", "#0d9488"]
-FIRST = ["Luca", "Marco", "Matteo", "Andrea", "Davide", "Simone", "Federico", "Alessio", "Giorgio", "Riccardo", "Tommaso", "Nicolò", "Edoardo", "Filippo", "Samuele", "Lorenzo", "Gabriele", "Emanuele", "Stefano", "Diego", "Pietro", "Jacopo", "Mattia", "Leonardo", "Carlos", "Mateo", "Hugo", "Lucas", "Noah", "Kylian", "Jules", "Thomas", "Yannick", "Joshua", "Emre", "Karim", "Omar", "Sven", "Jonas", "Rafael"]
-LAST = ["Rossi", "Bianchi", "Ferrari", "Esposito", "Romano", "Colombo", "Ricci", "Marino", "Greco", "Bruno", "Gallo", "Conti", "De Luca", "Costa", "Giordano", "Mancini", "Rizzo", "Lombardi", "Moretti", "Barbieri", "Fontana", "Santoro", "Mariani", "Rinaldi", "Caruso", "Ferraro", "Galli", "Martini", "Leone", "Longo", "Silva", "Garcia", "Lopez", "Dubois", "Martin", "Müller", "Schmidt", "Kovač", "Nowak", "Haddad", "Yilmaz", "Santos", "Oliveira", "Moreau", "Bernard", "Fischer", "Novak", "Petrov", "Jansen"]
-BOT_NAMES = ["Real Studium", "Atletico Banco", "Inter Compiti", "Dinamo Cattedra", "Juve Lavagna", "Sporting Quaderno", "Borussia Zaino", "Milan Ricreazione", "Olimpia Interrogati", "Torino Verifica", "Napoli Appunti", "Roma Merenda"]
-RARITIES = ["comune", "non_comune", "raro", "epico", "leggendario", "mitico"]
+RARITIES = ["comune", "raro", "epico", "leggendario", "mitico"]
+ITALIAN = ["Inter", "Milan", "Napoli", "Juventus", "Atalanta", "Roma", "Lazio", "Fiorentina", "Bologna", "Como", "Torino", "Genoa", "Udinese", "Parma", "Cagliari", "Lecce", "Sassuolo", "Monza", "Venezia", "Frosinone"]
+BOT_NAMES = ["Torino", "Genoa", "Udinese", "Parma", "Cagliari", "Lecce", "Sassuolo", "Monza", "Venezia", "Frosinone", "Como", "Bologna"]
+FOREIGN = ["Real Madrid", "Barcellona", "Atletico Madrid", "Paris Saint-Germain", "Bayern Monaco", "Arsenal", "Manchester City", "Liverpool", "Chelsea", "Borussia Dortmund", "Bayer Leverkusen", "Benfica", "Sporting CP", "Tottenham", "Newcastle"]
+FAT = CFG.get("fatigue", {"perMatch": 18, "recoverPerHour": 14, "freshBelow": 25, "maxPenalty": 0.14, "injuryBoost": 0.8, "friendlyFactor": 0.55})
 
 
 def clamp(v, a, b):
@@ -52,27 +60,28 @@ def calc_ovr(pos: str, stats: dict) -> int:
 def mk_stats(pos: str, ovr: int, rng: random.Random) -> dict:
     raw = {k: OFFSETS[pos][k] + rng.randint(-5, 5) for k in STAT_KEYS}
     d = ovr - sum(WEIGHTS[pos][k] * raw[k] for k in STAT_KEYS)
-    return {k: clamp(round(raw[k] + d), 20, 99) for k in STAT_KEYS}
+    return {k: clamp(round(raw[k] + d), 20, STAT_MAX) for k in STAT_KEYS}
 
 
-def mk_player(pid: str, pos: str, ovr: int, rng: random.Random, name: Optional[str] = None, pot: Optional[int] = None) -> dict:
-    ovr = clamp(ovr, 40, 99)
-    stats = mk_stats(pos, ovr, rng)
-    real = calc_ovr(pos, stats)
-    return {
-        "id": pid,
-        "name": name or f"{rng.choice(FIRST)} {rng.choice(LAST)}",
-        "pos": pos,
-        "ovr": real,
-        "pot": clamp(pot if pot is not None else real + rng.randint(2, 14), real, 99),
-        "stats": stats,
-        "goals": 0,
-        "trained": -1,
-        "training": None,
-    }
+META = ("nation", "league", "team")
+
+
+def _meta(entry: dict) -> dict:
+    out = {}
+    if entry.get("nation"):
+        out["nation"] = entry["nation"]
+    if entry.get("league"):
+        out["league"] = entry["league"]
+    if entry.get("team"):
+        out["club"] = entry["team"]
+    return out
 
 
 def from_catalog(entry: dict, pid: Optional[str] = None) -> dict:
+    if "stats" not in entry:
+        stats = mk_stats(entry["pos"], entry["ovr"], random.Random(zlib.crc32(entry["id"].encode())))
+        ovr = calc_ovr(entry["pos"], stats)
+        entry = {**entry, "stats": stats, "ovr": ovr, "pot": clamp(int(entry.get("pot", ovr + 2)), ovr, POT_MAX)}
     p = {
         "id": pid or entry["id"],
         "name": entry["name"],
@@ -83,7 +92,8 @@ def from_catalog(entry: dict, pid: Optional[str] = None) -> dict:
         "goals": 0,
         "trained": -1,
         "training": None,
-        "card": entry["id"],
+        "card": entry.get("card") or entry["id"],
+        **_meta(entry),
     }
     if entry.get("price") is not None:
         p["price"] = entry["price"]
@@ -93,12 +103,34 @@ def from_catalog(entry: dict, pid: Optional[str] = None) -> dict:
     return p
 
 
-def mk_squad(base: int, rng: random.Random, prefix: str) -> list[dict]:
+def pick_reserve(pos: str, target: int, rng: random.Random, taken: set, spread: int = 8) -> Optional[dict]:
+    pool = [c for c in RESERVE if c["pos"] == pos and c["id"] not in taken]
+    if not pool:
+        pool = [c for c in STARTERS if c["pos"] == pos and c["id"] not in taken and c["ovr"] <= target + spread]
+    if not pool:
+        return None
+    pool.sort(key=lambda c: abs(c["ovr"] - target))
+    c = rng.choice(pool[: max(3, len(pool) // 6)])
+    taken.add(c["id"])
+    return c
+
+
+def mk_player(pid: str, pos: str, ovr: int, rng: random.Random, name: Optional[str] = None, pot: Optional[int] = None, taken: Optional[set] = None) -> dict:
+    entry = pick_reserve(pos, clamp(ovr, 40, OVR_MAX), rng, taken if taken is not None else set())
+    if entry:
+        return from_catalog(entry, pid)
+    stats = mk_stats(pos, clamp(ovr, 40, OVR_MAX), rng)
+    real = calc_ovr(pos, stats)
+    return {"id": pid, "name": name or "Riserva", "pos": pos, "ovr": real, "pot": clamp(pot if pot is not None else real + 4, real, POT_MAX), "stats": stats, "goals": 0, "trained": -1, "training": None}
+
+
+def mk_squad(base: int, rng: random.Random, prefix: str, taken: Optional[set] = None) -> list[dict]:
     plan = [("POR", 2), ("DIF", 6), ("CEN", 5), ("ATT", 4)]
+    used = taken if taken is not None else set()
     out = []
     for pos, n in plan:
         for i in range(n):
-            out.append(mk_player(f"{prefix}-{pos}{i}", pos, base + rng.randint(-9, 9), rng))
+            out.append(mk_player(f"{prefix}-{pos}{i}", pos, base + rng.randint(-9, 9), rng, taken=used))
     return out
 
 
@@ -130,13 +162,52 @@ def auto_xi(players: list[dict], formation: str, blocked: Optional[set] = None) 
     return xi
 
 
-def lineup(team: dict, xi: Optional[list] = None) -> list[dict]:
+def fatigue_of(team: dict, pid: str, now: Optional[float]) -> float:
+    f = (team.get("state") or {}).get("fatigue", {}).get(pid)
+    if not f:
+        return 0.0
+    gone = max(0.0, (now if now is not None else f["at"]) - f["at"])
+    return max(0.0, float(f["v"]) - FAT["recoverPerHour"] * gone / 3600)
+
+
+def fatigue_mult(v: float) -> float:
+    over = max(0.0, v - FAT["freshBelow"]) / max(1.0, 100 - FAT["freshBelow"])
+    return 1 - FAT["maxPenalty"] * min(1.0, over)
+
+
+def fatigue_map(team: dict, now: Optional[float]) -> dict:
+    out = {}
+    for pid in (team.get("state") or {}).get("fatigue", {}):
+        v = fatigue_of(team, pid, now)
+        if v >= 1:
+            out[pid] = round(v)
+    return out
+
+
+def apply_fatigue(team: dict, xi: list, now: float, factor: float = 1.0) -> None:
+    fat = team.setdefault("state", {}).setdefault("fatigue", {})
+    for pid in xi:
+        if not pid:
+            continue
+        v = fatigue_of(team, pid, now) + FAT["perMatch"] * factor
+        fat[pid] = {"v": round(min(100.0, v), 1), "at": now}
+    for pid in list(fat.keys()):
+        if fatigue_of(team, pid, now) < 1:
+            del fat[pid]
+
+
+def lineup(team: dict, xi: Optional[list] = None, now: Optional[float] = None) -> list[dict]:
     ids = xi if xi is not None else team["xi"]
     by_id = {p["id"]: p for p in team["players"]}
     out = []
     for i, pos in enumerate(FORMATIONS[team["formation"]]):
         p = by_id.get(ids[i]) if i < len(ids) and ids[i] else None
-        out.append({"player": p, "pos": pos, "eff": (p["ovr"] if p["pos"] == pos else p["ovr"] - 12) if p else 30})
+        if p:
+            base = p["ovr"] if p["pos"] == pos else p["ovr"] - 12
+            eff = round(base * fatigue_mult(fatigue_of(team, p["id"], now)), 1)
+        else:
+            eff = 30
+        out.append({"player": p, "pos": pos, "eff": eff})
     return out
 
 
@@ -145,8 +216,8 @@ def _wavg(slots: list[dict], w: dict) -> float:
     return sum(s["eff"] * w[s["pos"]] for s in slots) / tot
 
 
-def strength(team: dict, xi: Optional[list] = None) -> dict:
-    slots = lineup(team, xi)
+def strength(team: dict, xi: Optional[list] = None, now: Optional[float] = None) -> dict:
+    slots = lineup(team, xi, now)
     return {"att": _wavg(slots, AW), "def": _wavg(slots, DW), "ovr": round(sum(s["eff"] for s in slots) / len(slots), 1)}
 
 
@@ -226,7 +297,7 @@ OFF_T = [("wide", "{p} ci prova, palla fuori di poco."), ("over", "Conclusione d
 def _snapshot(team: dict, xi: list) -> dict:
     by_id = {p["id"]: p for p in team["players"]}
     players = [by_id[i] for i in xi]
-    keep = ["id", "name", "pos", "ovr", "pot", "stats", "card", "look"]
+    keep = ["id", "name", "pos", "ovr", "pot", "stats", "card", "look", "nation", "league", "club"]
     return {
         "id": team["id"],
         "name": team["name"],
@@ -237,10 +308,10 @@ def _snapshot(team: dict, xi: list) -> dict:
     }
 
 
-def simulate(home: dict, away: dict, home_xi: list, away_xi: list, rng: random.Random) -> dict:
+def simulate(home: dict, away: dict, home_xi: list, away_xi: list, rng: random.Random, now: Optional[float] = None, friendly: bool = False, knockout: bool = False) -> dict:
     d = CFG["discipline"]
     sides = [(home, home_xi), (away, away_xi)]
-    st = [strength(t, xi) for t, xi in sides]
+    st = [strength(t, xi, now) for t, xi in sides]
     lam = [goal_lambda(st[0]["att"], st[1]["def"], True), goal_lambda(st[1]["att"], st[0]["def"], False)]
     taken: list[int] = []
     raw: list[dict] = []
@@ -310,7 +381,9 @@ def simulate(home: dict, away: dict, home_xi: list, away_xi: list, rng: random.R
             p = s["player"]
             if not p or p["id"] in red_ids:
                 continue
-            if rng.random() < d["injuryChance"]:
+            tired = fatigue_of(team, p["id"], now) / 100
+            chance = d["injuryChance"] * (1 + FAT["injuryBoost"] * tired) * (0 if friendly else 1)
+            if rng.random() < chance:
                 m = take_minute(taken, 2, rng) or rng.randint(10, 80)
                 n = rng.randint(d["injuryMatches"][0], d["injuryMatches"][1])
                 injuries.append({"side": si, "pid": p["id"], "left": n})
@@ -330,9 +403,13 @@ def simulate(home: dict, away: dict, home_xi: list, away_xi: list, rng: random.R
     for i, e in enumerate(allv):
         e["id"] = i
     scorers = sorted(goals, key=lambda g: g["min"])
+    shootout = None
+    if knockout and hg == ag:
+        shootout = penalties(st, rng)
     return {
         "hg": hg,
         "ag": ag,
+        "shootout": shootout,
         "log": allv,
         "events": [{"min": g["min"], "teamId": g["teamId"], "player": g["player"]} for g in scorers],
         "goals": [{"side": 0 if g["teamId"] == home["id"] else 1, "pid": g["pid"]} for g in scorers],
@@ -342,6 +419,18 @@ def simulate(home: dict, away: dict, home_xi: list, away_xi: list, rng: random.R
         "home": _snapshot(home, home_xi),
         "away": _snapshot(away, away_xi),
     }
+
+
+def penalties(st: list, rng: random.Random) -> list:
+    edge = clamp((st[0]["ovr"] - st[1]["ovr"]) / 60, -0.15, 0.15)
+    a = b = 0
+    for i in range(5):
+        a += rng.random() < 0.76 + edge
+        b += rng.random() < 0.76 - edge
+    while a == b:
+        a += rng.random() < 0.76 + edge
+        b += rng.random() < 0.76 - edge
+    return [a, b]
 
 
 def rand_between(pair: list, rng: random.Random) -> int:
@@ -401,7 +490,7 @@ def sanitize_player(p: dict, cards: dict, rng: random.Random) -> Optional[dict]:
     if not pid or len(pid) > 64 or pos not in POS_LIST:
         return None
     stats_in = p.get("stats") or {}
-    stats = {k: clamp(int(stats_in.get(k, 50)), 20, 99) for k in STAT_KEYS}
+    stats = {k: clamp(int(stats_in.get(k, 50)), 20, STAT_MAX) for k in STAT_KEYS}
     cap: int
     pot: int
     if pid.startswith("pk-"):
@@ -412,25 +501,25 @@ def sanitize_player(p: dict, cards: dict, rng: random.Random) -> Optional[dict]:
         cap = int(base["pot"])
         pot = int(base["pot"])
         name = base["name"]
-        extra = {"card": base.get("card"), "look": base.get("look")}
+        extra = {k: base.get(k) for k in ("card", "look", "nation", "league", "club")}
     elif pid in CATALOG_BY_ID:
         base = CATALOG_BY_ID[pid]
         cap = int(base["pot"]) + CFG["squad"]["trainingOvrMargin"]
         pot = int(base["pot"])
         name = base["name"]
-        extra = {"card": base["id"]}
+        extra = {"card": base.get("card") or base["id"], "nation": base.get("nation"), "league": base.get("league"), "club": base.get("team")}
         if base.get("skin"):
             extra["look"] = {"skin": base["skin"], "hair": base.get("hair"), "style": base.get("style")}
         pos = base["pos"]
     else:
         cap = CFG["squad"]["randomPlayerMaxOvr"] + CFG["squad"]["trainingOvrMargin"]
-        pot = clamp(int(p.get("pot", 70)), 40, 99)
+        pot = clamp(int(p.get("pot", 70)), 40, POT_MAX)
         name = str(p.get("name", "Giocatore"))[:40]
         extra = {}
     ovr = calc_ovr(pos, stats)
     if ovr > cap:
         shift = ovr - cap
-        stats = {k: clamp(v - shift, 20, 99) for k, v in stats.items()}
+        stats = {k: clamp(v - shift, 20, STAT_MAX) for k, v in stats.items()}
         ovr = calc_ovr(pos, stats)
     out = {"id": pid, "name": name, "pos": pos, "ovr": ovr, "pot": max(pot, ovr), "stats": stats, "goals": int(clamp(int(p.get("goals", 0) or 0), 0, 999))}
     for k, v in extra.items():
@@ -466,26 +555,42 @@ def sanitize_squad(payload: dict, cards: dict, rng: random.Random) -> dict:
     return {"formation": formation, "players": players, "xi": xi}
 
 
+def club_entries(team: str) -> list[dict]:
+    rows = [c for c in STARTERS if c["team"] == team]
+    rows += [e for e in EXCLUSIVE_ALL if e.get("team") == team]
+    return rows
+
+
 def make_bot(tid: str, name: str, color: str, rng: random.Random, base: Optional[int] = None, real_team: Optional[str] = None) -> dict:
-    lo, hi = 62, 74
-    players = mk_squad(base if base is not None else rng.randint(lo, hi), rng, tid)
-    if real_team:
-        for entry in [c for c in CATALOG if c["team"] == real_team]:
-            same = sorted([p for p in players if p["pos"] == entry["pos"] and not p["id"].startswith("c-")], key=lambda p: p["ovr"])
-            card = from_catalog(entry, f"c-{tid}-{entry['id']}")
-            if same:
-                players[players.index(same[0])] = card
-            else:
-                players.append(card)
-    return {"id": tid, "name": name, "color": color, "formation": "4-3-3", "xi": auto_xi(players, "4-3-3"), "players": players, "state": {"out": {}, "yellows": {}}}
+    team = real_team or name
+    entries = club_entries(team)
+    taken = {e["id"] for e in entries}
+    players = [from_catalog(e, f"c-{tid}-{e['id']}") for e in entries]
+    if not players:
+        level = base if base is not None else rng.randint(66, 74)
+    else:
+        top = sorted((p["ovr"] for p in players), reverse=True)[:11]
+        level = round(sum(top) / len(top)) - 5
+        if base is not None:
+            level = min(level, base)
+    need = {"POR": 2, "DIF": 6, "CEN": 5, "ATT": 4}
+    for pos, n in need.items():
+        have = sum(1 for p in players if p["pos"] == pos)
+        for _ in range(max(0, n - have)):
+            e = pick_reserve(pos, level + rng.randint(-4, 3), rng, taken)
+            if e:
+                players.append(from_catalog(e, f"r-{tid}-{e['id']}"))
+    return {"id": tid, "name": name, "color": color, "formation": "4-3-3", "xi": auto_xi(players, "4-3-3"), "players": players, "state": {"out": {}, "yellows": {}, "fatigue": {}}}
 
 
-def strongest_real_teams(n: int) -> list[str]:
-    by: dict[str, list[int]] = {}
-    for c in CATALOG:
-        by.setdefault(c["team"], []).append(c["ovr"])
-    ranked = sorted(by.items(), key=lambda kv: -sum(kv[1]) / len(kv[1]))
-    return [name for name, _ in ranked[:n]]
+def team_rating(team: str) -> float:
+    ovrs = sorted((e["ovr"] for e in club_entries(team)), reverse=True)[:11]
+    return sum(ovrs) / len(ovrs) if ovrs else 0.0
+
+
+def strongest_real_teams(n: int, among: Optional[list] = None, skip: Optional[set] = None) -> list[str]:
+    pool = [t for t in (among if among is not None else {c["team"] for c in STARTERS}) if not skip or t not in skip]
+    return sorted(pool, key=lambda t: -team_rating(t))[:n]
 
 
 def round_robin(ids: list[str]) -> list[list[tuple[str, str]]]:
