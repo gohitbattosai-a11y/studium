@@ -12,7 +12,6 @@ import "./packs.css";
 
 export const RARITY: Record<string, { name: string; color: string; rank: number }> = {
   comune: { name: "Comune", color: "#9ca3af", rank: 0 },
-  non_comune: { name: "Non comune", color: "#4ade80", rank: 1 },
   raro: { name: "Raro", color: "#60a5fa", rank: 2 },
   epico: { name: "Epico", color: "#c084fc", rank: 3 },
   leggendario: { name: "Leggendario", color: "#fbbf24", rank: 4 },
@@ -33,77 +32,159 @@ function Sparks({ color, n = 26 }: { color: string; n?: number }) {
   );
 }
 
-const STEP_MS = 1150;
+const flag = (code?: string) => (code && /^[A-Za-z]{2}$/.test(code) ? String.fromCodePoint(...[...code.toUpperCase()].map((c) => 127397 + c.charCodeAt(0))) : "");
 
-function walkSteps(card: PulledCard) {
-  const r = rar(card.rarity);
-  const stats = card.player.stats;
-  const best = STAT_KEYS.reduce((m, k) => (stats[k] > stats[m] ? k : m), STAT_KEYS[0]);
-  const steps: { k: string; label: string; value: string; color: string }[] = [];
-  steps.push({ k: "rar", label: card.exclusive ? "Giocatore esclusivo" : "Rarità", value: r.name, color: r.color });
-  steps.push({ k: "pos", label: "Ruolo", value: POS_LABEL[card.player.pos], color: "#ffffff" });
-  steps.push({ k: "stat", label: "Punto di forza", value: `${STAT_LABEL[best]} ${stats[best]}`, color: "#7EE787" });
-  steps.push({ k: "pot", label: "Potenziale", value: String(card.player.pot), color: "#E3B341" });
-  return steps;
+interface WStep {
+  k: string;
+  label: string;
+  value: string;
+  color: string;
+  ms: number;
+  icon?: string;
 }
+
+function walkSteps(card: PulledCard): WStep[] {
+  const r = rar(card.rarity);
+  const p = card.player;
+  const hot = r.rank >= 4;
+  const out: WStep[] = [];
+  if (p.nation) out.push({ k: "nat", label: "Nazionalità", value: p.nation.toUpperCase(), icon: flag(p.nation), color: "#ffffff", ms: 1500 });
+  if (p.league) out.push({ k: "lg", label: "Campionato", value: p.league, color: "#93c5fd", ms: 1400 });
+  if (p.club) out.push({ k: "club", label: "Club", value: p.club, color: "#ffffff", ms: 1600 });
+  out.push({ k: "pos", label: "Ruolo", value: POS_LABEL[p.pos], color: "#ffffff", ms: 1400 });
+  out.push({ k: "rar", label: card.exclusive ? "Giocatore esclusivo" : "Rarità", value: r.name, color: r.color, ms: hot ? 2000 : 1500 });
+  return out;
+}
+
+function Counter({ to, color, onDone }: { to: number; color: string; onDone: () => void }) {
+  const [v, setV] = useState(0);
+  useEffect(() => {
+    const dur = 1600 + to * 18;
+    const t0 = performance.now();
+    let raf = 0;
+    let last = 0;
+    const tick = (t: number) => {
+      const x = Math.min(1, (t - t0) / dur);
+      const e = 1 - Math.pow(1 - x, 3.2);
+      const n = Math.round(e * to);
+      if (n !== last) {
+        last = n;
+        setV(n);
+      }
+      if (x < 1) raf = requestAnimationFrame(tick);
+      else onDone();
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [to]);
+  return (
+    <div className="pk-ovr pk-count" style={{ color, textShadow: `0 0 ${12 + v / 3}px ${color}` }}>
+      {v}
+    </div>
+  );
+}
+
+type WPhase = "dark" | "steps" | "ovr" | "pot" | "name" | "done";
 
 function Walkout({ card, onDone }: { card: PulledCard; onDone: () => void }) {
   const r = rar(card.rarity);
   const steps = useMemo(() => walkSteps(card), [card]);
   const letters = useMemo(() => [...card.player.name.toUpperCase()], [card]);
-  const total = steps.length + 2;
-  const [stage, setStage] = useState(0);
+  const [phase, setPhase] = useState<WPhase>("dark");
+  const [i, setI] = useState(0);
+  const [boom, setBoom] = useState(0);
+  const hot = r.rank >= 4;
+
   useEffect(() => {
-    if (stage >= total) return;
-    const id = window.setTimeout(() => setStage((n) => n + 1), stage === total - 2 ? STEP_MS + 400 : STEP_MS);
+    if (phase !== "dark") return;
+    sfxGachaShake();
+    const id = window.setTimeout(() => setPhase("steps"), 1700);
     return () => window.clearTimeout(id);
-  }, [stage, total]);
+  }, [phase]);
+
   useEffect(() => {
-    if (stage < steps.length) sfxGachaReveal(Math.min(5, 1 + stage));
-    else if (stage === steps.length) sfxGachaReveal(5);
-  }, [stage, steps.length]);
-  const done = stage >= total;
-  const showOvr = stage >= steps.length;
-  const showName = stage >= steps.length + 1;
-  const cur = stage < steps.length ? steps[stage] : null;
+    if (phase !== "steps") return;
+    const s = steps[i];
+    if (!s) {
+      setPhase("ovr");
+      return;
+    }
+    sfxGachaReveal(Math.min(5, 1 + i));
+    const id = window.setTimeout(() => setI((n) => n + 1), s.ms);
+    return () => window.clearTimeout(id);
+  }, [phase, i, steps]);
+
+  useEffect(() => {
+    if (phase === "pot") {
+      sfxGachaReveal(4);
+      const id = window.setTimeout(() => setPhase("name"), 1700);
+      return () => window.clearTimeout(id);
+    }
+    if (phase === "name") {
+      sfxGachaBurst(r.rank);
+      setBoom((n) => n + 1);
+      const id = window.setTimeout(() => setPhase("done"), letters.length * 70 + 1500);
+      return () => window.clearTimeout(id);
+    }
+  }, [phase]);
+
+  const cur = phase === "steps" ? steps[i] : null;
+  const progress = phase === "dark" ? 0 : phase === "steps" ? (i + 1) / (steps.length + 3) : phase === "ovr" ? (steps.length + 1) / (steps.length + 3) : phase === "pot" ? (steps.length + 2) / (steps.length + 3) : 1;
+  const skip = () => (phase === "done" ? onDone() : setPhase("done"));
   return (
-    <div className="pk-walk" style={{ ["--pk" as string]: r.color }} onClick={() => (done ? onDone() : setStage(total))} data-testid="pack-walkout">
+    <div className={cn("pk-walk", phase === "ovr" && hot && "pk-quake")} style={{ ["--pk" as string]: r.color }} onClick={skip} data-testid="pack-walkout">
+      <div className="pk-vig" />
       <div className="pk-beam" />
-      <div className="relative flex w-full max-w-md flex-col items-center gap-4 px-4 text-center">
-        <div className="flex min-h-8 flex-wrap items-center justify-center gap-1.5">
-          {steps.slice(0, Math.min(stage, steps.length)).map((st, i) => (
-            <span key={st.k} className="pk-chip" style={{ ["--c" as string]: st.color, animationDelay: `${i * 30}ms` }}>
-              {st.value}
-            </span>
-          ))}
-        </div>
-        <div className="grid min-h-[190px] place-items-center">
+      {phase !== "dark" && <div className="pk-glow" style={{ opacity: 0.1 + progress * 0.3 }} />}
+      {boom > 0 && <div key={boom} className="pk-whiteout" />}
+      {boom > 0 && <div className="pk-ring" key={`r${boom}`} />}
+      <div className="relative flex w-full max-w-md flex-col items-center gap-5 px-4 text-center">
+        {phase === "dark" && (
+          <div className="pk-heart">
+            <p className="text-[11px] font-bold tracking-[0.5em] text-white/60 uppercase">Walkout</p>
+            <div className="pk-pulse" />
+          </div>
+        )}
+        <div className="grid min-h-[220px] place-items-center">
           {cur && (
             <div key={cur.k} className="pk-step">
               <p className="text-[11px] font-bold tracking-[0.4em] text-white/60 uppercase">{cur.label}</p>
+              {cur.icon && <p className="pk-flag">{cur.icon}</p>}
               <p className="pk-step-v" style={{ color: cur.color, textShadow: `0 0 28px ${cur.color}` }}>
                 {cur.value}
               </p>
             </div>
           )}
-          {showOvr && (
-            <div key="ovr" className="flex flex-col items-center">
-              <div className="pk-ovr">{card.player.ovr}</div>
-              <p className="text-sm font-bold tracking-widest text-white/80">{card.player.pos}</p>
+          {phase === "ovr" && (
+            <div className="flex flex-col items-center">
+              <p className="mb-2 text-[11px] font-bold tracking-[0.4em] text-white/60 uppercase">Overall</p>
+              <Counter to={card.player.ovr} color={r.color} onDone={() => window.setTimeout(() => setPhase("pot"), 900)} />
+              <p className="mt-1 text-sm font-bold tracking-widest text-white/80">{card.player.pos}</p>
+            </div>
+          )}
+          {(phase === "pot" || phase === "name" || phase === "done") && (
+            <div className="flex flex-col items-center">
+              <div className="pk-ovr" style={{ color: r.color, textShadow: `0 0 30px ${r.color}` }}>
+                {card.player.ovr}
+              </div>
+              <p className="pk-step mt-2 text-sm font-bold tracking-widest text-[#E3B341] uppercase">Potenziale {card.player.pot}</p>
             </div>
           )}
         </div>
         <p className="pk-name min-h-[2.4em]">
-          {showName &&
-            letters.map((c, i) => (
-              <span key={i} className="pk-letter" style={{ animationDelay: `${i * 55}ms` }}>
+          {(phase === "name" || phase === "done") &&
+            letters.map((c, k) => (
+              <span key={k} className="pk-letter" style={{ animationDelay: `${k * 70}ms` }}>
                 {c === " " ? " " : c}
               </span>
             ))}
         </p>
-        <p className="h-4 text-xs text-white/60">{done ? "Tocca per scoprire la carta" : "Tocca per saltare"}</p>
+        <div className="pk-bar">
+          <span style={{ width: `${progress * 100}%` }} />
+        </div>
+        <p className="h-4 text-xs text-white/60">{phase === "done" ? "Tocca per scoprire la carta" : "Tocca per saltare"}</p>
       </div>
-      <Sparks color={r.color} n={40} />
+      {(phase === "name" || phase === "done") && <Sparks color={r.color} n={hot ? 60 : 36} />}
     </div>
   );
 }
