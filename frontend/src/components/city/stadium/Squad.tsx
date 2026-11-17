@@ -76,6 +76,7 @@ export function PlayerDetail({ p, team, s, onClose }: { p: Player | null; team: 
                 trained && <p className="mt-1 text-[11px] text-[#8B949E]">Già allenato in questa giornata: torna dopo la prossima partita.</p>
               )}
             </div>
+            {!cur.out && !!cur.tired && cur.tired >= 25 && <p className="rounded-lg border border-[#E3B341]/40 bg-[#2a2108]/90 px-3 py-2 text-xs text-[#F5D26B]">Stanchezza {cur.tired}%: rende meno e rischia più infortuni. Recupera con il tempo o con le amichevoli (che non stancano).</p>}
             {cur.out && <p className="rounded-lg border border-[#F85149]/40 bg-[#2a1214]/90 px-3 py-2 text-xs text-[#FFA198]">{cur.out.kind === "red" ? `Squalificato per ${cur.out.left} partite` : `Infortunato: torna tra ${cur.out.left} partite`}. Non può essere schierato.</p>}
             {cur.id.startsWith("pk-") ? (
               <div>
