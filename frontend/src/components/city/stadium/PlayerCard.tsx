@@ -63,7 +63,7 @@ export default function PlayerCard({ p, size = 1, color = "#2563eb", selected, d
       avatar: avatarMarkup(p, color),
       price: p.price ?? "",
       ...Object.fromEntries(STAT_KEYS.map((k) => [k, p.stats[k]])),
-      ...Object.fromEntries(STAT_KEYS.map((k) => [`${k}_w`, Math.round((20 * Math.min(99, p.stats[k])) / 99 * 10) / 10])),
+      ...Object.fromEntries(STAT_KEYS.map((k) => [`${k}_w`, Math.round((20 * Math.min(125, p.stats[k])) / 125 * 10) / 10])),
     });
     if (size < 0.8) out = out.replace(/<g id="[^"]*stats"[\s\S]*?<\/g>/, "");
     return scopeIds(out, `c${uid}`);
