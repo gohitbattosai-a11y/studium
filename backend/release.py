@@ -10,5 +10,5 @@ UPDATE_MESSAGES = {
 
 FEATURES = {
     "pets": "all",
-    "citta": "admins",
+    "citta": "all",
 }
