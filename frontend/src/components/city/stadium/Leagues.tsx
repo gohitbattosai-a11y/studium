@@ -9,6 +9,8 @@ import { teamOfSnap, useLeague, useLeagues, useReplay, useServerState, useStadiu
 import LiveMatch from "./LiveMatch";
 import { Dot, PANEL } from "./stadiumUi";
 
+export const fmtEvery = (m: number) => (m % 1440 === 0 ? (m === 1440 ? "giorno" : `${m / 1440} giorni`) : m % 60 === 0 ? (m === 60 ? "ora" : `${m / 60} ore`) : `${m} min`);
+
 export const fmtWhen = (at: number) => new Date(at * 1000).toLocaleString("it-IT", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
 export const countdown = (at: number, now: number) => {
@@ -145,7 +147,7 @@ function LeagueView({ id, myId, onBack }: { id: string; myId: string | null; onB
           <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold">{statusLabel[d.status] ?? d.status}</span>
         </div>
         <p className="mt-1 text-[11px] text-[#8B949E]">
-          Stagione {d.season} · {d.teams}/{d.size} squadre · una partita ogni {d.interval_minutes} min {d.owner_name ? `· creata da ${d.owner_name}` : ""}
+          Stagione {d.season} · {d.teams}/{d.size} squadre · una partita ogni {fmtEvery(d.interval_minutes)} {d.owner_name ? `· creata da ${d.owner_name}` : ""}
         </p>
         {d.champion && <p className="mt-1 text-xs text-[#E3B341]">🏆 Campione: {d.champion}</p>}
         {serie && !!d.promoted_waiting && <p className="mt-1 text-xs text-[#7EE787]">{d.promoted_waiting} promosse dalle leghe personalizzate in attesa della prossima stagione.</p>}
@@ -281,7 +283,7 @@ function LeagueRow({ l, onOpen }: { l: LeagueCard; onOpen: () => void }) {
             {l.private && " 🔒"}
           </p>
           <p className="text-[11px] text-[#8B949E]">
-            {statusLabel[l.status] ?? l.status} · {l.teams}/{l.size} squadre · ogni {l.interval_minutes} min
+            {statusLabel[l.status] ?? l.status} · {l.teams}/{l.size} squadre · ogni {fmtEvery(l.interval_minutes)}
           </p>
         </div>
         {l.joined && <span className="text-[10px] font-bold text-[#7EE787]">ISCRITTO</span>}
@@ -323,7 +325,7 @@ export default function Leagues({ myId, onNeedClub }: { myId: string | null; onN
           <div className="min-w-0 flex-1">
             <p className="text-base font-black text-[#F5D26B]">Serie A</p>
             <p className="text-[11px] text-[#C9D1D9]">
-              Le squadre più forti. I campioni delle leghe personalizzate vengono promossi qui. · ogni {d.serie_a.interval_minutes} min
+              Le squadre più forti. I campioni delle leghe personalizzate vengono promossi qui. · ogni {fmtEvery(d.serie_a.interval_minutes)}
             </p>
           </div>
           {d.serie_a.joined && <span className="text-[10px] font-bold text-[#7EE787]">IN SERIE A</span>}
@@ -346,7 +348,7 @@ export default function Leagues({ myId, onNeedClub }: { myId: string | null; onN
           <label className="mt-2 flex items-center gap-2 text-xs">
             <input type="checkbox" checked={priv} onChange={(e) => setPriv(e.target.checked)} /> Privata (solo con codice invito)
           </label>
-          <p className="mt-2 text-[11px] text-[#8B949E]">Le squadre libere vengono riempite con bot. Una partita ogni {cfg?.interval_minutes ?? "?"} minuti, giocate in automatico.</p>
+          <p className="mt-2 text-[11px] text-[#8B949E]">Le squadre libere vengono riempite con bot. Una partita ogni {cfg ? fmtEvery(cfg.interval_minutes) : "?"}, giocate in automatico.</p>
           <Button className="mt-2 w-full" disabled={name.trim().length < 3 || act.createLeague.isPending} onClick={() => act.createLeague.mutate({ name: name.trim(), size: n, private: priv }, { onSuccess: (l) => (setForm(false), setName(""), setOpen(l.id)) })}>
             Crea
           </Button>
