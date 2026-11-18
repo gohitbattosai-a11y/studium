@@ -56,7 +56,7 @@ export default function PlayerCard({ p, size = 1, color = "#2563eb", selected, d
       pos: p.pos,
       name: esc(p.name),
       surname: esc(fit(surname(p.name), 11)),
-      first: esc(fit(firstName(p.name), 9)),
+      first: esc(fit(firstName(p.name), 14)),
       pot: p.pot,
       tier: tier.name,
       shirt: color,
