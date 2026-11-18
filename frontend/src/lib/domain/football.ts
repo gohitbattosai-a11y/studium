@@ -337,6 +337,22 @@ function normalize(raw: StadiumState | null | undefined): StadiumState | null {
   return raw;
 }
 
+const CITY_RESET = "2026-11-18";
+
+const purgeLocalCity = () => {
+  try {
+    if (localStorage.getItem("studium.city.reset") === CITY_RESET) return;
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith("studium.stadium."))
+      .forEach((k) => localStorage.removeItem(k));
+    localStorage.setItem("studium.city.reset", CITY_RESET);
+  } catch {
+    return;
+  }
+};
+
+purgeLocalCity();
+
 let scope: string | null = null;
 let state: StadiumState = fresh();
 const listeners = new Set<() => void>();
@@ -432,7 +448,7 @@ export function buyPlayer(pid: string): string | null {
   if (!mine) return "Prima crea o compra una squadra";
   const p = state.market.find((x) => x.id === pid);
   if (!p) return "Giocatore non disponibile";
-  if (!canInstantBuy(p.ovr, p.card)) return "Questo giocatore si prende solo all'asta";
+  if (!canInstantBuy(p.ovr)) return "Questo giocatore si prende solo all'asta";
   if (state.auctions.some((a) => a.pid === pid)) return "Giocatore già all'asta";
   if (mine.players.length >= SQUAD_MAX) return `Rosa piena (massimo ${SQUAD_MAX} giocatori)`;
   const price = playerPrice(p);
