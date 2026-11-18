@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api/client";
 import { errMsg } from "@/lib/utils/format";
-import { addBudget, adoptClub, applyServer, bindStadium, currentScope, getStadium, myTeam, replaceStadium, stadiumScope, syncDay, useStadium, type Fixture, type Player, type StadiumState, type Team } from "@/lib/domain/football";
+import { addBudget, adoptClub, applyServer, bindStadium, currentScope, getStadium, myTeam, replaceStadium, resetStadium, stadiumScope, syncDay, useStadium, type Fixture, type Player, type StadiumState, type Team } from "@/lib/domain/football";
 
 export interface ServerSettings {
   interval_minutes: number;
@@ -245,6 +245,15 @@ export function useStadiumActions() {
   const all = () => qc.invalidateQueries({ queryKey: KEY });
   const onError = (e: unknown) => toast.error(errMsg(e));
   return {
+    resetWorld: useMutation({
+      mutationFn: () => apiDelete<{ ok: boolean }>("/stadium/club"),
+      onSuccess: () => {
+        resetStadium();
+        qc.removeQueries({ queryKey: KEY });
+        qc.invalidateQueries({ queryKey: KEY });
+      },
+      onError,
+    }),
     createClub: useMutation({ mutationFn: (v: { name: string; color: string }) => apiPost<ClubInfo>("/stadium/club", v), onSuccess: all, onError }),
     createLeague: useMutation({ mutationFn: (v: { name: string; size: number; private: boolean }) => apiPost<LeagueCard>("/stadium/leagues", v), onSuccess: all, onError }),
     join: useMutation({ mutationFn: (v: { id: string; code?: string }) => apiPost(`/stadium/leagues/${v.id}/join`, { code: v.code ?? null }), onSuccess: all, onError }),
