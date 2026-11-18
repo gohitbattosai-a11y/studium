@@ -11,6 +11,7 @@ from starlette.middleware.gzip import GZipMiddleware
 
 load_dotenv(Path(__file__).parent / ".env")
 
+from lib.city_reset import reset_city_once
 from lib.db import client, ensure_indexes, ensure_roles
 from lib.gate import site_gate
 from lib.maintenance import maintenance_loop
@@ -20,6 +21,7 @@ from routers import auth, badges, city, cityshop, dungeon, games, homework, hunt
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await reset_city_once()
     app.state.index_task = asyncio.create_task(ensure_indexes())
     app.state.roles_task = asyncio.create_task(ensure_roles())
     app.state.maintenance_task = asyncio.create_task(maintenance_loop())
