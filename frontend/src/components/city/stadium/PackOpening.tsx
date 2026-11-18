@@ -32,6 +32,66 @@ function Sparks({ color, n = 26 }: { color: string; n?: number }) {
   );
 }
 
+
+const rnd = (n: number, seed = 1) => {
+  let x = seed * 9301 + 49297;
+  return Array.from({ length: n }, () => {
+    x = (x * 9301 + 49297) % 233280;
+    return x / 233280;
+  });
+};
+
+function Backdrop({ rank, walk }: { rank: number; walk?: boolean }) {
+  const n = 12 + rank * 7;
+  const embers = useMemo(() => {
+    const r = rnd(n * 5, rank + 3);
+    return Array.from({ length: n }, (_, i) => ({ x: r[i * 5] * 100, s: 2 + r[i * 5 + 1] * 5, d: 5 + r[i * 5 + 2] * 7, w: -r[i * 5 + 3] * 10, sx: (r[i * 5 + 4] - 0.5) * 160 }));
+  }, [n, rank]);
+  return (
+    <div className="pk-bg" aria-hidden>
+      <div className="pk-aurora a" />
+      <div className="pk-aurora b" />
+      {rank >= 2 && <div className="pk-god" />}
+      {rank >= 3 && <div className="pk-grid" />}
+      {rank >= 4 && <div className="pk-prism" />}
+      {rank >= 5 && (
+        <>
+          <div className="pk-bolt" style={{ left: "14%", animationDelay: "0s" }} />
+          <div className="pk-bolt" style={{ left: "52%", animationDelay: "0.9s" }} />
+          <div className="pk-bolt" style={{ left: "84%", animationDelay: "1.7s" }} />
+        </>
+      )}
+      {walk && (
+        <>
+          <div className="pk-spot" style={{ left: "14%", ["--sw" as string]: "-16deg" }} />
+          <div className="pk-spot" style={{ left: "70%", ["--sw" as string]: "16deg" }} />
+          {[0, 0.6, 1.2, 1.8].map((d) => (
+            <div key={d} className="pk-tun" style={{ animationDelay: `${d}s` }} />
+          ))}
+        </>
+      )}
+      {embers.map((e, i) => (
+        <span key={i} className="pk-ember" style={{ left: `${e.x}%`, width: e.s, height: e.s, animationDuration: `${e.d}s`, animationDelay: `${e.w}s`, ["--sx" as string]: `${e.sx}px` }} />
+      ))}
+    </div>
+  );
+}
+
+function Confetti({ color, n = 48 }: { color: string; n?: number }) {
+  const items = useMemo(() => {
+    const r = rnd(n * 4, 11);
+    const pal = [color, "#ffffff", "#fbbf24", color];
+    return Array.from({ length: n }, (_, i) => ({ x: r[i * 4] * 100, w: 5 + r[i * 4 + 1] * 6, d: 2.2 + r[i * 4 + 2] * 2.4, c: pal[i % pal.length], del: r[i * 4 + 3] * 1.4 }));
+  }, [n, color]);
+  return (
+    <>
+      {items.map((c, i) => (
+        <span key={i} className="pk-conf" style={{ left: `${c.x}%`, width: c.w, height: c.w * 1.6, background: c.c, animationDuration: `${c.d}s`, animationDelay: `${c.del}s` }} />
+      ))}
+    </>
+  );
+}
+
 const flag = (code?: string) => (code && /^[A-Za-z]{2}$/.test(code) ? String.fromCodePoint(...[...code.toUpperCase()].map((c) => 127397 + c.charCodeAt(0))) : "");
 
 interface WStep {
@@ -89,7 +149,10 @@ type WPhase = "dark" | "steps" | "ovr" | "pot" | "name" | "done";
 function Walkout({ card, onDone }: { card: PulledCard; onDone: () => void }) {
   const r = rar(card.rarity);
   const steps = useMemo(() => walkSteps(card), [card]);
-  const letters = useMemo(() => [...card.player.name.toUpperCase()], [card]);
+  const lines = useMemo(() => {
+    const parts = card.player.name.trim().toUpperCase().split(/\s+/);
+    return parts.length > 1 ? [[...parts[0]], [...parts.slice(1).join(" ")]] : [[...parts[0]]];
+  }, [card]);
   const [phase, setPhase] = useState<WPhase>("dark");
   const [i, setI] = useState(0);
   const [boom, setBoom] = useState(0);
@@ -123,7 +186,7 @@ function Walkout({ card, onDone }: { card: PulledCard; onDone: () => void }) {
     if (phase === "name") {
       sfxGachaBurst(r.rank);
       setBoom((n) => n + 1);
-      const id = window.setTimeout(() => setPhase("done"), letters.length * 70 + 1500);
+      const id = window.setTimeout(() => setPhase("done"), lines.flat().length * 70 + 1500);
       return () => window.clearTimeout(id);
     }
   }, [phase]);
@@ -134,6 +197,7 @@ function Walkout({ card, onDone }: { card: PulledCard; onDone: () => void }) {
   return (
     <div className={cn("pk-walk", phase === "ovr" && hot && "pk-quake")} style={{ ["--pk" as string]: r.color }} onClick={skip} data-testid="pack-walkout">
       <div className="pk-vig" />
+      {phase !== "dark" && <Backdrop rank={Math.max(2, r.rank)} walk />}
       <div className="pk-beam" />
       {phase !== "dark" && <div className="pk-glow" style={{ opacity: 0.1 + progress * 0.3 }} />}
       {boom > 0 && <div key={boom} className="pk-whiteout" />}
@@ -173,9 +237,13 @@ function Walkout({ card, onDone }: { card: PulledCard; onDone: () => void }) {
         </div>
         <p className="pk-name min-h-[2.4em]">
           {(phase === "name" || phase === "done") &&
-            letters.map((c, k) => (
-              <span key={k} className="pk-letter" style={{ animationDelay: `${k * 70}ms` }}>
-                {c === " " ? " " : c}
+            lines.map((line, li) => (
+              <span key={li} className="block">
+                {line.map((c, k) => (
+                  <span key={k} className="pk-letter" style={{ animationDelay: `${(li * 6 + k) * 70}ms` }}>
+                    {c === " " ? "\u00A0" : c}
+                  </span>
+                ))}
               </span>
             ))}
         </p>
@@ -185,6 +253,7 @@ function Walkout({ card, onDone }: { card: PulledCard; onDone: () => void }) {
         <p className="h-4 text-xs text-white/60">{phase === "done" ? "Tocca per scoprire la carta" : "Tocca per saltare"}</p>
       </div>
       {(phase === "name" || phase === "done") && <Sparks color={r.color} n={hot ? 60 : 36} />}
+      {(phase === "name" || phase === "done") && <Confetti color={r.color} n={hot ? 70 : 40} />}
     </div>
   );
 }
@@ -277,6 +346,8 @@ export default function PackOpening({ pack, run, onClose, onAgain }: { pack: Pac
     <div className="pk-root" style={{ ["--pk" as string]: color }} data-testid="pack-opening">
       <div className="pk-glow" />
       <div className="pk-rays" />
+      {phase === "reveal" && cur && <Backdrop key={idx} rank={rar(cur.rarity).rank} />}
+      {phase === "summary" && <Backdrop rank={best} />}
       {phase !== "shake" && phase !== "burst" && (
         <button type="button" onClick={onClose} aria-label="Chiudi" className="absolute top-[max(0.75rem,env(safe-area-inset-top))] right-3 z-20 grid size-10 place-items-center rounded-full border border-white/20 bg-black/60">
           <X className="size-5" />
@@ -306,6 +377,7 @@ export default function PackOpening({ pack, run, onClose, onAgain }: { pack: Pac
             <span className="block size-full" dangerouslySetInnerHTML={{ __html: packArt(pack.id) }} />
           </div>
           <div className="pk-flash" />
+          <div className="pk-pillar" />
           <div className="pk-ring" />
           <div className="pk-ring" style={{ animationDelay: "180ms" }} />
           <Sparks color={bestColor} n={34} />
@@ -319,10 +391,13 @@ export default function PackOpening({ pack, run, onClose, onAgain }: { pack: Pac
           </p>
           <div className={cn("pk-stage", leaving ? "pk-out" : "pk-in")} key={idx} style={{ ["--pk" as string]: rar(cur.rarity).color }}>
             <div className={cn("pk-halo", flipped[idx] && "on")} />
+            {flipped[idx] && <div className="pk-shock" />}
+            {flipped[idx] && <Sparks color={rar(cur.rarity).color} n={14 + rar(cur.rarity).rank * 8} />}
             <div className={cn("pk-card", flipped[idx] && "pk-flipped")} onClick={tapCard} role="button" tabIndex={0} aria-label="Gira la carta" onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && tapCard()} data-testid="pack-card">
               <div className={cn("pk-back", rar(cur.rarity).rank >= 3 && "pk-hot")} />
               <div className="pk-face">
                 <PlayerCard p={cur.player} size={3.2} color="#2563eb" />
+                {rar(cur.rarity).rank >= 2 && <div className="pk-sheen" />}
               </div>
             </div>
           </div>
