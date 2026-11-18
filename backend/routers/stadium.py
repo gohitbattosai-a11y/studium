@@ -193,6 +193,16 @@ async def create_club(body: CreateClub, member: dict = Depends(stadium_member)):
     return club_public(doc)
 
 
+@router.delete("/stadium/club")
+async def reset_club(member: dict = Depends(stadium_member)):
+    club = await get_club(member)
+    if club:
+        await db.stadium_leagues.update_many({"status": "open"}, {"$pull": {"teams": {"id": club["id"]}}})
+        await db.stadium_clubs.delete_one({"id": club["id"]})
+    await db.stadium_worlds.delete_many({"member_id": member["id"]})
+    return {"ok": True}
+
+
 @router.put("/stadium/club/squad")
 async def sync_squad(body: SquadSync, member: dict = Depends(stadium_member)):
     club = await need_club(member)
