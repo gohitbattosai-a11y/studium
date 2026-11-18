@@ -1,8 +1,8 @@
 {
  "league": {
-  "matchIntervalMinutes": 30,
+  "matchIntervalMinutes": 2880,
   "alignToInterval": true,
-  "startDelayMinutes": 10,
+  "startDelayMinutes": 60,
   "minTeams": 4,
   "maxTeams": 12,
   "defaultTeams": 8,
@@ -14,40 +14,30 @@
   "winPoints": 3,
   "drawPoints": 1,
   "rewards": {
-   "win": 4.0,
-   "draw": 1.5,
-   "loss": 0.5,
-   "perGoal": 0.2,
-   "walkoverWin": 3.0,
-   "prizes": [
-    20,
-    12,
-    8,
-    5
-   ]
+   "win": 16.0,
+   "draw": 6.0,
+   "loss": 2.0,
+   "perGoal": 0.8,
+   "walkoverWin": 12.0,
+   "prizes": [30, 18, 12, 8]
   },
-  "offsetMinutes": 10
+  "offsetMinutes": 1080
  },
  "serieA": {
   "teams": 10,
-  "matchIntervalMinutes": 30,
+  "matchIntervalMinutes": 2880,
   "maxHumans": 8,
   "relegated": 2,
-  "seasonBreakMinutes": 60,
+  "seasonBreakMinutes": 1440,
   "rewards": {
-   "win": 7.0,
-   "draw": 2.5,
-   "loss": 1.0,
-   "perGoal": 0.4,
-   "walkoverWin": 5.0,
-   "prizes": [
-    80,
-    45,
-    25,
-    15
-   ]
+   "win": 28.0,
+   "draw": 10.0,
+   "loss": 4.0,
+   "perGoal": 1.6,
+   "walkoverWin": 20.0,
+   "prizes": [120, 68, 38, 22]
   },
-  "offsetMinutes": 0,
+  "offsetMinutes": 1110,
   "qualifyRank": 5,
   "qualifyMax": 4
  },
@@ -78,7 +68,7 @@
    {
     "id": "bronzo",
     "name": "Pack Bronzo",
-    "price": 25,
+    "price": 15,
     "cards": 3,
     "tone": "#CD7F32",
     "blurb": "Tre carte per cominciare.",
@@ -93,7 +83,7 @@
    {
     "id": "argento",
     "name": "Pack Argento",
-    "price": 70,
+    "price": 40,
     "cards": 4,
     "tone": "#C0C8D4",
     "blurb": "Quattro carte, buone chance di un raro.",
@@ -109,7 +99,7 @@
    {
     "id": "oro",
     "name": "Pack Oro",
-    "price": 160,
+    "price": 90,
     "cards": 5,
     "tone": "#F5C542",
     "blurb": "Cinque carte, almeno un raro garantito.",
@@ -125,7 +115,7 @@
    {
     "id": "elite",
     "name": "Pack Élite",
-    "price": 380,
+    "price": 200,
     "cards": 5,
     "tone": "#38BDF8",
     "blurb": "Almeno un epico garantito e giocatori esclusivi.",
@@ -141,7 +131,7 @@
    {
     "id": "icone",
     "name": "Pack Icone",
-    "price": 800,
+    "price": 400,
     "cards": 3,
     "tone": "#E879F9",
     "blurb": "Tre carte da leggenda: solo qui trovi le Icone.",
@@ -1300,22 +1290,17 @@
   "teams": 16,
   "groups": 2,
   "italianBots": 4,
-  "matchIntervalMinutes": 60,
-  "offsetMinutes": 20,
+  "matchIntervalMinutes": 2880,
+  "offsetMinutes": 1140,
   "maxHumans": 4,
-  "seasonBreakMinutes": 120,
+  "seasonBreakMinutes": 1440,
   "rewards": {
-   "win": 12.0,
-   "draw": 4.0,
-   "loss": 1.5,
-   "perGoal": 0.7,
-   "walkoverWin": 8.0,
-   "prizes": [
-    250,
-    140,
-    70,
-    70
-   ]
+   "win": 48.0,
+   "draw": 16.0,
+   "loss": 6.0,
+   "perGoal": 2.8,
+   "walkoverWin": 32.0,
+   "prizes": [375, 210, 105, 105]
   }
  },
  "fatigue": {
@@ -1328,6 +1313,6 @@
  },
  "friendly": {
   "pendingMax": 4,
-  "expireMinutes": 180
+  "expireMinutes": 1440
  }
 }
