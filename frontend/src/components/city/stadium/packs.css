@@ -66,3 +66,32 @@
 @keyframes pk-quake { 0% { transform: translate(0, 0); } 25% { transform: translate(-2px, 1px); } 50% { transform: translate(2px, -2px); } 75% { transform: translate(-1px, -1px); } 100% { transform: translate(1px, 2px); } }
 @keyframes pk-white { 0% { opacity: 1; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .pk-quake, .pk-pulse { animation: none; } }
+
+.pk-bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.pk-aurora { position: absolute; width: 90vmax; height: 60vmax; border-radius: 50%; filter: blur(70px); opacity: 0.3; }
+.pk-aurora.a { top: -30vmax; left: -30vmax; background: radial-gradient(closest-side, var(--pk), transparent); animation: pk-drift 9s ease-in-out infinite alternate; }
+.pk-aurora.b { bottom: -30vmax; right: -30vmax; background: radial-gradient(closest-side, color-mix(in srgb, var(--pk) 45%, #8b5cf6), transparent); animation: pk-drift 11s ease-in-out -4s infinite alternate-reverse; }
+.pk-god { position: absolute; left: 50%; top: -5%; width: 150vmax; height: 150vmax; margin-left: -75vmax; background: repeating-conic-gradient(from 0deg at 50% 0%, var(--pk) 0deg 1.6deg, transparent 1.6deg 7deg); clip-path: polygon(50% 0, 78% 100%, 22% 100%); opacity: 0.16; transform-origin: 50% 0; animation: pk-sway 6s ease-in-out infinite alternate; mask-image: linear-gradient(#000, transparent 80%); -webkit-mask-image: linear-gradient(#000, transparent 80%); }
+.pk-grid { position: absolute; left: -50%; right: -50%; bottom: -8%; height: 55%; background: linear-gradient(var(--pk) 1px, transparent 1px) 0 0 / 100% 48px, linear-gradient(90deg, var(--pk) 1px, transparent 1px) 0 0 / 48px 100%; transform: perspective(500px) rotateX(62deg); transform-origin: 50% 100%; opacity: 0.28; mask-image: linear-gradient(transparent, #000 70%); -webkit-mask-image: linear-gradient(transparent, #000 70%); animation: pk-gridmove 1.2s linear infinite; }
+.pk-prism { position: absolute; left: 50%; top: 50%; width: 150vmax; height: 150vmax; margin: -75vmax 0 0 -75vmax; background: conic-gradient(#f0f, #0ff, #ff0, #0f8, #f0f); opacity: 0.12; mix-blend-mode: screen; animation: pk-spin 14s linear infinite, pk-hue 6s linear infinite; mask-image: radial-gradient(circle, #000 0%, transparent 55%); -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 55%); }
+.pk-bolt { position: absolute; top: 0; width: 3px; height: 100%; background: linear-gradient(transparent, #fff 30%, var(--pk) 60%, transparent); box-shadow: 0 0 16px var(--pk); opacity: 0; transform: skewX(-12deg); animation: pk-bolt 2.6s steps(1, end) infinite; }
+.pk-ember { position: absolute; bottom: -12px; border-radius: 50%; background: var(--pk); box-shadow: 0 0 8px var(--pk); opacity: 0; animation: pk-rise 8s linear infinite; }
+.pk-spot { position: absolute; top: -10%; width: 34vmin; height: 130%; background: linear-gradient(180deg, #ffffffaa, transparent 80%); clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%); transform-origin: 50% 0; opacity: 0.2; animation: pk-swing 3.2s ease-in-out infinite alternate; }
+.pk-tun { position: absolute; left: 50%; top: 50%; width: 30vmin; height: 30vmin; margin: -15vmin 0 0 -15vmin; border-radius: 50%; border: 2px solid var(--pk); box-shadow: 0 0 20px var(--pk), inset 0 0 20px var(--pk); opacity: 0; animation: pk-tunnel 2.4s ease-in infinite; }
+.pk-conf { position: absolute; top: -20px; z-index: 4; opacity: 0; border-radius: 1px; pointer-events: none; animation: pk-fall 3s linear infinite; }
+.pk-pillar { position: absolute; left: 50%; bottom: 0; width: 26vmin; height: 100%; margin-left: -13vmin; background: linear-gradient(0deg, var(--pk), #ffffffaa 45%, transparent); filter: blur(10px); transform-origin: 50% 100%; animation: pk-pillar 1s ease-out forwards; }
+.pk-shock { position: absolute; inset: 0; border-radius: 14px; border: 3px solid var(--pk); box-shadow: 0 0 24px var(--pk); pointer-events: none; animation: pk-shock 0.8s ease-out forwards; z-index: 2; }
+.pk-sheen { position: absolute; inset: 0; border-radius: 14px; background: linear-gradient(115deg, transparent 38%, #ffffff99 50%, transparent 62%) 150% 0 / 250% 100% no-repeat; mix-blend-mode: screen; pointer-events: none; animation: pk-sheen 3.2s ease-in-out 0.9s infinite; }
+@keyframes pk-drift { from { transform: translate(0, 0) scale(1); } to { transform: translate(14vmax, 8vmax) scale(1.2); } }
+@keyframes pk-sway { from { transform: rotate(-10deg); opacity: 0.1; } to { transform: rotate(10deg); opacity: 0.2; } }
+@keyframes pk-gridmove { to { background-position: 0 48px, 0 0; } }
+@keyframes pk-hue { to { filter: hue-rotate(360deg); } }
+@keyframes pk-bolt { 0%, 8% { opacity: 0; } 2% { opacity: 0.9; } 4% { opacity: 0.2; } 6% { opacity: 1; } 9%, 100% { opacity: 0; } }
+@keyframes pk-rise { 0% { transform: translate(0, 0); opacity: 0; } 10% { opacity: 0.9; } 100% { transform: translate(var(--sx), -110vh); opacity: 0; } }
+@keyframes pk-swing { from { transform: rotate(calc(var(--sw) * -1)); } to { transform: rotate(var(--sw)); } }
+@keyframes pk-tunnel { 0% { transform: scale(0.1); opacity: 0; } 25% { opacity: 0.6; } 100% { transform: scale(7); opacity: 0; } }
+@keyframes pk-fall { 0% { transform: translateY(0) rotate(0) rotateY(0); opacity: 0; } 8% { opacity: 1; } 100% { transform: translateY(112vh) rotate(540deg) rotateY(540deg); opacity: 1; } }
+@keyframes pk-pillar { 0% { transform: scaleX(0.1); opacity: 1; } 100% { transform: scaleX(2.4); opacity: 0; } }
+@keyframes pk-shock { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.9); opacity: 0; } }
+@keyframes pk-sheen { 0% { background-position: 150% 0; } 55%, 100% { background-position: -50% 0; } }
+@media (prefers-reduced-motion: reduce) { .pk-aurora, .pk-god, .pk-grid, .pk-prism, .pk-bolt, .pk-ember, .pk-spot, .pk-tun, .pk-conf, .pk-sheen { animation: none; } .pk-ember, .pk-conf, .pk-bolt, .pk-tun { display: none; } }
