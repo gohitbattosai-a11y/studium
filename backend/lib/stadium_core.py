@@ -22,6 +22,11 @@ FORMATIONS: dict[str, list[str]] = {
     "4-3-3": ["POR", "DIF", "DIF", "DIF", "DIF", "CEN", "CEN", "CEN", "ATT", "ATT", "ATT"],
     "4-4-2": ["POR", "DIF", "DIF", "DIF", "DIF", "CEN", "CEN", "CEN", "CEN", "ATT", "ATT"],
     "3-5-2": ["POR", "DIF", "DIF", "DIF", "CEN", "CEN", "CEN", "CEN", "CEN", "ATT", "ATT"],
+    "4-2-3-1": ["POR", "DIF", "DIF", "DIF", "DIF", "CEN", "CEN", "CEN", "CEN", "CEN", "ATT"],
+    "4-5-1": ["POR", "DIF", "DIF", "DIF", "DIF", "CEN", "CEN", "CEN", "CEN", "CEN", "ATT"],
+    "3-4-3": ["POR", "DIF", "DIF", "DIF", "CEN", "CEN", "CEN", "CEN", "ATT", "ATT", "ATT"],
+    "5-3-2": ["POR", "DIF", "DIF", "DIF", "DIF", "DIF", "CEN", "CEN", "CEN", "ATT", "ATT"],
+    "5-4-1": ["POR", "DIF", "DIF", "DIF", "DIF", "DIF", "CEN", "CEN", "CEN", "CEN", "ATT"],
 }
 WEIGHTS = {
     "POR": {"rit": 0.2, "tir": 0, "pas": 0.15, "dri": 0.1, "dif": 0.4, "fis": 0.15},
