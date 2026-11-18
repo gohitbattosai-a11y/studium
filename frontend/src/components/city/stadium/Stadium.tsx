@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, RotateCcw, Wrench } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils/cn";
 import { useNow } from "@/lib/runtime/useNow";
-import { COLORS, SQUAD_MIN, TRAIN, addBudget, available, collectTraining, buyTeam, createTeam, isReady, myTeam, resetTraining, settleAuctions, strength, teamPrice, train, trainCost, trainSeconds, trainTeam, useStadium, type Player, type StadiumState, type Team, type TrainKind } from "@/lib/domain/football";
-import { useClubSync, useServerState, useStadiumActions } from "@/lib/domain/stadiumApi";
+import { COLORS, SQUAD_MIN, TRAIN, available, collectTraining, buyTeam, createTeam, isReady, myTeam, settleAuctions, strength, teamPrice, train, trainCost, trainSeconds, trainTeam, useStadium, type Player, type StadiumState, type Team, type TrainKind } from "@/lib/domain/football";
+import { useClubSync, useServerState } from "@/lib/domain/stadiumApi";
 import { stadiumArt } from "@/lib/art/stadiumAssets";
 import Deals from "./Deals";
 import Friendlies from "./Friendlies";
@@ -25,38 +25,6 @@ const report = (r: { name: string; d: number }[]) => {
   r.slice(0, 3).forEach((x) => toast.success(x.d > 0 ? `${x.name}: +${x.d} overall` : `${x.name} ha finito l'allenamento`));
   if (r.length > 3) toast.success(`Altri ${r.length - 3} giocatori hanno finito l'allenamento`);
 };
-
-function Tools({ s }: { s: StadiumState }) {
-  const [open, setOpen] = useState(false);
-  const { resetWorld } = useStadiumActions();
-  return (
-    <div className="mb-3">
-      <button type="button" onClick={() => setOpen(!open)} className="st-chip">
-        <Wrench className="size-3.5" /> Strumenti test
-      </button>
-      {open && (
-        <div className="st-bar mt-2 flex flex-wrap items-center gap-1.5">
-          <span className="text-xs text-[#C9D1D9]">Budget {eur(s.budget)}</span>
-          <Button size="sm" variant="outline" onClick={() => addBudget(10)}>
-            +€10M
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => addBudget(100)}>
-            +€100M
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => report(collectTraining(Infinity))}>
-            Completa allenamenti
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => resetTraining()}>
-            Azzera allenamenti
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => resetWorld.mutate()} disabled={resetWorld.isPending}>
-            <RotateCcw /> Nuovo mondo
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-}
 
 function Setup({ s }: { s: StadiumState }) {
   const [name, setName] = useState("");
@@ -277,7 +245,6 @@ export default function Stadium({ memberId }: { memberId: string }) {
       <div className="absolute inset-0 overflow-y-auto pt-14 pb-10">
         <div className="mx-auto w-full max-w-3xl px-3 pt-3">
           {sync.ready && mine && <p className="mb-2 text-center text-[11px] font-semibold tracking-wider text-[#8B949E] uppercase">{ctxLabel}</p>}
-          {sync.ready && <Tools s={s} />}
           {!sync.ready ? (
             <p className="py-16 text-center text-sm text-[#8B949E]">Carico la tua squadra…</p>
           ) : !mine && sync.hasClub ? (
