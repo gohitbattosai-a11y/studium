@@ -67,4 +67,4 @@ export const ROSTER: RosterEntry[] = rosterRaw as RosterEntry[];
 const tiersDesc = [...CFG.tiers].sort((a, b) => b.min - a.min);
 export const tierFor = (ovr: number): TierCfg => tiersDesc.find((t) => ovr >= t.min) ?? tiersDesc[tiersDesc.length - 1];
 
-export const canInstantBuy = (ovr: number, card?: string): boolean => !card && CFG.auction.instantTiers.includes(tierFor(ovr).id);
+export const canInstantBuy = (ovr: number): boolean => CFG.auction.instantTiers.includes(tierFor(ovr).id);
