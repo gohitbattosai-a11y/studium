@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils/cn";
 import { useNow } from "@/lib/runtime/useNow";
-import { COLORS, SQUAD_MIN, TRAIN, addBudget, available, collectTraining, buyTeam, createTeam, isReady, myTeam, resetStadium, resetTraining, settleAuctions, strength, teamPrice, train, trainCost, trainSeconds, trainTeam, useStadium, type Player, type StadiumState, type Team, type TrainKind } from "@/lib/domain/football";
-import { useClubSync, useServerState } from "@/lib/domain/stadiumApi";
+import { COLORS, SQUAD_MIN, TRAIN, addBudget, available, collectTraining, buyTeam, createTeam, isReady, myTeam, resetTraining, settleAuctions, strength, teamPrice, train, trainCost, trainSeconds, trainTeam, useStadium, type Player, type StadiumState, type Team, type TrainKind } from "@/lib/domain/football";
+import { useClubSync, useServerState, useStadiumActions } from "@/lib/domain/stadiumApi";
 import { stadiumArt } from "@/lib/art/stadiumAssets";
 import Deals from "./Deals";
 import Friendlies from "./Friendlies";
@@ -28,6 +28,7 @@ const report = (r: { name: string; d: number }[]) => {
 
 function Tools({ s }: { s: StadiumState }) {
   const [open, setOpen] = useState(false);
+  const { resetWorld } = useStadiumActions();
   return (
     <div className="mb-3">
       <button type="button" onClick={() => setOpen(!open)} className="st-chip">
@@ -48,7 +49,7 @@ function Tools({ s }: { s: StadiumState }) {
           <Button size="sm" variant="outline" onClick={() => resetTraining()}>
             Azzera allenamenti
           </Button>
-          <Button size="sm" variant="ghost" onClick={() => resetStadium()}>
+          <Button size="sm" variant="ghost" onClick={() => resetWorld.mutate()} disabled={resetWorld.isPending}>
             <RotateCcw /> Nuovo mondo
           </Button>
         </div>
