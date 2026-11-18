@@ -160,7 +160,7 @@ export default function MarketView({ s, team }: { s: StadiumState; team: Team })
       </p>
       <div className="grid grid-cols-2 gap-x-2 gap-y-4 sm:grid-cols-3 md:grid-cols-4">
         {list.slice(0, limit).map((p) => {
-          const instant = canInstantBuy(p.ovr, p.card);
+          const instant = canInstantBuy(p.ovr);
           const price = playerPrice(p);
           return (
             <div key={p.id} className="st-slot">
